@@ -50,3 +50,12 @@ path = "src/kernelforge/data/examples/triton2flydsl-mxfp8-grouped-gemm/mxfp8_gro
 precedence = "override"
 SPDX-FileCopyrightText = "SGLang Team and contributors"
 SPDX-License-Identifier = "Apache-2.0"
+
+# Fork-local backlog: the developer-agent rules, the issue texts and the
+# posting script. Written for this fork, not by AMD, so the blanket entry
+# above must not add an AMD claim on top.
+[[annotations]]
+path = "docs/backlog/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Hasith Ishara"
+SPDX-License-Identifier = "MIT"
