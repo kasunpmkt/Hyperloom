@@ -723,7 +723,7 @@ def _validate_and_resolve_claude_model(
     raise SystemExit(2)
 
 
-def _resolve_models_for_run(
+async def _resolve_models_for_run(
     args: argparse.Namespace,
     resolved_urls: tuple[str, str] | None,
     *,
@@ -748,13 +748,13 @@ def _resolve_models_for_run(
     if codex_follows_claude:
         args.codex_model = args.claude_model
 
-    _probe_critic_review_model(args, codex_follows_claude=codex_follows_claude)
+    await _probe_critic_review_model(args, codex_follows_claude=codex_follows_claude)
 
 
 _CRITIC_PROBE_TIMEOUT_SEC = 60.0
 
 
-def _probe_critic_review_model(args: argparse.Namespace, *, codex_follows_claude: bool) -> None:
+async def _probe_critic_review_model(args: argparse.Namespace, *, codex_follows_claude: bool) -> None:
     """Send the critic's model one real request before the session starts; exit rc=2 when it cannot answer.
 
     A catalog listing only proves a gateway names a model, not that its upstream serves it, and the critic has no
@@ -778,10 +778,10 @@ def _probe_critic_review_model(args: argparse.Namespace, *, codex_follows_claude
     last_error: BaseException | None = None
     for delay in (0.0, *_CATALOG_RETRY_DELAYS_SEC):
         if delay:
-            time.sleep(delay)
+            await asyncio.sleep(delay)
         try:
             if protocol == "anthropic":
-                llm_config.anthropic_completion(
+                await llm_config.aanthropic_completion(
                     model=model,
                     messages=messages,
                     max_tokens=16,
@@ -1631,7 +1631,7 @@ async def _run_optimize(args: argparse.Namespace) -> int:
             log.warning("failed to preserve SBD V6 preflight failure", exc_info=True)
         raise
 
-    _resolve_models_for_run(
+    await _resolve_models_for_run(
         args,
         resolved_urls,
         claude_follows_codex=claude_follows_codex,
