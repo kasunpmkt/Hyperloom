@@ -57,5 +57,5 @@ SPDX-License-Identifier = "Apache-2.0"
 [[annotations]]
 path = "docs/backlog/**"
 precedence = "override"
-SPDX-FileCopyrightText = "2026 Hasith Ishara"
+SPDX-FileCopyrightText = "2026 KRAI Ltd. - Hasith Ishara"
 SPDX-License-Identifier = "MIT"

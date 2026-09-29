@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2026 Hasith Ishara
+SPDX-FileCopyrightText: 2026 KRAI Ltd. - Hasith Ishara
 SPDX-License-Identifier: MIT
 -->
 
