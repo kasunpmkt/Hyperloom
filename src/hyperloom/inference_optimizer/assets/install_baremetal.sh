@@ -2216,7 +2216,7 @@ dotenv_render_value() {
   elif [[ "$value" != *"'"* ]]; then
     printf "'%s'" "$value"
   elif [[ "$value" == *[\$\`]* ]]; then
-    printf '%s\n' "[install-baremetal ERROR] a .env value holding both ' and \$ or \` cannot be written portably" >&2
+    printf '%s\n' "[dotenv ERROR] a .env value holding both ' and \$ or \` cannot be written portably" >&2
     return 1
   else
     value="${value//\\/\\\\}"
