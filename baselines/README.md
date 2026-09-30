@@ -26,6 +26,7 @@ frozen; every value marked _TBD_ is filled in from measured artifacts, never typ
 | Hyperloom | source checkout, commit _TBD_ |
 | Claude model | _TBD_ |
 | Host sharing | Shared with other GPU jobs; the neighbouring load during each measurement is recorded next to it |
+| CPU governor | `powersave`, kept deliberately: the smoke run was measured in it, and every ground-truth and later run uses the same setting so their numbers compare |
 
 ## Reference workloads
 
