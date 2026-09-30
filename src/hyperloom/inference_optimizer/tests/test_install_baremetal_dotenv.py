@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -46,7 +47,7 @@ def _functions(script: Path, *names: str) -> str:
 def _bash(body: str, writer: Path = _INSTALL_SH, **env: str) -> str:
     script = (
         "set -euo pipefail\n"
-        + _functions(writer, "dotenv_render_value", "upsert_dotenv_var")
+        + _functions(writer, "dotenv_render_value", "upsert_dotenv_var", "remove_dotenv_var")
         + _functions(_INSTALL_SH, "read_dotenv_var")
         + body
     )
@@ -106,3 +107,19 @@ def test_a_value_no_reader_agrees_on_is_refused_and_leaves_the_file_alone(
 
     assert "cannot be written portably" in failure.value.stderr
     assert dotenv.read_text() == "HL_TEST_VALUE=stale\n"
+
+
+@pytest.mark.skipif(os.geteuid() != 0, reason="only root can hand a file to another owner")
+@pytest.mark.parametrize("writer", _WRITERS.values(), ids=_WRITERS.keys())
+@pytest.mark.parametrize("call", ['upsert_dotenv_var HL_TEST_VALUE "new value"', "remove_dotenv_var HL_TEST_VALUE"])
+def test_rewriting_as_root_keeps_the_users_ownership(tmp_path: Path, writer: Path, call: str) -> None:
+    """The documented Docker flow runs setup as root on the host user's .env."""
+    dotenv = tmp_path / ".env"
+    dotenv.write_text("HL_TEST_VALUE=stale\n")
+    os.chown(dotenv, 4242, 4343)
+    dotenv.chmod(0o644)
+
+    _bash(f"\n{call}\n", writer, DOTENV=str(dotenv))
+
+    st = dotenv.stat()
+    assert (st.st_uid, st.st_gid, st.st_mode & 0o777) == (4242, 4343, 0o600)

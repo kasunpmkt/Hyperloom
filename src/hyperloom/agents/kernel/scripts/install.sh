@@ -428,6 +428,9 @@ upsert_dotenv_var() {
   fi
   [ "$found" -eq 0 ] && printf '%s=%s\n' "$key" "$value" >> "$tmp"
   mkdir -p "$(dirname "$DOTENV")"
+  # Replacing the file would hand it to whoever runs setup (root in the container), locking the user out of
+  # their own .env; the temp file takes the current owner first.
+  [ -f "$DOTENV" ] && chown --reference="$DOTENV" "$tmp" 2>/dev/null || true
   mv "$tmp" "$DOTENV"
   chmod 600 "$DOTENV" 2>/dev/null || true
 }
@@ -445,6 +448,7 @@ remove_dotenv_var() {
       *) printf '%s\n' "$line" >> "$tmp" ;;
     esac
   done < "$DOTENV"
+  [ -f "$DOTENV" ] && chown --reference="$DOTENV" "$tmp" 2>/dev/null || true
   mv "$tmp" "$DOTENV"
   chmod 600 "$DOTENV" 2>/dev/null || true
 }
