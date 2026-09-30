@@ -40,6 +40,20 @@ All use the default random-token prompts, so they match existing recipe-KB rows.
 
 The set stays small because it is re-run for every issue.
 
+## Method
+
+- **Code and host:** `main` at `aac3eee24`; one MI300X (host GPU 7), CPU governor `powersave`.
+- **Stock baseline (noise floor):** three runs of Hyperloom's own PRELUDE baseline and nothing else:
+  `optimize --no-framework-agent --no-kernel --no-enable-conc-sweep --no-enable-roofline --max-hours 3`
+  with the workload flags. The baseline is measured by the same executor as in a full run: a
+  discarded warmup round, then the measured round.
+- **Hyperloom today:** one `optimize` per workload with the default phase chain,
+  `--max-hours 3 --target-gain 30`.
+- **Recipe KB:** every run starts from an empty KB of its own (`KNOWLEDGE_LOCAL_ROOT` set to a fresh
+  directory), per `docs/backlog/PROJECT.md` § *Recipe KB state*. Noise runs 1–3 of `ref-dense-bf16`
+  predate this rule. They used the shared KB, which held the smoke run's recipe; their baseline
+  numbers are unaffected because PRELUDE measures the baseline before warm replay.
+
 ## Metrics
 
 Taken from `session_breakdown.json` (`docs/reference/session-breakdown.md`):

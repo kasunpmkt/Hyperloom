@@ -68,6 +68,21 @@ public draft.
 when its delta against ground truth is **outside the noise band**. A delta inside the
 band is recorded as `inconclusive`, never as `keep`.
 
+### Recipe KB state
+
+Hyperloom's recipe KB (`$KNOWLEDGE_LOCAL_ROOT`, default `$USER_DATA_PATH/knowledge`) is keyed by
+model, GPU, framework, architecture, framework version and precision, not by concurrency or
+sequence length. Every run reads it (T0 warm replay, agent priors) and writes it back, including a
+baseline-only run. A shared KB therefore makes each run depend on the runs before it, which the
+noise band cannot absorb.
+
+**Every ground-truth and experiment run starts from an empty KB of its own:** point
+`KNOWLEDGE_LOCAL_ROOT` at a new empty directory per run. Keep the KB features enabled (no
+`--degraded-kb`); an empty KB only removes the carried-over knowledge. The persistent
+`$USER_DATA_PATH/knowledge` is for production use of Hyperloom only. An issue that changes the KB
+itself (storage, replay, priors) adds a second comparison from a frozen, versioned KB snapshot,
+copied fresh for each run.
+
 ## Experiment log
 
 The log has two levels. One rule governs both: **numbers are extracted by a script from
@@ -143,5 +158,5 @@ Filled in by issue #21 and kept current here:
 | ROCm / driver | _(version)_ |
 | Run mode | `docker` (validated stack); container image tag: _(tag)_ |
 | Workspace clone | _(absolute path; always the same path, so Claude's memory stays in one place)_ |
-| `USER_DATA_PATH` | _(persistent disk; holds the recipe KB and session dirs; backed up)_ |
+| `USER_DATA_PATH` | _(persistent disk; holds session dirs, the per-run KBs and the production recipe KB; backed up)_ |
 | Hyperloom wheel | 1.1.2 |
