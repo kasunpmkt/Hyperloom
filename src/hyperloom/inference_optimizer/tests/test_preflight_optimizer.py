@@ -14,6 +14,7 @@ import pytest
 
 from hyperloom.common import rocm_smi
 from hyperloom.common.rocm_smi import GpuVram
+from hyperloom.common.visible_devices import VISIBLE_DEVICE_VARS
 
 _TOTAL_MIB = 288 * 1024.0
 
@@ -28,6 +29,13 @@ def preflight() -> ModuleType:
     sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
     return mod
+
+
+@pytest.fixture(autouse=True)
+def _no_visible_device_mask(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The gate now honours these masks, so a runner that exports one must not change the other tests."""
+    for var in VISIBLE_DEVICE_VARS:
+        monkeypatch.delenv(var, raising=False)
 
 
 def _usage(*used_fractions: float) -> list[GpuVram]:
@@ -50,6 +58,45 @@ def test_occupancy_fails_when_unreadable(preflight: ModuleType, monkeypatch: pyt
     """An unknown GPU state is a failure, not a pass."""
     monkeypatch.setattr(rocm_smi, "gpu_vram_usage", lambda: None)
     assert preflight._check_gpu_occupancy() is False
+
+
+@pytest.mark.parametrize(
+    ("mask", "fractions", "idle"),
+    [
+        ({"ROCR_VISIBLE_DEVICES": "1"}, (0.05, 0.001), True),
+        ({"ROCR_VISIBLE_DEVICES": "1"}, (0.001, 0.05), False),
+        ({"ROCR_VISIBLE_DEVICES": "0,1", "HIP_VISIBLE_DEVICES": "1"}, (0.05, 0.001), True),
+        ({"HIP_VISIBLE_DEVICES": "0"}, (0.001, 0.05), True),
+        ({"ROCR_VISIBLE_DEVICES": "GPU-a1b2c3"}, (0.05, 0.001), False),
+        ({"ROCR_VISIBLE_DEVICES": ""}, (0.001, 0.001), False),
+        ({"ROCR_VISIBLE_DEVICES": "7"}, (0.001, 0.001), False),
+    ],
+    ids=[
+        "pinned-idle-other-busy",
+        "pinned-busy",
+        "hip-inside-rocr",
+        "hip-only",
+        "uuid-checks-all",
+        "empty-mask",
+        "out-of-range",
+    ],
+)
+def test_occupancy_judges_only_the_gpus_the_mask_leaves_visible(
+    preflight: ModuleType,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    mask: dict[str, str],
+    fractions: tuple[float, ...],
+    idle: bool,
+) -> None:
+    """A run pinned to an idle GPU on a shared host must not be refused for a neighbour's load."""
+    for var, value in mask.items():
+        monkeypatch.setenv(var, value)
+    monkeypatch.setattr(rocm_smi, "gpu_vram_usage", lambda: _usage(*fractions))
+
+    assert preflight._check_gpu_occupancy() is idle
+    if mask == {"ROCR_VISIBLE_DEVICES": "1"} and idle:
+        assert "gpu0_vram_used" in capsys.readouterr().out.split("not visible, ignored")[0]
 
 
 def test_main_propagates_busy_gpu_to_exit_code(

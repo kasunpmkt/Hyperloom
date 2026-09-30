@@ -15,6 +15,7 @@ import pathlib
 import sys
 
 from hyperloom.common import rocm_smi
+from hyperloom.common.visible_devices import visible_host_indices
 
 
 #: Command-line fragments that identify a leftover optimizer or serving
@@ -94,19 +95,27 @@ def _print_torch_visibility() -> bool:
 
 
 def _check_gpu_occupancy() -> bool:
-    """Print per-GPU VRAM usage and report whether every GPU is idle."""
+    """Print per-GPU VRAM usage and report whether every GPU this process can see is idle."""
     snapshots = rocm_smi.gpu_vram_usage()
     if snapshots is None:
         print("gpu_vram=unreadable")
         return False
 
+    visible = visible_host_indices(len(snapshots))
+    if visible == []:
+        print("gpu_visible=none (the visible-devices mask names no GPU rocm-smi lists)")
+        return False
+
     idle = True
     for idx, snap in enumerate(snapshots):
-        busy = snap.used_mib > snap.total_mib * VRAM_BUSY_FRACTION
-        print(
-            f"gpu{idx}_vram_used={snap.used_mib:.1f}/{snap.total_mib:.1f} MiB"
-            f" ({snap.used_mib / snap.total_mib:.2%}) {'BUSY' if busy else 'idle'}"
+        usage = (
+            f"gpu{idx}_vram_used={snap.used_mib:.1f}/{snap.total_mib:.1f} MiB ({snap.used_mib / snap.total_mib:.2%})"
         )
+        if visible is not None and idx not in visible:
+            print(f"{usage} not visible, ignored")
+            continue
+        busy = snap.used_mib > snap.total_mib * VRAM_BUSY_FRACTION
+        print(f"{usage} {'BUSY' if busy else 'idle'}")
         idle = idle and not busy
     return idle
 
