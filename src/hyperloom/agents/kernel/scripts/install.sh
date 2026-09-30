@@ -16,14 +16,18 @@ set -euo pipefail
 # Ray/K8s subprocesses may inherit a minimal PATH; git/apt/node live under
 # /usr/bin even when callers only prepend /opt/venv/bin. Prepend the
 # standard system bins so multi-node RayJob children resolve them.
+_caller_python_bin="$(dirname "$(command -v python3 2>/dev/null || echo /nonexistent/python3)")"
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin${PATH:+:$PATH}"
 # Re-assert the active virtualenv ahead of the system bins prepended above.
 # Callers may only put the venv on PATH (e.g. /venv/bin) or activate it via
 # $VIRTUAL_ENV; otherwise the system-bins prepend shadows the venv python3
 # with /usr/bin/python3, whose apt-managed packages (e.g. packaging) have no
 # RECORD file and break `pip install`/uninstall. Probe the activated venv
-# first, then the common ROCm image locations (/opt/venv, /venv).
-for _venv_bin in "${VIRTUAL_ENV:+${VIRTUAL_ENV}/bin}" /opt/venv/bin /venv/bin; do
+# first, then the common ROCm image locations (/opt/venv, /venv), then the
+# python3 the caller had first on PATH -- the only trace of an image whose
+# interpreter lives elsewhere (rocm/vllm rocm10: /opt/python), since docker
+# mode deliberately does not take VIRTUAL_ENV from .env.
+for _venv_bin in "${VIRTUAL_ENV:+${VIRTUAL_ENV}/bin}" /opt/venv/bin /venv/bin "$_caller_python_bin"; do
   if [ -n "${_venv_bin}" ] && [ -x "${_venv_bin}/python" ]; then
     export PATH="${_venv_bin}:$PATH"
     break
