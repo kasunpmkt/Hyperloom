@@ -437,7 +437,7 @@ so `.env`, logs, and session artifacts stay valid:
 ```bash
 export HYPERLOOM_IMAGE=docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0
 export REPO_ROOT="$(pwd -P)"
-docker run -d \
+docker run -d --init \
   --name "${HYPERLOOM_CONTAINER_NAME:-hyperloom-local}" \
   --shm-size "${HYPERLOOM_SHM_SIZE:-64g}" \
   --entrypoint tail \
