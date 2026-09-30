@@ -560,3 +560,15 @@ def test_credential_only_recipe_keeps_the_callers_key(tmp_path: Path) -> None:
     assert kept["OPENAI_API_KEY"] == "key-from-caller"
     filled = _run_recipe(fragment, tmp_path, {})
     assert filled["OPENAI_API_KEY"] == "key-from-dotenv"
+
+
+INSTALL_DOC = REPO_ROOT / "docs" / "install" / "install.md"
+
+
+@pytest.mark.parametrize("doc", (*RECIPE_DOCS, INSTALL_DOC), ids=lambda p: p.parent.name)
+def test_a_long_running_recipe_container_reaps_its_children(doc: Path) -> None:
+    """The optimizer is launched with setsid under docker exec; without --init nothing reaps it when it exits."""
+    if not doc.exists():
+        pytest.skip(f"{doc} not present in this layout")
+    runs = [line for block in _bash_blocks(doc.read_text()) for line in block if line.startswith("docker run -d")]
+    assert all("--init" in shlex.split(line.rstrip("\\")) for line in runs), runs
