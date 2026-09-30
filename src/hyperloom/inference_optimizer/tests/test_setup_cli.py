@@ -313,7 +313,7 @@ def test_baremetal_setup_authoritative_anthropic_env_removes_openai_keys(tmp_pat
 
     text = dotenv.read_text(encoding="utf-8")
     assert "ANTHROPIC_BASE_URL=https://api.anthropic.com" in text
-    assert "ANTHROPIC_API_KEY=<PLEASE_FILL_IN>" in text
+    assert "ANTHROPIC_API_KEY='<PLEASE_FILL_IN>'" in text
     assert "OPENAI_BASE_URL=" not in text
     assert "OPENAI_API_KEY=" not in text
     assert "OPENAI_CUSTOM_HEADERS=" not in text
