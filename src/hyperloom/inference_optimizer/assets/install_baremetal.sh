@@ -2190,14 +2190,46 @@ read_dotenv_var() {
   [ -f "$DOTENV" ] || return 0
   # `|| true` keeps a no-match grep from tripping pipefail/set -e when this is
   # used inside a ${VAR:-$(read_dotenv_var ...)} default expansion.
-  { grep -E "^[[:space:]]*(export[[:space:]]+)?${name}=" "$DOTENV" 2>/dev/null || true; } | tail -n 1 \
-    | sed -E "s/^[[:space:]]*(export[[:space:]]+)?${name}=//; s/^[\"']//; s/[\"']$//"
+  local value
+  value="$({ grep -E "^[[:space:]]*(export[[:space:]]+)?${name}=" "$DOTENV" 2>/dev/null || true; } | tail -n 1 \
+    | sed -E "s/^[[:space:]]*(export[[:space:]]+)?${name}=//")"
+  case "$value" in
+    \'*\') value="${value:1:${#value}-2}" ;;
+    \"*\")
+      value="${value:1:${#value}-2}"
+      value="$(printf '%s' "$value" | sed -E 's/\\([\\"$`])/\1/g')"
+      ;;
+  esac
+  printf '%s\n' "$value"
+}
+
+# The .env is read back by `source` (kernel-agent install.sh), runtime_env.sh's
+# loader, read_dotenv_var and the preflight's shlex parser, so a value is written
+# in the one form all four decode to the same string: bare when it is plain,
+# single-quoted when it holds shell syntax, double-quoted with \-escapes when it
+# holds a single quote itself. A single quote together with $ or ` has no such
+# form (shlex does not undo \$ or \` inside double quotes), so it is refused.
+dotenv_render_value() {
+  local value="$1"
+  if [[ "$value" =~ ^[A-Za-z0-9_./:,@%+=-]*$ ]]; then
+    printf '%s' "$value"
+  elif [[ "$value" != *"'"* ]]; then
+    printf "'%s'" "$value"
+  elif [[ "$value" == *[\$\`]* ]]; then
+    printf '%s\n' "[dotenv ERROR] a .env value holding both ' and \$ or \` cannot be written portably" >&2
+    return 1
+  else
+    value="${value//\\/\\\\}"
+    value="${value//\"/\\\"}"
+    printf '"%s"' "$value"
+  fi
 }
 
 # Upsert KEY=VALUE into .env, matching an optional leading-whitespace / export
 # prefix so a pre-existing line is replaced (never duplicated). Pure-bash.
 upsert_dotenv_var() {
-  local key="$1" value="$2" tmp found=0 line stripped
+  local key="$1" value tmp found=0 line stripped
+  value="$(dotenv_render_value "$2")" || return 1
   tmp="$(mktemp)"
   if [ -f "$DOTENV" ]; then
     while IFS= read -r line || [ -n "$line" ]; do

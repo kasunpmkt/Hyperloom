@@ -412,8 +412,9 @@ warn() { echo "[kernel-agent WARN] $*" >&2; }
 die() { echo "[kernel-agent ERROR] $*" >&2; exit 1; }
 
 upsert_dotenv_var() {
-  local key="$1" value="$2" tmp found=0 line stripped
+  local key="$1" value tmp found=0 line stripped
   [ -n "$key" ] || return 0
+  value="$(dotenv_render_value "$2")" || return 1
   tmp="$(mktemp)"
   if [ -f "$DOTENV" ]; then
     while IFS= read -r line || [ -n "$line" ]; do
@@ -446,6 +447,30 @@ remove_dotenv_var() {
   done < "$DOTENV"
   mv "$tmp" "$DOTENV"
   chmod 600 "$DOTENV" 2>/dev/null || true
+}
+
+# Byte-identical to dotenv_render_value in install_baremetal.sh: this script must stay
+# self-contained (tests source a copy of it), and a test asserts both render every value the same.
+# The .env is read back by `source` (kernel-agent install.sh), runtime_env.sh's
+# loader, read_dotenv_var and the preflight's shlex parser, so a value is written
+# in the one form all four decode to the same string: bare when it is plain,
+# single-quoted when it holds shell syntax, double-quoted with \-escapes when it
+# holds a single quote itself. A single quote together with $ or ` has no such
+# form (shlex does not undo \$ or \` inside double quotes), so it is refused.
+dotenv_render_value() {
+  local value="$1"
+  if [[ "$value" =~ ^[A-Za-z0-9_./:,@%+=-]*$ ]]; then
+    printf '%s' "$value"
+  elif [[ "$value" != *"'"* ]]; then
+    printf "'%s'" "$value"
+  elif [[ "$value" == *[\$\`]* ]]; then
+    printf '%s\n' "[dotenv ERROR] a .env value holding both ' and \$ or \` cannot be written portably" >&2
+    return 1
+  else
+    value="${value//\\/\\\\}"
+    value="${value//\"/\\\"}"
+    printf '"%s"' "$value"
+  fi
 }
 # In --check-only mode, downgrade post-install verification failures to a
 # warning so report_status can still enumerate what's missing. The caller
