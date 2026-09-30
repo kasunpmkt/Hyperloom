@@ -47,7 +47,7 @@ development.
 | What | Where |
 |---|---|
 | Issue texts, labels, execution order | [`docs/backlog/issues.md`](issues.md) (source of truth; sync with `create_issues.py --update`) |
-| Tracking issue | GitHub issue #1 in this fork; child issues #2–#21 |
+| Tracking issue | GitHub issue #1 in this fork; child issues #2–#21 and #35 |
 | Board | GitHub project `users/ishara0925/projects/4`, arranged in execution order |
 | Ground truth | `baselines/` (produced by issue #21) |
 | Experiment records | `experiments/` and the generated `RESULTS.md` (see below) |
@@ -56,7 +56,7 @@ development.
 `baselines/README.md`. Check that the issue's dependencies (named in its body) are
 closed before starting it. Work in a branch named `issue-<N>`.
 
-Execution order: #21 → #4 → #3 → #2 → #5 → #7 → #6 → #15 → #12 → #10 → #13 → #16 →
+Execution order: #21 → #4 → #3 → #35 → #2 → #5 → #7 → #6 → #15 → #12 → #10 → #13 → #16 →
 #17 → #11 → #14 → #8 → #18 → #19 → #9 → #20. Issues #18, #19 and #9 have no dependency
 on the main chain and can run in parallel. #8 proceeds only if #6 showed a gain with a
 public draft.

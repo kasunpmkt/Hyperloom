@@ -35,7 +35,7 @@ rewritten to real `#123` issue links after creation.
 | Label | Meaning |
 |---|---|
 | `type:feature`, `domain:inference` | Existing Hyperloom labels (from `scripts/migrate-labels.sh`) |
-| `area:objective`, `area:benchmark`, `area:specdec`, `area:quantization`, `area:accuracy`, `area:recipe-kb`, `area:kernel`, `area:xdit`, `area:model-compression` | New: which part of the system the issue touches |
+| `area:objective`, `area:benchmark`, `area:specdec`, `area:quantization`, `area:accuracy`, `area:recipe-kb`, `area:kernel`, `area:xdit`, `area:model-compression`, `area:host-overhead` | New: which part of the system the issue touches |
 | `priority:P0` … `priority:P3` | New: P0 = do first / unblocks others, P3 = research |
 | `source:modelopt` | New: idea ported from NVIDIA Model-Optimizer |
 
@@ -76,9 +76,10 @@ offers and Hyperloom lacks:
 - [ ] HL-17 Skip-softmax sparse attention for long-context prefill
 - [ ] HL-18 Diffusion step caching for xDiT with a distributional quality gate
 - [ ] HL-19 Offline model-variant track (prune + distill)
+- [ ] HL-20 Host-side overhead: GPU idle time as a first-class search target
 
 ### Execution order (as arranged in project 4)
-HL-B0 → HL-03 → HL-02 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
+HL-B0 → HL-03 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
 HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
@@ -971,6 +972,73 @@ Research issue, not an in-loop lever: distillation costs about 100B tokens.
 ### Acceptance criteria
 - [ ] Design note on the model-variant contract (KB fields, accuracy provenance) and a
       go/no-go recommendation.
+
+---
+
+## [HL-20] Host-side overhead: measure GPU idle time and make it a first-class search target
+<!-- labels: type:feature, domain:inference, area:host-overhead, priority:P1 -->
+
+### Problem / use case
+The ground-truth runs in HL-B0 show the GPU idle for **about half the time** on a single-GPU
+Qwen3-8B vLLM workload. The step-4 roofline trace (TraceLens, 1718 ms steady-state window) reports
+49.15% compute and 50.85% idle, and the GEMMs, which are 74.6% of compute, already run at 60–82% of the
+708 TFLOPS BF16 roofline. The largest remaining opportunity is therefore host-side: kernel launch and
+dispatch overhead, scheduling, and CPU work between steps. It is not kernel efficiency.
+
+Hyperloom already has the pieces, but they don't drive the search:
+
+- `system_specialist` (launch/dispatch overhead, host-blocking calls, KFD/driver env vars, `numactl`)
+  and `serving_specialist` (scheduler, CUDA graphs, batching, chunked prefill, `max-num-seqs`) exist
+  in `orchestrator/specialists/domains.py`, and `roofline_snapshot.py` routes `idle` and
+  `host_overhead` bottlenecks to `system_specialist`.
+- In practice, candidate discovery followed the roofline's compute-bound verdict. Round 1 went to AITER
+  and GEMM levers, host-side variants came in round 2, and the settings phase ended at +1.92%, inside
+  the noise band. The smoke run found +14.46% mainly from two levers that fill idle time: FP8 KV cache
+  (+12.1%, more concurrent requests) and `FULL_DECODE_ONLY` CUDA graphs (fewer launches). The
+  roofline-driven run never proposed FP8 KV.
+- No record shows GPU idle % per candidate, so nothing tells whether a kept change shrank the gap.
+
+### Proposed solution
+Extend the framework agent's existing loop; do not add an agent or a phase. Host-side levers are
+applied the same way as other framework levers (server args and env vars, KEEP/REVERT), and a new
+phase would compete for the same wall-clock budget that already starves KERNEL_AGENT.
+
+1. **Measure.** Carry GPU busy % and idle % from the PRELUDE trace into `session_breakdown.json`, and
+   measure them again for kept candidates when a trace is taken. Put them in the HL-B0 experiment
+   records next to throughput and latency.
+2. **Prioritise by the idle signal.** When idle % is high (threshold to be set from data, e.g. > 30%),
+   candidate discovery ranks host-side and capacity levers first, next to the compute-bound
+   recommendations rather than after them.
+3. **Cover the host-side levers explicitly** in `system_specialist` / `serving_specialist`:
+   - CUDA-graph mode and capture sizes;
+   - async scheduling;
+   - `max-num-seqs` and `max-num-batched-tokens`;
+   - chunked-prefill size;
+   - KV-cache capacity (FP8 KV, coordinated with HL-12's calibrated KV quantization);
+   - CPU/NUMA affinity of the serving process (`numactl`, cores local to the GPU).
+4. **Diagnose what is not software.** A one-off check of how much of the idle share comes from CPU
+   frequency scaling: the ground truth runs with the `powersave` governor. It needs root on the host,
+   so it is a manual diagnosis, never an autonomous lever, and the ground truth keeps `powersave`.
+
+Out of scope here: per-concurrency tuning of the same levers, which is HL-16. HL-20 makes the idle
+signal drive the search; HL-16 tunes the result per operating point.
+
+### Acceptance criteria
+- [ ] GPU busy % / idle % appear in `session_breakdown.json` for the PRELUDE trace, and in every
+      HL-B0 experiment record.
+- [ ] With a high idle share, the first framework explore round includes at least one host-side or
+      capacity candidate (verified on `ref-dense-bf16`).
+- [ ] Each lever in item 3 can be proposed, benchmarked and kept or reverted, with the idle % change
+      recorded for kept candidates.
+- [ ] The governor diagnosis is written up: idle % and throughput under `powersave` vs `performance`
+      on the same workload.
+- [ ] On `ref-dense-bf16` and `ref-latency`, the gain against ground truth is outside the noise band,
+      or the record explains why not (`inconclusive`).
+
+### Expected impact
+The step-4 profile puts the ceiling for this work well above what kernel tuning can reach on these
+workloads (GEMMs are within about 20–40% of their roofline; the GPU is idle for half the time). The
+smoke run's +14.46% came almost entirely from idle-filling levers.
 
 ---
 
