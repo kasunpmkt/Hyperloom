@@ -11,6 +11,7 @@ from pathlib import Path
 from hyperloom.orchestrator.actions.executors.integrate_patch import (
     _git_restore_stash_if_needed,
     _git_stash_if_dirty,
+    restore_pending_integrate,
 )
 
 from hyperloom.orchestrator.tests._helpers import git_commit_all, init_git_repo
@@ -165,3 +166,40 @@ def test_a_clean_tree_is_left_alone(tmp_path: Path):
     assert state == "clean"
     assert note == ""
     assert (repo / "src.py").read_text() == _SEED
+
+
+def test_a_config_only_revert_hands_the_stash_back_over_rewritten_files(tmp_path: Path):
+    """The benchmark's patchers rewrite stashed files mid-attempt; the revert must still pop the stash."""
+    repo = _repo(tmp_path)
+    installed = "def f():\n    return 1  # install-time patch\n"
+    (repo / "src.py").write_text(installed, encoding="utf-8")
+    (repo / "copied.sh").write_text("echo copied\n", encoding="utf-8")
+    state, ref = _git_stash_if_dirty(repo)
+    assert state == "stashed"
+    stash_oid = _git(repo, "rev-parse", ref).stdout.strip()
+    head = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    (repo / "src.py").write_text(installed, encoding="utf-8")
+    (repo / "copied.sh").write_text("echo copied\n", encoding="utf-8")
+    recovery_root = tmp_path / "attempt" / "recovery"
+    recovery_root.mkdir(parents=True)
+    pending = {
+        "framework_source_root": str(repo),
+        "patches": [],
+        "artifacts": [],
+        "extra_server_args": "--kv-cache-dtype fp8",
+        "recovery": {
+            "version": 1,
+            "phase": "ready",
+            "root": str(recovery_root),
+            "git_head": head,
+            "stash_oid": stash_oid,
+        },
+    }
+
+    summary = restore_pending_integrate(pending)
+
+    assert summary["failed"] == []
+    assert pending["recovery"]["phase"] == "restored"
+    assert (repo / "src.py").read_text() == installed
+    assert (repo / "copied.sh").read_text() == "echo copied\n"
+    assert "hyperloom-auto-stash" not in _git(repo, "stash", "list").stdout

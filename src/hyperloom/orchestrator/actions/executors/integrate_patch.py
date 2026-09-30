@@ -1702,26 +1702,28 @@ def restore_pending_integrate(pending: dict[str, Any], *, keep: bool = False) ->
                 summary["failed"].extend(errors)
                 return summary
             summary["artifacts_reverted"] = [row.get("rel_target") or row["target"] for row in artifact_records]
-            if pending.get("patches"):
-                if recovery.get("git_head"):
-                    # Everything still untracked here was created by this
-                    # attempt: the pre-candidate auto-stash took the operator's
-                    # untracked files with ``push -u``, and ``clean`` without
-                    # ``-x`` leaves ignored paths (an ignored artifact target
-                    # included) where they are. Only this attempt's own recovery
-                    # data has to survive the sweep.
-                    exclusions = (
-                        ["/" + workspace.relative_to(root).as_posix()] if workspace.is_relative_to(root) else []
-                    )
-                    ok, error = _git_checkout_clean(root, exclude=exclusions)
-                    if not ok:
-                        raise OSError(error)
-                else:
-                    _, errors = restore_records(patch_records)
-                    if errors:
-                        summary["failed"].extend(errors)
-                        return summary
-                summary["reversed"] = list(reversed(pending["patches"]))
+            patches = pending.get("patches")
+            if patches and not recovery.get("git_head"):
+                _, errors = restore_records(patch_records)
+                if errors:
+                    summary["failed"].extend(errors)
+                    return summary
+            if stash_ref or (patches and recovery.get("git_head")):
+                # Everything that differs from HEAD here was created by this
+                # attempt: the pre-candidate auto-stash took the operator's
+                # changes, untracked files included, with ``push -u``. The sweep
+                # is owed even when the attempt applied no patch, because the
+                # benchmark's own patchers rewrite files that stash also holds,
+                # and popping it onto them collides. ``clean`` without ``-x``
+                # leaves ignored paths (an ignored artifact target included)
+                # where they are. Only this attempt's own recovery data has to
+                # survive the sweep.
+                exclusions = ["/" + workspace.relative_to(root).as_posix()] if workspace.is_relative_to(root) else []
+                ok, error = _git_checkout_clean(root, exclude=exclusions)
+                if not ok:
+                    raise OSError(error)
+            if patches:
+                summary["reversed"] = list(reversed(patches))
             recovery["phase"] = "files_restored"
         if stash_ref:
             note = _git_restore_stash_if_needed(root, "stashed", stash_ref)
