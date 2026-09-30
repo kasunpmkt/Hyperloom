@@ -46,6 +46,7 @@ __all__ = [
     "is_rocr_level",
     "mask_tokens",
     "parse_device_list",
+    "visible_host_indices",
 ]
 
 #: ROCr-level masks: these slice the device set and renumber it ``0..N-1``.
@@ -254,3 +255,37 @@ def parse_device_list(raw: Any) -> list[int]:
         except ValueError:
             continue
     return out
+
+
+def visible_host_indices(total: int, env: Any = None) -> list[int] | None:
+    """Which of the ``total`` GPUs ``rocm-smi`` lists this process can use, or ``None`` for all of them.
+
+    ``rocm-smi`` ignores every visible-devices mask, so a caller that judges the
+    GPUs it lists (the IR-1 occupancy gate) has to apply the mask itself. The
+    first set var of each level applies, ROCr level first: it picks absolute
+    indices and renumbers them, and a HIP-level mask then indexes into that
+    result. Indices assume ``rocm-smi`` enumerates GPUs in the ROCr order.
+
+    Args:
+        total: Number of GPUs ``rocm-smi`` reported.
+        env: Mapping to read the masks from; ``os.environ`` when omitted.
+
+    Returns:
+        Host indices in the order the process sees them, ``[]`` when the mask
+        names none of them, and ``None`` when no mask is set or one holds a
+        non-numeric token (a UUID), which cannot be matched to ``rocm-smi``
+        indices here and so must not narrow the set.
+    """
+    source = os.environ if env is None else env
+    devices = list(range(total))
+    masked = False
+    for level in (ROCR_LEVEL_VARS, HIP_LEVEL_VARS):
+        var = next((name for name in level if source.get(name) is not None), None)
+        if var is None:
+            continue
+        tokens = effective_mask_tokens(source[var])
+        if not all(tok.isdigit() for tok in tokens):
+            return None
+        devices = [devices[int(tok)] for tok in tokens if int(tok) < len(devices)]
+        masked = True
+    return devices if masked else None

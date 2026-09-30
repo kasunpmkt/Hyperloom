@@ -25,6 +25,7 @@ from hyperloom.common.visible_devices import (
     is_rocr_level,
     mask_tokens,
     parse_device_list,
+    visible_host_indices,
 )
 
 
@@ -127,3 +128,22 @@ def test_parse_device_list_agrees_with_effective_tokens() -> None:
         tokens = effective_mask_tokens(raw)
         assert len(ids) <= len(tokens)
         assert ids == [int(t) for t in tokens if t.lstrip("-").isdigit()]
+
+
+@pytest.mark.parametrize(
+    ("env", "expected"),
+    [
+        ({}, None),
+        ({"ROCR_VISIBLE_DEVICES": "3,1"}, [3, 1]),
+        ({"HSA_VISIBLE_DEVICES": "2"}, [2]),
+        ({"ROCR_VISIBLE_DEVICES": "5", "HSA_VISIBLE_DEVICES": "2"}, [5]),
+        ({"ROCR_VISIBLE_DEVICES": "4,6", "HIP_VISIBLE_DEVICES": "1"}, [6]),
+        ({"CUDA_VISIBLE_DEVICES": "0,7"}, [0, 7]),
+        ({"ROCR_VISIBLE_DEVICES": "3,3,-1"}, [3]),
+        ({"ROCR_VISIBLE_DEVICES": "9"}, []),
+        ({"ROCR_VISIBLE_DEVICES": ""}, []),
+        ({"ROCR_VISIBLE_DEVICES": "GPU-a1b2c3"}, None),
+    ],
+)
+def test_visible_host_indices_applies_both_mask_levels(env: dict[str, str], expected: list[int] | None) -> None:
+    assert visible_host_indices(8, env) == expected
