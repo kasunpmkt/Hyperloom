@@ -1332,10 +1332,10 @@ class PreludePhase(CoordinatorCollaborator):
             )
             return None
         # Historical gain anchor: donor's expected gain, else MAX gain across attrs.sessions[], else the flat
-        # gain_pct.
+        # gain_pct. A suppressed recipe has none: its gains were measured with the config this replay leaves out.
         expected_gain = donor_expected_gain
         sessions_field = recipe_attrs.get("sessions")
-        if expected_gain <= 0 and isinstance(sessions_field, list):
+        if expected_gain <= 0 and not recipe_suppressed and isinstance(sessions_field, list):
             session_gains: list[float] = []
             for s in sessions_field:
                 if not isinstance(s, dict):
@@ -1348,7 +1348,7 @@ class PreludePhase(CoordinatorCollaborator):
             if session_gains:
                 expected_gain = max(session_gains)
         # Last-chance fallback for offline-ingested seed rows.
-        if expected_gain <= 0:
+        if expected_gain <= 0 and not recipe_suppressed:
             try:
                 fallback = float(recipe_attrs.get("gain_pct") or 0.0)
             except (TypeError, ValueError):
@@ -2257,10 +2257,10 @@ class PreludePhase(CoordinatorCollaborator):
                 extra_envs=dict(decision_params.get("extra_envs") or {}),
             )
             self._record_warm_patch_apply_items(recorder, result)
-        keep_threshold = 0.0
+        default_threshold = _phase_state.resolve_keep_threshold(self.shared_state)
+        keep_threshold = default_threshold
         if combined_current_contract:
             raw_threshold = decision_params.get("combined_keep_threshold_pct")
-            default_threshold = _phase_state.resolve_keep_threshold(self.shared_state)
             try:
                 keep_threshold = float(raw_threshold) if raw_threshold is not None else default_threshold
             except (TypeError, ValueError):
@@ -2270,33 +2270,25 @@ class PreludePhase(CoordinatorCollaborator):
         min_reproduce = float(
             getattr(self, "_warm_replay_min_reproduce_pct", 0.8) or 0.8,
         )
-        # Local legacy replay keeps any positive gain.
-        reproduced = measured_gain >= keep_threshold if combined_current_contract else measured_gain > 0
+        historical_bar = expected_gain * min_reproduce if expected_gain > 0 else 0.0
+        required_gain = max(keep_threshold, historical_bar)
+        reproduced = measured_gain >= required_gain
         outcome["keep_threshold_pct"] = keep_threshold
+        if historical_bar > 0:
+            outcome["historical_reproduce_bar_pct"] = round(historical_bar, 3)
+            outcome["below_historical_reproduce_pct"] = measured_gain < historical_bar
         if recorder is not None:
             recorder.record_gate(
                 GATE_KEEP_THRESHOLD,
                 passed=reproduced,
                 reason=(
-                    "cleared the approved kernel replay threshold"
-                    if combined_current_contract
-                    else "legacy local replay keeps any positive gain"
+                    f"the recipe must reproduce {min_reproduce:.0%} of its recorded +{expected_gain:.2f}%"
+                    if historical_bar > keep_threshold
+                    else "the replay must clear the session keep threshold"
                 ),
                 observed=measured_gain,
-                threshold=keep_threshold,
+                threshold=required_gain,
             )
-        if expected_gain > 0:
-            historical_bar = expected_gain * min_reproduce
-            # Advisory, and deliberately not a gate row: falling short never
-            # rejects a replay that cleared the keep threshold, and a
-            # ``passed=False`` row would make ``blocked_by`` name it as the
-            # reason an arc that actually succeeded ended.
-            if measured_gain > 0 and measured_gain < historical_bar:
-                outcome["below_historical_reproduce_pct"] = True
-                outcome["historical_reproduce_bar_pct"] = round(
-                    historical_bar,
-                    3,
-                )
         promoted_checkout = ""
         if reproduced:
             params = (task.params if task is not None else {}) or {}
@@ -2487,7 +2479,7 @@ class PreludePhase(CoordinatorCollaborator):
                 "min_required=+%.2f%%); pushed warm_replay onto stack",
                 measured_gain,
                 expected_gain,
-                expected_gain * min_reproduce if expected_gain > 0 else 0.0,
+                required_gain,
             )
             # Journal warm-replay as a synthetic KEEP; no KB lesson.
             try:
@@ -2524,11 +2516,16 @@ class PreludePhase(CoordinatorCollaborator):
             if recorder is not None:
                 recorder.record_applied(kernel=kernel_outcome)
             outcome["status"] = "drift"
-            outcome["reason"] = f"measured {measured_gain:+.2f}% below keep threshold {keep_threshold:+.2f}%"
+            outcome["reason"] = (
+                f"measured {measured_gain:+.2f}% below the required {required_gain:+.2f}% "
+                f"(keep threshold {keep_threshold:+.2f}%, historical bar {historical_bar:+.2f}%)"
+            )
             log.info(
-                "warm-replay DRIFT: measured=%+.2f%% threshold=%+.2f%%",
+                "warm-replay DRIFT: measured=%+.2f%% required=%+.2f%% (keep_threshold=%+.2f%%, historical_bar=%+.2f%%)",
                 measured_gain,
+                required_gain,
                 keep_threshold,
+                historical_bar,
             )
         state.warm_replay_pending = {}
         state.warm_replay_outcome = outcome

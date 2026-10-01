@@ -6,7 +6,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import Any, Mapping
 from hyperloom.common.framework_arm import is_upstream_pr_prescreen
 from hyperloom.orchestrator.knowledge.recipe_kb import recipe_canonical_id
 from hyperloom.inference_optimizer.recipe_snapshot_constants import detect_framework_version
@@ -15,9 +15,6 @@ from ..bus.message_bus import Message
 from .coordinator_helpers import approved_proposal_idempotency_key
 from ..state.shared_state import inject_stack_base_params
 from ..state.task_registry import TERMINAL_STATES
-
-if TYPE_CHECKING:
-    from ..state.task_registry import Task
 
 import logging as _logging
 
@@ -155,6 +152,12 @@ def _extra_server_args(payload: Mapping[str, Any]) -> str:
     return str(value)
 
 
+def _has_launch_config(best_config: Mapping[str, Any]) -> bool:
+    """Whether a ``best_config`` changes the launch: server args or env vars."""
+    envs = best_config.get("extra_envs")
+    return bool(_extra_server_args(best_config).strip() or (isinstance(envs, Mapping) and envs))
+
+
 class ProposalsCollaborator:
     """Extracted collaborator; delegates unknown attrs to its Coordinator."""
 
@@ -210,38 +213,6 @@ class ProposalsCollaborator:
         return row
 
     @staticmethod
-    def _extract_kept_best_config(
-        *,
-        task: "Task",
-        variant_attrs: dict[str, Any] | None = None,
-        result_dict: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        """Build a replayable ``best_config`` from a KEEP'd task or explore variant."""
-        params = task.params if isinstance(getattr(task, "params", None), dict) else {}
-        attrs = variant_attrs if isinstance(variant_attrs, dict) else {}
-
-        args = _extra_server_args(attrs)
-        if not args.strip():
-            args = _extra_server_args(params)
-        if not args.strip() and isinstance(result_dict, dict):
-            args = _extra_server_args(result_dict)
-
-        envs_raw = attrs.get("extra_envs") or params.get("extra_envs") or {}
-        if not envs_raw and isinstance(result_dict, dict):
-            envs_raw = result_dict.get("extra_envs") or {}
-        envs = {str(k): str(v) for k, v in envs_raw.items()} if isinstance(envs_raw, dict) else {}
-
-        if not args.strip() and not envs:
-            return {}
-
-        best_config: dict[str, Any] = {}
-        if args.strip():
-            best_config["extra_server_args"] = args.strip()
-        if envs:
-            best_config["extra_envs"] = envs
-        return best_config
-
-    @staticmethod
     def _kb_best_config_overrides_for_keep(
         *,
         live: Mapping[str, Any],
@@ -249,14 +220,11 @@ class ProposalsCollaborator:
         throughput_after: float | None,
     ) -> dict[str, Any]:
         """Decide whether a KEEP amend should also stamp ``best_config`` on the recipe row."""
-        if not best_config_candidate:
+        if not _has_launch_config(best_config_candidate):
             return {}
 
         live_bc = live.get("best_config") if isinstance(live.get("best_config"), Mapping) else {}
-        live_has_config = bool(
-            _extra_server_args(live_bc).strip()
-            or (isinstance(live_bc.get("extra_envs"), Mapping) and live_bc.get("extra_envs"))
-        )
+        live_has_config = _has_launch_config(live_bc)
         try:
             live_tput = float(live.get("best_throughput") or 0.0)
         except (TypeError, ValueError):
