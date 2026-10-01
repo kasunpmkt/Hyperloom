@@ -35,7 +35,7 @@ rewritten to real `#123` issue links after creation.
 | Label | Meaning |
 |---|---|
 | `type:feature`, `domain:inference` | Existing Hyperloom labels (from `scripts/migrate-labels.sh`) |
-| `area:objective`, `area:benchmark`, `area:specdec`, `area:quantization`, `area:accuracy`, `area:recipe-kb`, `area:kernel`, `area:xdit`, `area:model-compression`, `area:host-overhead` | New: which part of the system the issue touches |
+| `area:objective`, `area:benchmark`, `area:specdec`, `area:quantization`, `area:accuracy`, `area:recipe-kb`, `area:kernel`, `area:xdit`, `area:model-compression`, `area:host-overhead`, `area:search` | New: which part of the system the issue touches |
 | `priority:P0` … `priority:P3` | New: P0 = do first / unblocks others, P3 = research |
 | `source:modelopt` | New: idea ported from NVIDIA Model-Optimizer |
 
@@ -77,11 +77,15 @@ offers and Hyperloom lacks:
 - [ ] HL-18 Diffusion step caching for xDiT with a distributional quality gate
 - [ ] HL-19 Offline model-variant track (prune + distill)
 - [ ] HL-20 Host-side overhead: GPU idle time as a first-class search target
+- [ ] HL-21 Cut the per-candidate cost of the framework search
+- [ ] HL-22 Keep PRELUDE within its budget and spend the whole phase budget
+- [ ] HL-23 Noise-aware keep threshold for framework candidates
+- [ ] HL-24 Warm replay accepts a recipe below its own threshold and replays it partially
 
 ### Execution order (as arranged in project 4)
-HL-B0 → HL-03 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
+HL-B0 → HL-03 → HL-21 → HL-22 → HL-23 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
-HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
+HL-24 (bug), HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
 draft.
 
@@ -1039,6 +1043,118 @@ signal drive the search; HL-16 tunes the result per operating point.
 The step-4 profile puts the ceiling for this work well above what kernel tuning can reach on these
 workloads (GEMMs are within about 20–40% of their roofline; the GPU is idle for half the time). The
 smoke run's +14.46% came almost entirely from idle-filling levers.
+
+---
+
+## [HL-21] Cut the per-candidate cost of the framework search (accuracy eval at workload concurrency)
+<!-- labels: type:feature, domain:inference, area:search, priority:P1 -->
+
+### Problem / use case
+In the HL-B0 runs, the framework stage tested 8–11 candidates in 1.5–2 h on the CONC-64 workload,
+and only **2–4** on the CONC-4 workload. Each candidate gets two measurements. The second, on the
+warm server, takes about 1–2 minutes. The first takes **about 8.5 minutes at CONC 64 and about
+31 minutes at CONC 4**, although the CONC-4 benchmark window itself is only **34 s** (20 prompts).
+Example: `aiter_on` ran 00:33:32 → 01:05:11, then 01:05:11 → 01:06:19.
+
+The first measurement is: server restart, benchmark, and the GSM8K accuracy run (`RUN_EVAL: 'true'`
+in the baseline config). The baseline shows the eval runs at the workload's concurrency. Its warmup
+round took 31 min, and the measured round, on the same warm server, took 1 min. So at low
+concurrency, the accuracy check, not the benchmark, decides how many candidates fit in the budget.
+
+### Proposed solution
+1. **Measure first:** record the time breakdown of every candidate (server start, benchmark,
+   accuracy eval) in `session_breakdown.json`.
+2. **Run the accuracy eval at its own concurrency,** independent of the workload's CONC. The eval
+   checks correctness, not serving performance, so it does not need the benchmark's concurrency.
+3. **Order the gates:** benchmark first, and run the accuracy eval only for candidates that would
+   be kept on performance. A candidate that loses on speed is reverted without an eval. #4 (the
+   coherence gate) still catches broken outputs cheaply before the benchmark.
+4. **Check the restart cost:** confirm the vLLM compile and graph caches are reused across
+   candidates, and how long a restart takes on its own.
+
+### Acceptance criteria
+- [ ] Per-candidate time breakdown in `session_breakdown.json`.
+- [ ] On `ref-latency`, a 3 h settings-only run tests at least 3× as many candidates as the HL-B0
+      runs (2–4), with the same accuracy protection on every kept candidate.
+- [ ] On `ref-dense-bf16`, the median time per candidate drops measurably (HL-B0: 10.4–12.2 min).
+- [ ] No candidate is kept without an accuracy result.
+
+---
+
+## [HL-22] Keep PRELUDE within its budget and spend the whole phase budget
+<!-- labels: type:feature, domain:inference, area:search, priority:P1 -->
+
+### Problem / use case
+PRELUDE's planned share is about 3% of the wall clock. In the HL-B0 runs it took **36–50 min**
+(CONC 64) and **74–87 min** (CONC 4) of a 180-min budget. On gpt-oss-120b it took about 2 h of 6 h.
+Everything after it gets the remainder:
+- in the default chain, KERNEL_AGENT got 30 min and ~1 min instead of about 85, and kept nothing;
+- PRELUDE's profiling run repeats the full GSM8K evaluation the baseline has already done (Qwen
+  CONC 4: 38 min; gpt-oss: still running after 50+ min);
+- at the other end, phases end with work left undone. In the smoke run, explore rounds 6–8 were
+  queued but never dispatched once the phase budget hit 0 (orchestration alert: "queued explore
+  tasks appear to be admitted but never dispatched").
+
+### Proposed solution
+1. Do not run the accuracy eval in PRELUDE's profiling run: the baseline already has the score.
+2. Measure each PRELUDE step's duration against its share, and re-plan the downstream phase
+   budgets from the actual remaining time, not the planned shares.
+3. When a phase ends with budget-limited tasks still queued, either dispatch them if the remaining
+   session time allows, or record them as skipped. Never drop them silently.
+
+### Acceptance criteria
+- [ ] PRELUDE's profiling run makes no GSM8K call.
+- [ ] `session_breakdown.json` reports each phase's planned vs actual minutes.
+- [ ] On `ref-dense-bf16` and `ref-latency`, PRELUDE drops measurably below the HL-B0 times (36 / 74 min).
+- [ ] No queued explore task is dropped without a recorded reason.
+
+---
+
+## [HL-23] Noise-aware keep threshold for framework candidates
+<!-- labels: type:feature, domain:inference, area:search, priority:P1 -->
+
+### Problem / use case
+Hyperloom kept `aiter-linear-rmsnorm-async` at **+0.6%** on `ref-dense-bf16`, whose measured
+run-to-run noise is about ±1.5–1.9% (HL-B0). Noise-level "wins" become the base for the next
+round, so every later candidate is compared against a lucky high reading, and real small gains can
+be rejected. The AgentX mode uses a 3–5% bar (`common/perf_metric.py`); the default mode evidently
+accepts much less. With two measurements per candidate and ~4% noise at CONC 4, a real 3% gain can
+not be told apart from chance.
+
+### Proposed solution
+1. Estimate the noise band in PRELUDE, from the baseline's warmup and measured rounds plus one
+   extra cheap warm repeat, or take it from a supplied reference (`baselines/`).
+2. KEEP only when the gain exceeds that band. For a candidate inside the band but promising, add
+   warm repeats, which cost 1–2 min each on the warm server, before deciding.
+3. Record the band, the threshold used, and the number of repeats per decision.
+
+### Acceptance criteria
+- [ ] Each KEEP/REVERT in the records shows the threshold and repeat count it used.
+- [ ] Replaying the HL-B0 settings-only runs' decisions, the +0.6% keep is no longer a KEEP.
+- [ ] A known real lever (`--kv-cache-dtype fp8`, +13% on `ref-dense-bf16`) is still kept.
+
+---
+
+## [HL-24] Warm replay accepts a recipe below its own threshold and replays it partially
+<!-- labels: type:bug, domain:inference, area:recipe-kb, priority:P2 -->
+
+### Problem / use case
+In the HL-B0 noise runs, which used a shared KB still holding the smoke run's recipe (FP8 KV +
+`FULL_DECODE_ONLY`, +14.46%):
+
+- PRELUDE logged `warm-replay REPRODUCED: measured=+0.64% (expected=+14.46%, min_required=+11.57%);
+  pushed warm_replay onto stack`. The measured gain was far below the required one, yet the replay
+  was accepted and stacked.
+- The replayed stack was `--compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}` only. The FP8
+  KV part of the recipe was missing, which explains the +0.64%.
+
+### Proposed solution
+Find why the reproduce check passed below `min_required`, and why the replayed overlay dropped the
+`--kv-cache-dtype` argument. Fix both, with tests that replay a two-lever recipe.
+
+### Acceptance criteria
+- [ ] A warm replay below `min_required` is rejected and recorded as not reproduced.
+- [ ] Replaying a recipe applies every lever in it; a test covers a KV-dtype + compilation-config recipe.
 
 ---
 
