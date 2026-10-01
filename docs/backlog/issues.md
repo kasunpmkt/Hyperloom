@@ -81,11 +81,14 @@ offers and Hyperloom lacks:
 - [ ] HL-22 Keep PRELUDE within its budget and spend the whole phase budget
 - [ ] HL-23 Noise-aware keep threshold for framework candidates
 - [ ] HL-24 Warm replay accepts a recipe below its own threshold and replays it partially
+- [ ] HL-25 Resume drops a finished GEAK result and skips to SWEEP
+- [ ] HL-26 Store a validated GEAK overlay in the recipe KB and replay it on the next run
+- [ ] HL-27 Give the KERNEL delegation a usage budget and stop GEAK when the run stops
 
 ### Execution order (as arranged in project 4)
 HL-B0 → HL-03 → HL-21 → HL-22 → HL-23 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
-HL-24 (bug), HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
+HL-24 and HL-25 (bugs), HL-26 (after HL-24 and HL-25), HL-27, HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
 draft.
 
@@ -1155,6 +1158,104 @@ Find why the reproduce check passed below `min_required`, and why the replayed o
 ### Acceptance criteria
 - [ ] A warm replay below `min_required` is rejected and recorded as not reproduced.
 - [ ] Replaying a recipe applies every lever in it; a test covers a KV-dtype + compilation-config recipe.
+
+---
+
+## [HL-25] Resume drops a finished GEAK result and skips to SWEEP
+<!-- labels: type:bug, domain:inference, area:kernel, priority:P1 -->
+
+### Problem / use case
+In the gpt-oss-120b full run (1 Oct, session `20261001T044820Z-b30c5cdf`, TP 1, CONC 64), the run was
+stopped at 10:05 UTC by the plan-usage limit while GEAK was in its KERNEL delegation. GEAK kept running and
+wrote `geak/result.json` at about 10:21: `status: ok`, `throughput_speedup: 1.207`, `output_parity: pass`,
+with a deployable overlay.
+
+The run was resumed with `--resume-from <session> --extend-hours 1`:
+
+- `resume: re-entering KERNEL GEAK delegation (no completion evidence on the current phase row);
+  recover-from-disk or re-run.` (12:47:48)
+- 0.4 s later: `KERNEL_AGENT → SWEEP (reason=kernel_no_more_leverage)`. `state.json` shows
+  `last_consumed_escalate_hint: skip_to_sweep` at that moment.
+
+The crash-recovery branch in `orchestrator/phases/kernel.py` (promote `result.json`, then
+`_revalidate_geak_candidate`) did not take effect: the best stayed at the framework result (+2.75%) and SWEEP
+measured that config. The GEAK change was real: measured on its own by Hyperloom's PRELUDE baseline executor,
+the overlay gave 1795.2 tok/s against stock baselines of 1523.1 and 1462.1 (+17.9% / +22.8%), with GSM8K
+0.9659 against 0.9651 / 0.9621.
+
+### Proposed solution
+On resume, run the KERNEL recovery (read `result.json`, promote, re-validate with Hyperloom's harness) before
+the phase machine evaluates its exit conditions, and make sure a `skip_to_sweep` hint only fires after a
+recovered result has been promoted or rejected. Record the outcome in `session_breakdown.json` either way.
+
+### Acceptance criteria
+- [ ] A test resumes a session whose KERNEL row has no completion evidence but whose `geak/result.json` is
+      `status: ok`; the result is re-validated, and kept or reverted, before any transition to SWEEP.
+- [ ] A rejected recovered result is recorded with its reason; it is not silently dropped.
+- [ ] A recovered `provisional` result (GEAK salvage) is re-measured, never promoted on GEAK's own number.
+
+---
+
+## [HL-26] Store a validated GEAK overlay in the recipe KB and replay it on the next run
+<!-- labels: type:feature, domain:inference, area:recipe-kb, area:kernel, priority:P2 -->
+
+### Problem / use case
+A GEAK win costs about 2 h of GPU time and about 11M input-equivalent Opus tokens (gpt-oss-120b, 1 Oct: 11
+GEAK sessions, 55.5M cache-read, 2.7M cache-write, 0.4M output tokens). After the run, nothing in Hyperloom
+lets a later run reuse it:
+
+- The run's recipe KB (`recipe.json`) has `kernel_optimizations: []` and no reference to the overlay. It
+  holds only the framework recipe (`--attention-backend ROCM_AITER_UNIFIED_ATTN`, +2.75%).
+- GEAK's own KB write (`kb_write.json`) wrote the overlay locally but did not promote it
+  (`remote_unavailable: no_credentials`).
+
+So the next gpt-oss-120b run on the same MI300X / vLLM / fp4 key would run GEAK again for a result that is
+already measured. The overlay (`tuning/deploy/installed_overlay`) is a self-contained `PYTHONPATH` drop-in and
+can be replayed without GEAK.
+
+### Proposed solution
+When a GEAK result is kept after Hyperloom's re-validation, copy its overlay into the recipe KB entry (as a
+content-addressed artifact next to `recipe.json`) and add it to `kernel_optimizations` with its measured gain,
+the accuracy result and the GEAK report path. Warm replay (PRELUDE) puts a stored overlay on the server
+`PYTHONPATH` and checks it against its recorded gain, under the same rules as HL-24 (#40). KERNEL then starts
+from the replayed stack, or is skipped when the replay reproduces and the remaining target is met.
+
+### Acceptance criteria
+- [ ] A kept GEAK result adds an entry to `kernel_optimizations` with the overlay artifact, gain and accuracy.
+- [ ] A run with that KB replays the overlay in PRELUDE and logs `warm-replay REPRODUCED` or `NOT REPRODUCED`.
+- [ ] A KB keyed to another GPU architecture or framework version does not replay the overlay.
+
+---
+
+## [HL-27] Give the KERNEL delegation a usage budget and stop GEAK when the run stops
+<!-- labels: type:feature, domain:inference, area:kernel, priority:P2 -->
+
+### Problem / use case
+Hyperloom passes GEAK a wall-clock budget only (`GEAK_E2E_TIMEOUT_S`, default 43200 s, shrunk to the run
+deadline). It does not pass or track the Claude usage GEAK spends, and it does not stop GEAK when the
+optimizer itself stops:
+
+- In the gpt-oss-120b run (1 Oct), GEAK used more input tokens than all 149 of Hyperloom's own agent calls in
+  the same run (55.5M against 25.0M cache-read tokens), within 2 of the run's 8 hours.
+- When the optimizer was stopped at 10:05 UTC for the plan-usage limit, GEAK and its Claude sessions kept
+  running for about 16 minutes. The operator's watcher script has to kill `run_e2e.py` / `geak_runner` and
+  the bundled `claude` processes itself.
+
+### Proposed solution
+1. Read the token usage of the GEAK sessions (from their transcripts or GEAK's result) into
+   `session_breakdown.json`, per GEAK role, next to the framework agents' usage.
+2. Add a `--kernel-usage-budget` (tokens or a share of the run's budget) that Hyperloom passes to GEAK. When
+   GEAK has no matching option yet, Hyperloom stops the delegation at the budget and recovers what is on disk.
+3. When the optimizer gets SIGTERM or hits its deadline, stop the GEAK process group and its Claude
+   subprocesses, then record the partial result.
+
+The changes inside GEAK that would cut its usage (benchmark polling turns, growing tuning sessions, duplicate
+tuning sessions, model choice per role) belong to the GEAK repo and are not part of this issue.
+
+### Acceptance criteria
+- [ ] `session_breakdown.json` reports GEAK token usage per role for a run with a KERNEL delegation.
+- [ ] A test stops the optimizer during a (mocked) GEAK delegation; no GEAK or `claude` process survives it.
+- [ ] A delegation that reaches its usage budget is stopped and its on-disk result is handled as in HL-25.
 
 ---
 
