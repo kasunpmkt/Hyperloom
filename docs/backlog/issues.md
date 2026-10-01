@@ -83,9 +83,9 @@ offers and Hyperloom lacks:
 - [ ] HL-24 Warm replay accepts a recipe below its own threshold and replays it partially
 
 ### Execution order (as arranged in project 4)
-HL-B0 → HL-03 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
+HL-B0 → HL-03 → HL-21 → HL-22 → HL-23 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
-HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
+HL-24 (bug), HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
 draft.
 
