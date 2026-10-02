@@ -7,8 +7,11 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import signal
+import subprocess
 import sys
 import textwrap
+import time
 from pathlib import Path
 
 import pytest
@@ -184,6 +187,97 @@ def test_sigkill_escalation_when_child_ignores_sigterm(tmp_path, monkeypatch):
     assert "no parseable result.json" in out["error"]
     assert out["returncode"] == -1
     assert not (tmp_path / "out" / "result.json").is_file()
+
+
+def _alive(pid: int) -> bool:
+    """Whether ``pid`` is a live process; a zombie nobody reaped yet counts as gone."""
+    try:
+        state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
+    except (FileNotFoundError, ProcessLookupError, IndexError):
+        return False
+    return state != "Z"
+
+
+def _wait_until_gone(pids: list[int], *, timeout_s: float) -> list[int]:
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        alive = [pid for pid in pids if _alive(pid)]
+        if not alive:
+            return []
+        time.sleep(0.2)
+    return [pid for pid in pids if _alive(pid)]
+
+
+def _wait_for_file(path: Path, *, timeout_s: float = 20.0) -> str:
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        if path.is_file() and path.read_text().strip():
+            return path.read_text().strip()
+        time.sleep(0.1)
+    raise AssertionError(f"{path} never appeared")
+
+
+def _geak_tree_stub(tmp_path: Path, monkeypatch) -> Path:
+    """A run_e2e that starts a long-lived child in its own process group, as run_e2e starts the Claude CLIs."""
+    runner = _write_fake_runner(
+        tmp_path,
+        f"""
+        import subprocess, sys, time
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(300)"])
+        open({str(tmp_path / "tree.pids")!r}, "w").write(f"{{__import__('os').getpid()}} {{child.pid}}")
+        time.sleep(300)
+    """,
+    )
+    monkeypatch.setenv("GEAK_E2E_RUNNER", str(runner))
+    monkeypatch.setenv("GEAK_FLUSH_GRACE_S", "5")
+    handoff = tmp_path / "handoff.json"
+    handoff.write_text(json.dumps(_handoff()), encoding="utf-8")
+    return handoff
+
+
+def test_an_optimizer_killed_outright_leaves_no_geak_process_behind(tmp_path, monkeypatch):
+    """SIGKILL, or a native signal handler, gives the optimizer no chance to stop GEAK; the runner must notice."""
+    handoff = _geak_tree_stub(tmp_path, monkeypatch)
+    optimizer = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            textwrap.dedent(
+                f"""
+                import subprocess, sys, time
+                runner = subprocess.Popen(
+                    [sys.executable, {str(_RUNNER_PY)!r}, {str(handoff)!r}, {str(tmp_path / "out")!r}, "--timeout-s", "600"],
+                    start_new_session=True,
+                )
+                open({str(tmp_path / "runner.pid")!r}, "w").write(str(runner.pid))
+                time.sleep(300)
+                """
+            ),
+        ]
+    )
+    runner_pid = int(_wait_for_file(tmp_path / "runner.pid"))
+    tree = [int(pid) for pid in _wait_for_file(tmp_path / "tree.pids").split()]
+
+    optimizer.kill()
+    optimizer.wait()
+
+    assert _wait_until_gone([runner_pid, *tree], timeout_s=30) == []
+
+
+def test_a_sigterm_to_the_runner_stops_run_e2e_and_its_children(tmp_path, monkeypatch):
+    handoff = _geak_tree_stub(tmp_path, monkeypatch)
+    runner = subprocess.Popen(
+        [sys.executable, str(_RUNNER_PY), str(handoff), str(tmp_path / "out"), "--timeout-s", "600"],
+        start_new_session=True,
+        stdout=subprocess.PIPE,
+    )
+    tree = [int(pid) for pid in _wait_for_file(tmp_path / "tree.pids").split()]
+
+    runner.send_signal(signal.SIGTERM)
+    runner.wait(timeout=30)
+
+    assert _wait_until_gone(tree, timeout_s=10) == []
+    assert json.loads((runner.stdout.read() or b"{}").decode())["status"] == "error"
 
 
 if __name__ == "__main__":

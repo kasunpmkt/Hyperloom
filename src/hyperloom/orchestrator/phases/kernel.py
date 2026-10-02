@@ -1430,9 +1430,12 @@ class KernelPhase(CoordinatorCollaborator):
             " ".join(cmd),
         )
 
-        # Run in its own process group so a timeout can SIGTERM the whole runner -> run_e2e -> vllm/node tree (grace
-        # to flush result.json), then SIGKILL, instead of orphaning run_e2e + its servers.
-        term_grace = int(os.environ.get("GEAK_TERM_GRACE_S", "180"))
+        # The runner owns the GEAK tree: run_e2e and its Claude/vLLM children sit in a session of their own, out of
+        # reach from here, and the runner stops that session on SIGTERM, waiting its flush grace before SIGKILL. A
+        # SIGKILL here inside that grace would cut the teardown short, so the wait covers it with a margin.
+        flush_raw = os.environ.get("GEAK_FLUSH_GRACE_S", "").strip()
+        flush_grace = int(flush_raw) if flush_raw.isdigit() and int(flush_raw) > 0 else 180
+        term_grace = max(int(os.environ.get("GEAK_TERM_GRACE_S", "180")), flush_grace + 60)
 
         # GEAK measures whatever axis Hyperloom grades on. An agentic replay is
         # graded on total token throughput, so leaving this pinned to output aims
@@ -1444,6 +1447,8 @@ class KernelPhase(CoordinatorCollaborator):
             benchmark_mode=str(getattr(state, "benchmark_mode", "") or ""),
             grading=getattr(state, "grading", None),
         )
+
+        launched: list[subprocess.Popen] = []
 
         def _run() -> subprocess.CompletedProcess:
             runner_env = dict(os.environ)
@@ -1461,6 +1466,7 @@ class KernelPhase(CoordinatorCollaborator):
                 env=runner_env,
                 start_new_session=True,
             )
+            launched.append(p)
 
             def _killpg(sig: int) -> None:
                 try:
@@ -1493,6 +1499,14 @@ class KernelPhase(CoordinatorCollaborator):
             stderr_tail = (proc.stderr or "")[-2000:]
             if proc.returncode != 0:
                 log.warning("GEAK runner rc=%s: %s", proc.returncode, stderr_tail)
+        except asyncio.CancelledError:
+            # The worker thread keeps waiting on a runner nobody would stop; SIGTERM makes it take its tree down.
+            for runner_proc in launched:
+                try:
+                    os.killpg(os.getpgid(runner_proc.pid), signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+            raise
         except subprocess.TimeoutExpired:
             log.warning(
                 "GEAK runner exceeded kill_timeout=%ds; SIGTERM'd to let it flush, then reclaimed the closing window",

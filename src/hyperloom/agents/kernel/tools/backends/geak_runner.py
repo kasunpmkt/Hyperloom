@@ -11,8 +11,12 @@ import os
 import signal
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
+
+#: How often the runner checks whether it was told to stop or lost the optimizer that started it.
+STOP_POLL_S = 2.0
 
 
 def _resolve_runner() -> str:
@@ -46,8 +50,21 @@ def _resolve_runner() -> str:
     )
 
 
-def call_geak(handoff: dict, output_dir: Path, *, timeout_s: int = 43200, python_bin: str = "") -> dict:
-    """Run GEAK e2e once and return the parsed result.json (+ run metadata)."""
+def call_geak(
+    handoff: dict,
+    output_dir: Path,
+    *,
+    timeout_s: int = 43200,
+    python_bin: str = "",
+    stop: threading.Event | None = None,
+) -> dict:
+    """Run GEAK e2e once and return the parsed result.json (+ run metadata).
+
+    run_e2e runs in a session of its own, so nothing aimed at this process reaches it or the Claude CLIs it starts.
+    The runner therefore takes its whole process group down -- SIGTERM, the flush grace, then SIGKILL -- on the
+    timeout, when ``stop`` is set, and when the process that started the runner is gone: an optimizer killed outright
+    (SIGKILL, or a native signal handler that never returns to Python) has no chance to tell it.
+    """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     handoff_path = output_dir / "handoff.json"
@@ -85,10 +102,23 @@ def call_geak(handoff: dict, output_dir: Path, *, timeout_s: int = 43200, python
             # Process already exited; nothing to signal.
             pass
 
-    try:
-        stdout, stderr = proc.communicate(timeout=timeout_s)
-        returncode = proc.returncode
-    except subprocess.TimeoutExpired:
+    parent = os.getppid()
+    deadline = time.monotonic() + timeout_s
+    stopped_by = ""
+    while True:
+        try:
+            stdout, stderr = proc.communicate(timeout=max(0.0, min(STOP_POLL_S, deadline - time.monotonic())))
+            returncode = proc.returncode
+            break
+        except subprocess.TimeoutExpired:
+            if stop is not None and stop.is_set():
+                stopped_by = "sigterm"
+            elif os.getppid() != parent:
+                stopped_by = "parent_exited"
+            elif time.monotonic() >= deadline:
+                stopped_by = "timeout"
+            else:
+                continue
         # SIGTERM lets run_e2e flush result.json, then escalate to SIGKILL.
         _killpg(signal.SIGTERM)
         try:
@@ -98,6 +128,7 @@ def call_geak(handoff: dict, output_dir: Path, *, timeout_s: int = 43200, python
             _killpg(signal.SIGKILL)
             stdout, stderr = proc.communicate()
             returncode = -1
+        break
     stdout_tail = (stdout or "")[-4000:]
     stderr_tail = (stderr or "")[-4000:]
 
@@ -124,6 +155,8 @@ def call_geak(handoff: dict, output_dir: Path, *, timeout_s: int = 43200, python
             "result_path": str(result_path),
         }
     )
+    if stopped_by:
+        result["stopped_by"] = stopped_by
     return result
 
 
@@ -144,7 +177,9 @@ def _main(argv: list[str]) -> int:
         timeout_s = int(os.environ.get("GEAK_E2E_TIMEOUT_S", "43200"))  # 12h
 
     handoff = json.loads(Path(args.handoff_json).read_text(encoding="utf-8"))
-    out = call_geak(handoff, Path(args.output_dir), timeout_s=timeout_s)
+    stop = threading.Event()
+    signal.signal(signal.SIGTERM, lambda _signum, _frame: stop.set())
+    out = call_geak(handoff, Path(args.output_dir), timeout_s=timeout_s, stop=stop)
     print(
         json.dumps(
             {
