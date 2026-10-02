@@ -6573,10 +6573,11 @@ class WritebackCollaborator:
           * completed-this-phase -> only re-arm (+persist) the ``skip_to_sweep``
             hint the delegation sets, so the phase machine winds down to SWEEP
             with no e2e re-run;
-          * not-completed -> re-enter ``_on_enter_kernel``; its own entry guard
-            promotes an existing OK ``result.json`` (crash-before-handback) and
-            re-runs the e2e only when there is genuinely nothing to recover
-            (run_e2e itself then continues from the pinned eval_dir on disk).
+          * not-completed -> re-enter ``_on_enter_kernel``, which dispatches a
+            fresh ``kernel_agent`` task; that task's executor promotes an existing
+            OK ``result.json`` (crash-before-handback) and re-runs the e2e only
+            when there is genuinely nothing to recover (run_e2e itself then
+            continues from the pinned eval_dir on disk).
 
         No-op unless resumed while parked in ``KERNEL_AGENT`` with the GEAK
         backend selected.
@@ -6614,6 +6615,10 @@ class WritebackCollaborator:
             "resume: re-entering KERNEL GEAK delegation (no completion "
             "evidence on the current phase row); recover-from-disk or re-run."
         )
+        # The pre-crash kernel_agent row still reads ``running``. Reconciling first fails it, so the entry dispatches a
+        # fresh task whose executor recovers result.json, instead of adopting a dead one whose later failure frees a
+        # stale skip_to_sweep hint before anything was recovered.
+        await self.reconciler.run(time.time())
         await self._on_enter_kernel(from_phase="resume")
 
     @property
