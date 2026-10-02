@@ -396,6 +396,35 @@
                     },
                     "open": {
                       "type": "boolean"
+                    },
+                    "reactor_turns": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "run",
+                          "skipped",
+                          "reasons"
+                        ],
+                        "properties": {
+                          "run": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "skipped": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "reasons": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "additionalProperties": false

@@ -79,6 +79,8 @@ SECTION_PROPOSAL = "phase_proposal"
 
 #: One row per PolicyGate denial, including intents that never became proposals.
 SECTION_DENIAL = "phase_denial"
+#: One row per reactor role, keyed by the role: how many of its turns ran and how many the reactor gate sat out.
+SECTION_REACTOR = "phase_reactor"
 
 STATUS_SUCCEEDED = "succeeded"
 STATUS_FAILED = "failed"
@@ -256,6 +258,32 @@ def record_marker(
         },
         row_type="marker",
         natural_ids=str(int(sequence or 0)),
+    )
+
+
+def record_reactor_turn(*, phase: str, macro_cycle: int, role: str, ran: bool, reason: str) -> None:
+    """Count one reactor tick for ``role`` against the phase it fell in. Never raises.
+
+    The count is read back from the spool and rewritten, so a resumed run adds to what the earlier leg counted.
+    """
+    event = phase_event_id(phase, macro_cycle)
+    sink = _sink(event)
+    if sink is None:
+        return
+    _open(event, phase=phase, macro_cycle=macro_cycle)
+    previous = next((row for row in _rows(SECTION_REACTOR, event) if row.get("role") == role), {})
+    reasons = dict(_as_dict(previous.get("reasons")))
+    reasons[reason] = int(reasons.get(reason) or 0) + 1
+    sink.record(
+        SECTION_REACTOR,
+        {
+            "role": str(role),
+            "run": int(previous.get("run") or 0) + (1 if ran else 0),
+            "skipped": int(previous.get("skipped") or 0) + (0 if ran else 1),
+            "reasons": reasons,
+        },
+        row_type="reactor",
+        natural_ids=str(role),
     )
 
 
@@ -711,6 +739,15 @@ def assemble_phase_ext(
         ),
         drop=("event_id",),
     )
+    reactor = {
+        str(row.get("role") or ""): {
+            "run": int(row.get("run") or 0),
+            "skipped": int(row.get("skipped") or 0),
+            "reasons": _as_dict(row.get("reasons")),
+        }
+        for row in rows_for_event(parts.get(SECTION_REACTOR) or [], event)
+        if row.get("role")
+    }
     # Summed over the entries, not measured first to last: a phase re-entered
     # inside one cycle did not own the time the run spent elsewhere in between.
     measured = [row.get("duration_sec") for row in segments if isinstance(row.get("duration_sec"), (int, float))]
@@ -734,6 +771,7 @@ def assemble_phase_ext(
         },
         "markers": {"count": len(markers), "rows": markers},
         "denials": {"count": len(denials), "rows": denials},
+        "reactor_turns": reactor,
         "proposals": {
             "count": len(proposals),
             # The gap to ``count`` is the ones the Critic never reached, which

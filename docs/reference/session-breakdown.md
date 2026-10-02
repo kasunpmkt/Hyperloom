@@ -299,7 +299,10 @@ failed instead of being graded on another one.
 carries its `type`, its identity (`event_id`, `phase`, `macro_cycle`), its
 span, its `status`, and an `ext` block holding what that kind of stage
 records. This is where the facts the older flat sections projected now live,
-attached to the stage that produced them.
+attached to the stage that produced them. A `phase` event's `ext.reactor_turns`
+counts, per reactor role, the LLM turns it ran in that phase and the ticks the
+reactor gate sat it out while an in-flight task owned the phase, with the reason
+for each (`reasons`).
 
 `close` is what the session settled at close: the `steps` the close sequencer
 ran and the `artifacts` it published. Its `robustness` field retains the
