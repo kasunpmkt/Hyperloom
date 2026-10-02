@@ -540,7 +540,6 @@ class Coordinator(metaclass=_CoordinatorMeta):
         "_discarded_escalate_hint_advisory_block": "conversation",
         "_workload_canonical_id": "proposals",
         "_read_local_recipe_row": "proposals",
-        "_extract_kept_best_config": "proposals",
         "_kb_best_config_overrides_for_keep": "proposals",
         "_kb_amend_recipe": "proposals",
         "_inject_explore_runtime_params": "proposals",

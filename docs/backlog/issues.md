@@ -35,7 +35,7 @@ rewritten to real `#123` issue links after creation.
 | Label | Meaning |
 |---|---|
 | `type:feature`, `domain:inference` | Existing Hyperloom labels (from `scripts/migrate-labels.sh`) |
-| `area:objective`, `area:benchmark`, `area:specdec`, `area:quantization`, `area:accuracy`, `area:recipe-kb`, `area:kernel`, `area:xdit`, `area:model-compression` | New: which part of the system the issue touches |
+| `area:objective`, `area:benchmark`, `area:specdec`, `area:quantization`, `area:accuracy`, `area:recipe-kb`, `area:kernel`, `area:xdit`, `area:model-compression`, `area:host-overhead`, `area:search` | New: which part of the system the issue touches |
 | `priority:P0` … `priority:P3` | New: P0 = do first / unblocks others, P3 = research |
 | `source:modelopt` | New: idea ported from NVIDIA Model-Optimizer |
 
@@ -76,11 +76,20 @@ offers and Hyperloom lacks:
 - [ ] HL-17 Skip-softmax sparse attention for long-context prefill
 - [ ] HL-18 Diffusion step caching for xDiT with a distributional quality gate
 - [ ] HL-19 Offline model-variant track (prune + distill)
+- [ ] HL-20 Host-side overhead: GPU idle time as a first-class search target
+- [ ] HL-21 Cut the per-candidate cost of the framework search
+- [ ] HL-22 Keep PRELUDE within its budget and spend the whole phase budget
+- [ ] HL-23 Noise-aware keep threshold for framework candidates
+- [ ] HL-24 Warm replay accepts a recipe below its own threshold and replays it partially
+- [ ] HL-25 Resume drops a finished GEAK result and skips to SWEEP
+- [ ] HL-26 Store a validated GEAK overlay in the recipe KB and replay it on the next run
+- [ ] HL-27 Give the KERNEL delegation a usage budget and stop GEAK when the run stops
+- [ ] HL-28 Don't run an LLM turn every tick while a delegated task is in flight
 
 ### Execution order (as arranged in project 4)
-HL-B0 → HL-03 → HL-02 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
+HL-B0 → HL-03 → HL-21 → HL-22 → HL-23 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
-HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
+HL-24 and HL-25 (bugs), HL-26 (after HL-24 and HL-25), HL-27, HL-28, HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
 draft.
 
@@ -971,6 +980,327 @@ Research issue, not an in-loop lever: distillation costs about 100B tokens.
 ### Acceptance criteria
 - [ ] Design note on the model-variant contract (KB fields, accuracy provenance) and a
       go/no-go recommendation.
+
+---
+
+## [HL-20] Host-side overhead: measure GPU idle time and make it a first-class search target
+<!-- labels: type:feature, domain:inference, area:host-overhead, priority:P1 -->
+
+### Problem / use case
+The ground-truth runs in HL-B0 show the GPU idle for **about half the time** on a single-GPU
+Qwen3-8B vLLM workload. The step-4 roofline trace (TraceLens, 1718 ms steady-state window) reports
+49.15% compute and 50.85% idle, and the GEMMs, which are 74.6% of compute, already run at 60–82% of the
+708 TFLOPS BF16 roofline. The largest remaining opportunity is therefore host-side: kernel launch and
+dispatch overhead, scheduling, and CPU work between steps. It is not kernel efficiency.
+
+Hyperloom already has the pieces, but they don't drive the search:
+
+- `system_specialist` (launch/dispatch overhead, host-blocking calls, KFD/driver env vars, `numactl`)
+  and `serving_specialist` (scheduler, CUDA graphs, batching, chunked prefill, `max-num-seqs`) exist
+  in `orchestrator/specialists/domains.py`, and `roofline_snapshot.py` routes `idle` and
+  `host_overhead` bottlenecks to `system_specialist`.
+- In practice, candidate discovery followed the roofline's compute-bound verdict. Round 1 went to AITER
+  and GEMM levers, host-side variants came in round 2, and the settings phase ended at +1.92%, inside
+  the noise band. The smoke run found +14.46% mainly from two levers that fill idle time: FP8 KV cache
+  (+12.1%, more concurrent requests) and `FULL_DECODE_ONLY` CUDA graphs (fewer launches). The
+  roofline-driven run never proposed FP8 KV.
+- No record shows GPU idle % per candidate, so nothing tells whether a kept change shrank the gap.
+
+### Proposed solution
+Extend the framework agent's existing loop; do not add an agent or a phase. Host-side levers are
+applied the same way as other framework levers (server args and env vars, KEEP/REVERT), and a new
+phase would compete for the same wall-clock budget that already starves KERNEL_AGENT.
+
+1. **Measure.** Carry GPU busy % and idle % from the PRELUDE trace into `session_breakdown.json`, and
+   measure them again for kept candidates when a trace is taken. Put them in the HL-B0 experiment
+   records next to throughput and latency.
+2. **Prioritise by the idle signal.** When idle % is high (threshold to be set from data, e.g. > 30%),
+   candidate discovery ranks host-side and capacity levers first, next to the compute-bound
+   recommendations rather than after them.
+3. **Cover the host-side levers explicitly** in `system_specialist` / `serving_specialist`:
+   - CUDA-graph mode and capture sizes;
+   - async scheduling;
+   - `max-num-seqs` and `max-num-batched-tokens`;
+   - chunked-prefill size;
+   - KV-cache capacity (FP8 KV, coordinated with HL-12's calibrated KV quantization);
+   - CPU/NUMA affinity of the serving process (`numactl`, cores local to the GPU).
+4. **Diagnose what is not software.** A one-off check of how much of the idle share comes from CPU
+   frequency scaling: the ground truth runs with the `powersave` governor. It needs root on the host,
+   so it is a manual diagnosis, never an autonomous lever, and the ground truth keeps `powersave`.
+
+Out of scope here: per-concurrency tuning of the same levers, which is HL-16. HL-20 makes the idle
+signal drive the search; HL-16 tunes the result per operating point.
+
+### Acceptance criteria
+- [ ] GPU busy % / idle % appear in `session_breakdown.json` for the PRELUDE trace, and in every
+      HL-B0 experiment record.
+- [ ] With a high idle share, the first framework explore round includes at least one host-side or
+      capacity candidate (verified on `ref-dense-bf16`).
+- [ ] Each lever in item 3 can be proposed, benchmarked and kept or reverted, with the idle % change
+      recorded for kept candidates.
+- [ ] The governor diagnosis is written up: idle % and throughput under `powersave` vs `performance`
+      on the same workload.
+- [ ] On `ref-dense-bf16` and `ref-latency`, the gain against ground truth is outside the noise band,
+      or the record explains why not (`inconclusive`).
+
+### Expected impact
+The step-4 profile puts the ceiling for this work well above what kernel tuning can reach on these
+workloads (GEMMs are within about 20–40% of their roofline; the GPU is idle for half the time). The
+smoke run's +14.46% came almost entirely from idle-filling levers.
+
+---
+
+## [HL-21] Cut the per-candidate cost of the framework search (accuracy eval at workload concurrency)
+<!-- labels: type:feature, domain:inference, area:search, priority:P1 -->
+
+### Problem / use case
+In the HL-B0 runs, the framework stage tested 8–11 candidates in 1.5–2 h on the CONC-64 workload,
+and only **2–4** on the CONC-4 workload. Each candidate gets two measurements. The second, on the
+warm server, takes about 1–2 minutes. The first takes **about 8.5 minutes at CONC 64 and about
+31 minutes at CONC 4**, although the CONC-4 benchmark window itself is only **34 s** (20 prompts).
+Example: `aiter_on` ran 00:33:32 → 01:05:11, then 01:05:11 → 01:06:19.
+
+The first measurement is: server restart, benchmark, and the GSM8K accuracy run (`RUN_EVAL: 'true'`
+in the baseline config). The baseline shows the eval runs at the workload's concurrency. Its warmup
+round took 31 min, and the measured round, on the same warm server, took 1 min. So at low
+concurrency, the accuracy check, not the benchmark, decides how many candidates fit in the budget.
+
+### Proposed solution
+1. **Measure first:** record the time breakdown of every candidate (server start, benchmark,
+   accuracy eval) in `session_breakdown.json`.
+2. **Run the accuracy eval at its own concurrency,** independent of the workload's CONC. The eval
+   checks correctness, not serving performance, so it does not need the benchmark's concurrency.
+3. **Order the gates:** benchmark first, and run the accuracy eval only for candidates that would
+   be kept on performance. A candidate that loses on speed is reverted without an eval. #4 (the
+   coherence gate) still catches broken outputs cheaply before the benchmark.
+4. **Check the restart cost:** confirm the vLLM compile and graph caches are reused across
+   candidates, and how long a restart takes on its own.
+
+### Acceptance criteria
+- [ ] Per-candidate time breakdown in `session_breakdown.json`.
+- [ ] On `ref-latency`, a 3 h settings-only run tests at least 3× as many candidates as the HL-B0
+      runs (2–4), with the same accuracy protection on every kept candidate.
+- [ ] On `ref-dense-bf16`, the median time per candidate drops measurably (HL-B0: 10.4–12.2 min).
+- [ ] No candidate is kept without an accuracy result.
+
+---
+
+## [HL-22] Keep PRELUDE within its budget and spend the whole phase budget
+<!-- labels: type:feature, domain:inference, area:search, priority:P1 -->
+
+### Problem / use case
+PRELUDE's planned share is about 3% of the wall clock. In the HL-B0 runs it took **36–50 min**
+(CONC 64) and **74–87 min** (CONC 4) of a 180-min budget. On gpt-oss-120b it took about 2 h of 6 h.
+Everything after it gets the remainder:
+- in the default chain, KERNEL_AGENT got 30 min and ~1 min instead of about 85, and kept nothing;
+- PRELUDE's profiling run repeats the full GSM8K evaluation the baseline has already done (Qwen
+  CONC 4: 38 min; gpt-oss: still running after 50+ min);
+- at the other end, phases end with work left undone. In the smoke run, explore rounds 6–8 were
+  queued but never dispatched once the phase budget hit 0 (orchestration alert: "queued explore
+  tasks appear to be admitted but never dispatched").
+
+### Proposed solution
+1. Do not run the accuracy eval in PRELUDE's profiling run: the baseline already has the score.
+2. Measure each PRELUDE step's duration against its share, and re-plan the downstream phase
+   budgets from the actual remaining time, not the planned shares.
+3. When a phase ends with budget-limited tasks still queued, either dispatch them if the remaining
+   session time allows, or record them as skipped. Never drop them silently.
+
+### Acceptance criteria
+- [ ] PRELUDE's profiling run makes no GSM8K call.
+- [ ] `session_breakdown.json` reports each phase's planned vs actual minutes.
+- [ ] On `ref-dense-bf16` and `ref-latency`, PRELUDE drops measurably below the HL-B0 times (36 / 74 min).
+- [ ] No queued explore task is dropped without a recorded reason.
+
+---
+
+## [HL-23] Noise-aware keep threshold for framework candidates
+<!-- labels: type:feature, domain:inference, area:search, priority:P1 -->
+
+### Problem / use case
+Hyperloom kept `aiter-linear-rmsnorm-async` at **+0.6%** on `ref-dense-bf16`, whose measured
+run-to-run noise is about ±1.5–1.9% (HL-B0). Noise-level "wins" become the base for the next
+round, so every later candidate is compared against a lucky high reading, and real small gains can
+be rejected. The AgentX mode uses a 3–5% bar (`common/perf_metric.py`); the default mode evidently
+accepts much less. With two measurements per candidate and ~4% noise at CONC 4, a real 3% gain can
+not be told apart from chance.
+
+### Proposed solution
+1. Estimate the noise band in PRELUDE, from the baseline's warmup and measured rounds plus one
+   extra cheap warm repeat, or take it from a supplied reference (`baselines/`).
+2. KEEP only when the gain exceeds that band. For a candidate inside the band but promising, add
+   warm repeats, which cost 1–2 min each on the warm server, before deciding.
+3. Record the band, the threshold used, and the number of repeats per decision.
+
+### Acceptance criteria
+- [ ] Each KEEP/REVERT in the records shows the threshold and repeat count it used.
+- [ ] Replaying the HL-B0 settings-only runs' decisions, the +0.6% keep is no longer a KEEP.
+- [ ] A known real lever (`--kv-cache-dtype fp8`, +13% on `ref-dense-bf16`) is still kept.
+
+---
+
+## [HL-24] Warm replay accepts a recipe below its own threshold and replays it partially
+<!-- labels: type:bug, domain:inference, area:recipe-kb, priority:P2 -->
+
+### Problem / use case
+In the HL-B0 noise runs, which used a shared KB still holding the smoke run's recipe (FP8 KV +
+`FULL_DECODE_ONLY`, +14.46%):
+
+- PRELUDE logged `warm-replay REPRODUCED: measured=+0.64% (expected=+14.46%, min_required=+11.57%);
+  pushed warm_replay onto stack`. The measured gain was far below the required one, yet the replay
+  was accepted and stacked.
+- The replayed stack was `--compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}` only. The FP8
+  KV part of the recipe was missing, which explains the +0.64%.
+
+### Proposed solution
+Find why the reproduce check passed below `min_required`, and why the replayed overlay dropped the
+`--kv-cache-dtype` argument. Fix both, with tests that replay a two-lever recipe.
+
+### Acceptance criteria
+- [ ] A warm replay below `min_required` is rejected and recorded as not reproduced.
+- [ ] Replaying a recipe applies every lever in it; a test covers a KV-dtype + compilation-config recipe.
+
+---
+
+## [HL-25] Resume drops a finished GEAK result and skips to SWEEP
+<!-- labels: type:bug, domain:inference, area:kernel, priority:P1 -->
+
+### Problem / use case
+In the gpt-oss-120b full run (1 Oct, session `20261001T044820Z-b30c5cdf`, TP 1, CONC 64), the run was
+stopped at 10:05 UTC by the plan-usage limit while GEAK was in its KERNEL delegation. GEAK kept running and
+wrote `geak/result.json` at about 10:21: `status: ok`, `throughput_speedup: 1.207`, `output_parity: pass`,
+with a deployable overlay.
+
+The run was resumed with `--resume-from <session> --extend-hours 1`:
+
+- `resume: re-entering KERNEL GEAK delegation (no completion evidence on the current phase row);
+  recover-from-disk or re-run.` (12:47:48)
+- 0.4 s later: `KERNEL_AGENT → SWEEP (reason=kernel_no_more_leverage)`. `state.json` shows
+  `last_consumed_escalate_hint: skip_to_sweep` at that moment.
+
+The crash-recovery branch in `orchestrator/phases/kernel.py` (promote `result.json`, then
+`_revalidate_geak_candidate`) did not take effect: the best stayed at the framework result (+2.75%) and SWEEP
+measured that config. The GEAK change was real: measured on its own by Hyperloom's PRELUDE baseline executor,
+the overlay gave 1795.2 tok/s against stock baselines of 1523.1 and 1462.1 (+17.9% / +22.8%), with GSM8K
+0.9659 against 0.9651 / 0.9621.
+
+### Proposed solution
+On resume, run the KERNEL recovery (read `result.json`, promote, re-validate with Hyperloom's harness) before
+the phase machine evaluates its exit conditions, and make sure a `skip_to_sweep` hint only fires after a
+recovered result has been promoted or rejected. Record the outcome in `session_breakdown.json` either way.
+
+### Acceptance criteria
+- [ ] A test resumes a session whose KERNEL row has no completion evidence but whose `geak/result.json` is
+      `status: ok`; the result is re-validated, and kept or reverted, before any transition to SWEEP.
+- [ ] A rejected recovered result is recorded with its reason; it is not silently dropped.
+- [ ] A recovered `provisional` result (GEAK salvage) is re-measured, never promoted on GEAK's own number.
+
+---
+
+## [HL-26] Store a validated GEAK overlay in the recipe KB and replay it on the next run
+<!-- labels: type:feature, domain:inference, area:recipe-kb, area:kernel, priority:P2 -->
+
+### Problem / use case
+A GEAK win costs about 2 h of GPU time and about 11M input-equivalent Opus tokens (gpt-oss-120b, 1 Oct: 11
+GEAK sessions, 55.5M cache-read, 2.7M cache-write, 0.4M output tokens). After the run, nothing in Hyperloom
+lets a later run reuse it:
+
+- The run's recipe KB (`recipe.json`) has `kernel_optimizations: []` and no reference to the overlay. It
+  holds only the framework recipe (`--attention-backend ROCM_AITER_UNIFIED_ATTN`, +2.75%).
+- GEAK's own KB write (`kb_write.json`) wrote the overlay locally but did not promote it
+  (`remote_unavailable: no_credentials`).
+
+So the next gpt-oss-120b run on the same MI300X / vLLM / fp4 key would run GEAK again for a result that is
+already measured. The overlay (`tuning/deploy/installed_overlay`) is a self-contained `PYTHONPATH` drop-in and
+can be replayed without GEAK.
+
+### Proposed solution
+When a GEAK result is kept after Hyperloom's re-validation, copy its overlay into the recipe KB entry (as a
+content-addressed artifact next to `recipe.json`) and add it to `kernel_optimizations` with its measured gain,
+the accuracy result and the GEAK report path. Warm replay (PRELUDE) puts a stored overlay on the server
+`PYTHONPATH` and checks it against its recorded gain, under the same rules as HL-24 (#40). KERNEL then starts
+from the replayed stack, or is skipped when the replay reproduces and the remaining target is met.
+
+### Acceptance criteria
+- [ ] A kept GEAK result adds an entry to `kernel_optimizations` with the overlay artifact, gain and accuracy.
+- [ ] A run with that KB replays the overlay in PRELUDE and logs `warm-replay REPRODUCED` or `NOT REPRODUCED`.
+- [ ] A KB keyed to another GPU architecture or framework version does not replay the overlay.
+
+---
+
+## [HL-27] Give the KERNEL delegation a usage budget and stop GEAK when the run stops
+<!-- labels: type:feature, domain:inference, area:kernel, priority:P2 -->
+
+### Problem / use case
+Hyperloom passes GEAK a wall-clock budget only (`GEAK_E2E_TIMEOUT_S`, default 43200 s, shrunk to the run
+deadline). It does not pass or track the Claude usage GEAK spends, and it does not stop GEAK when the
+optimizer itself stops:
+
+- In the gpt-oss-120b run (1 Oct), GEAK used more input tokens than all 149 of Hyperloom's own agent calls in
+  the same run (55.5M against 25.0M cache-read tokens), within 2 of the run's 8 hours.
+- When the optimizer was stopped at 10:05 UTC for the plan-usage limit, GEAK and its Claude sessions kept
+  running for about 16 minutes. The operator's watcher script has to kill `run_e2e.py` / `geak_runner` and
+  the bundled `claude` processes itself.
+
+### Proposed solution
+1. Read the token usage of the GEAK sessions (from their transcripts or GEAK's result) into
+   `session_breakdown.json`, per GEAK role, next to the framework agents' usage.
+2. Add a `--kernel-usage-budget` (tokens or a share of the run's budget) that Hyperloom passes to GEAK. When
+   GEAK has no matching option yet, Hyperloom stops the delegation at the budget and recovers what is on disk.
+3. When the optimizer gets SIGTERM or hits its deadline, stop the GEAK process group and its Claude
+   subprocesses, then record the partial result.
+
+The changes inside GEAK that would cut its usage (benchmark polling turns, growing tuning sessions, duplicate
+tuning sessions, model choice per role) belong to the GEAK repo and are not part of this issue.
+
+### Acceptance criteria
+- [ ] `session_breakdown.json` reports GEAK token usage per role for a run with a KERNEL delegation.
+- [ ] A test stops the optimizer during a (mocked) GEAK delegation; no GEAK or `claude` process survives it.
+- [ ] A delegation that reaches its usage budget is stopped and its on-disk result is handled as in HL-25.
+
+---
+
+## [HL-28] Don't run an LLM turn every tick while a delegated task is in flight
+<!-- labels: type:feature, domain:inference, area:kernel, priority:P1 -->
+
+### Problem / use case
+`Coordinator.tick` runs `_reactor_pass` for every role on every tick, and `_reactor_turn` always calls the
+backend: a fresh agent session with the full composed prompt and tool schemas. That happens even when nothing
+can change until a delegated task finishes.
+
+In the gpt-oss-120b run (1 Oct, `--tick-interval-sec 30`), the KERNEL phase delegated to GEAK at 08:21. Between
+08:22 and 10:05 the orchestrator started **124 Opus sessions**, about one a minute. Each had a ~40,000-character
+status prompt, checked `get_running_tasks`, and ended with a hold, e.g. `tick67 hold: no state change ...
+kernel_agent task c4b884f9 is still the sole in-flight work`.
+
+Measured from the session transcripts, weighting tokens by API price ratios (cache read 0.1x, cache write
+1.25x, output 5x input):
+
+| | Share of the run's AI usage |
+|---|---|
+| Orchestrator ticks during the KERNEL delegation | **32.2%** (525 turns, 21.8M cache-read, 3.0M cache-write tokens) |
+| All of GEAK | 54% |
+| The whole FRAMEWORK phase (7 candidates) | 4.0% |
+
+These ticks add to GEAK's own usage in the same window. During it, plan usage went from 62% to 82% of the
+5-hour limit in 25 minutes, which stopped the run (HL-25).
+
+### Proposed solution
+Skip a role's reactor LLM turn when its state has not changed since its last turn and a delegated task is
+still within its lease. Wake it on an event instead: the task completes, fails or times out, the lease is near
+its end, the phase budget is near its end, or a message or intent is addressed to it. Keep a slow heartbeat
+turn (for example every 10 minutes) so a stuck task is still noticed. Count skipped turns in
+`session_breakdown.json`.
+
+This is separate from HL-27, which limits what GEAK itself spends.
+
+### Acceptance criteria
+- [ ] A test runs a KERNEL phase with a long-running mocked delegation; the reactor is not called on ticks
+      where nothing changed, and it is called when the task completes.
+- [ ] A delegation that runs past its lease or the phase budget still wakes the role.
+- [ ] `session_breakdown.json` reports reactor turns run and skipped per phase.
+- [ ] On a rerun of the gpt-oss-120b workload, orchestrator usage during the KERNEL delegation falls by at
+      least 80%, and the run's result is unchanged.
 
 ---
 

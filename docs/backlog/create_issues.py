@@ -40,7 +40,9 @@ def gh(*args: str) -> str:
 
 
 def ensure_labels(repo: str, labels: set[str]) -> None:
-    existing = {item["name"] for item in json.loads(gh("label", "list", "--repo", repo, "--limit", "500", "--json", "name"))}
+    existing = {
+        item["name"] for item in json.loads(gh("label", "list", "--repo", repo, "--limit", "500", "--json", "name"))
+    }
     for label in sorted(labels - existing):
         color = next((c for prefix, c in LABEL_COLORS.items() if label.startswith(prefix)), "ededed")
         gh("label", "create", label, "--repo", repo, "--color", color)
@@ -55,7 +57,9 @@ def main() -> None:
     parser.add_argument("--project-owner", help="user or org that owns the Project")
     parser.add_argument("--only", help="comma-separated keys, e.g. HL-01,HL-05")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--update", action="store_true", help="edit existing issues (matched by title) instead of creating")
+    parser.add_argument(
+        "--update", action="store_true", help="edit existing issues (matched by title) instead of creating"
+    )
     args = parser.parse_args()
     if args.project and not args.project_owner:
         parser.error("--project requires --project-owner")
@@ -76,7 +80,20 @@ def main() -> None:
     numbers: dict[str, str] = {}
     urls: dict[str, str] = {}
     if args.update:
-        existing = json.loads(gh("issue", "list", "--repo", args.repo, "--state", "all", "--limit", "500", "--json", "number,title,url,labels"))
+        existing = json.loads(
+            gh(
+                "issue",
+                "list",
+                "--repo",
+                args.repo,
+                "--state",
+                "all",
+                "--limit",
+                "500",
+                "--json",
+                "number,title,url,labels",
+            )
+        )
         by_title = {item["title"]: item for item in existing}
         for issue in issues:
             item = by_title.get(issue["title"])
