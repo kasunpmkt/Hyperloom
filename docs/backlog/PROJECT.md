@@ -153,10 +153,10 @@ Filled in by issue #21 and kept current here:
 
 | Item | Value |
 |---|---|
-| Workstation | _(hostname, Ubuntu version)_ |
-| GPUs | _(model × count)_ |
-| ROCm / driver | _(version)_ |
-| Run mode | `docker` (validated stack); container image tag: _(tag)_ |
-| Workspace clone | _(absolute path; always the same path, so Claude's memory stays in one place)_ |
-| `USER_DATA_PATH` | _(persistent disk; holds session dirs, the per-run KBs and the production recipe KB; backed up)_ |
-| Hyperloom wheel | 1.1.2 |
+| Workstation | `xe9680-3`, Ubuntu 22.04.5 LTS (kernel 5.15.0-130); shared with other users |
+| GPUs | 8× AMD Instinct MI300X (gfx942); this project uses host GPU 7 only |
+| ROCm / driver | host ROCk module 6.10.5; container ROCm 10.0.0 (HIP 7.15) |
+| Run mode | `docker` (validated stack); container image tag: `rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0`, one long-running container `hyperloom-hasith` that sees only GPU 7, started with `--init` |
+| Workspace clone | `/home/hasith/AMD/Hyperloom` |
+| `USER_DATA_PATH` | `/home/hasith/AMD/hyperloom-data` (local disk; backup not confirmed, so anything that must be kept is committed under `baselines/` or `experiments/`); per-run KBs under `kb-runs/<run tag>/` |
+| Hyperloom | source checkout (not the 1.1.2 wheel); the ground truth was measured at `main` `aac3eee24` |
