@@ -466,3 +466,51 @@ async def test_a_stale_skip_to_sweep_hint_waits_for_the_recovered_delegation(
 
     assert coord.shared_state.phase == "KERNEL_AGENT"
     assert coord.shared_state.pending_escalate_hint == ESCALATE_HINT_SKIP_TO_SWEEP
+
+
+@pytest.mark.asyncio
+async def test_cancelling_the_kernel_phase_stops_the_geak_runner(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A stopped run must not leave the runner (and through it run_e2e) running behind a cancelled await."""
+    import asyncio
+
+    pid_file = tmp_path / "runner.pid"
+    runner = tmp_path / "geak_runner.py"
+    runner.write_text(
+        f"import os, time\nopen({str(pid_file)!r}, 'w').write(str(os.getpid()))\ntime.sleep(30)\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "hyperloom.orchestrator.actions.executors._kernel_agent_tool._kernel_agent_tool_path",
+        lambda _name: runner,
+    )
+    coord = Coordinator.__new__(Coordinator)
+    coord.session_dir = tmp_path
+    coord._run_deadline = None
+    coord.shared_state = SharedState(baseline_tput=100.0, model_path="/models/m", gpu_type="mi300x")
+    coord.phase_kernel._record_geak_kernel_journey = lambda _result: None
+
+    phase = asyncio.create_task(coord._run_geak_kernel_phase(from_phase="FRAMEWORK_AGENT"))
+    deadline = time.monotonic() + 20
+    while not (pid_file.is_file() and pid_file.read_text()) and time.monotonic() < deadline:
+        await asyncio.sleep(0.1)
+    runner_pid = int(pid_file.read_text())
+
+    phase.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await phase
+
+    deadline = time.monotonic() + 10
+    while _alive(runner_pid) and time.monotonic() < deadline:
+        await asyncio.sleep(0.1)
+    assert not _alive(runner_pid)
+
+
+def _alive(pid: int) -> bool:
+    """Whether ``pid`` is a live process; a zombie nobody reaped yet counts as gone."""
+    try:
+        return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0] != "Z"
+    except FileNotFoundError:
+        return False
