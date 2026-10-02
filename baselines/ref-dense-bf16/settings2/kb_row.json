@@ -1,0 +1,208 @@
+{
+  "aiter_version": "0.1.20.post1",
+  "architectures": [
+    "Qwen3ForCausalLM"
+  ],
+  "authority": "EXPERIENTIAL",
+  "best_config": {
+    "extra_envs": {
+      "VLLM_ROCM_USE_AITER": "1",
+      "VLLM_ROCM_USE_AITER_LINEAR": "1",
+      "VLLM_ROCM_USE_AITER_MHA": "1",
+      "VLLM_ROCM_USE_AITER_RMSNORM": "1",
+      "VLLM_USE_TRITON_FLASH_ATTN": "0"
+    },
+    "extra_server_args": "--async-scheduling",
+    "tput": 4464.904502523791
+  },
+  "best_throughput": 4464.904502523791,
+  "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+  "conc": 64,
+  "confidence": 0.85,
+  "created_at": "2026-09-30T20:46:33.523576+00:00",
+  "ep": 1,
+  "evidence_refs": [],
+  "framework_name": "vllm",
+  "framework_version": "0.27.1.dev5+gf46a9dfe2.d20260827",
+  "hardware": "mi300x",
+  "image_digest": "docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0",
+  "isl": 1024,
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-30T23:05:41.847135+00:00",
+  "lessons": [
+    {
+      "measured_impact": {
+        "gain_pct": 0.6043201535719134,
+        "measured_at": "2026-09-30T23:05:41+00:00",
+        "stack_depth_at_apply": 1
+      },
+      "statement": "[vllm] --async-scheduling | env: VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_LINEAR=1 VLLM_ROCM_USE_AITER_MHA=1 VLLM_ROCM_USE_AITER_RMSNORM=1 VLLM_USE_TRITON_FLASH_ATTN=0 on Qwen3-8B/mi300x"
+    }
+  ],
+  "max_model_len": 6144,
+  "model": "Qwen3-8B",
+  "model_class": "dense",
+  "model_name": "Qwen3-8B",
+  "model_type": "qwen3",
+  "osl": 1024,
+  "pitfalls": [],
+  "precision": "bf16",
+  "provenance": {
+    "details": {
+      "evidence": [
+        "log:session-20260930T204632Z-e76ff207"
+      ],
+      "phase": "close_finalize"
+    },
+    "generated_at": "2026-09-30T23:17:14.644114+00:00",
+    "generator": "coordinator",
+    "source": "hyperloom-inference-optimizer"
+  },
+  "remaining_gaps": [],
+  "rocm_version": "10.0.0",
+  "sessions": [
+    {
+      "actions_taken": [
+        "aiter-linear-rmsnorm-async"
+      ],
+      "date": "2026-09-30T23:17:14.643447+00:00",
+      "gain_pct": 0.6043201535719134,
+      "session_id": "20260930T204632Z-e76ff207",
+      "stack_len": 1,
+      "throughput_after": 4464.904502523791,
+      "throughput_before": 4438.084264878626
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "0.1.20.post1",
+    "rocm_version": "10.0.0",
+    "vllm_version": "0.27.1.dev5+gf46a9dfe2.d20260827.rocm100"
+  },
+  "tp": 1,
+  "updated_at": "2026-09-30T23:17:14.644218+00:00",
+  "version": 3,
+  "what_failed": [
+    {
+      "name": "explore",
+      "reason": "magpie_nonzero_invalid_measurement"
+    },
+    {
+      "name": "explore",
+      "reason": "magpie_nonzero_invalid_measurement"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-kernel-stack",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-attention-only",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "sched-shape-fixed-flags",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "async-sched-full-cudagraph",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-mha-plus-async-sched",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-unified-attention",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-mha-async-fullgraph",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-mha-async-bigbatch",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "fixed-seqlen-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "fixed-seqlen-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "fixed-seqlen-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "fixed-seqlen-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "fixed-seqlen-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "fixed-seqlen-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-stack-plus-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-stack-plus-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-stack-plus-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-stack-plus-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-stack-plus-scheduler-shape",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-stack-plus-scheduler-shape",
+      "reason": "reverted"
+    }
+  ],
+  "what_worked": [
+    {
+      "extra_envs": {
+        "VLLM_ROCM_USE_AITER": "1",
+        "VLLM_ROCM_USE_AITER_LINEAR": "1",
+        "VLLM_ROCM_USE_AITER_MHA": "1",
+        "VLLM_ROCM_USE_AITER_RMSNORM": "1",
+        "VLLM_USE_TRITON_FLASH_ATTN": "0"
+      },
+      "extra_server_args": "--async-scheduling",
+      "gain_pct": 0.6043201535719134,
+      "name": "aiter-linear-rmsnorm-async"
+    }
+  ]
+}

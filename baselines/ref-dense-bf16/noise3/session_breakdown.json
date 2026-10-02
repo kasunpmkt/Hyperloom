@@ -1,0 +1,2495 @@
+{
+  "close": {
+    "artifacts": {
+      "artifact_package_path": "/workspace/hyperloom-session-packages/Qwen3-8B_20260930T050241Z_912e74b6.zip",
+      "final_json_path": "reports/final.json",
+      "final_md_path": "reports/final.md",
+      "session_breakdown_path": "session_breakdown.json"
+    },
+    "baseline_progress": {
+      "arg_error_streak": 0,
+      "failure_streak": 0,
+      "total_failures": 0
+    },
+    "close_sequence_done": true,
+    "end_time": "2026-09-30T05:52:40.894622+00:00",
+    "final_recipe": {
+      "action_path": [
+        "replay_warm_recipe:warm_replay"
+      ],
+      "e2el_mean_ms": null,
+      "extra_envs": {},
+      "extra_server_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "throughput": 4485.58196688822,
+      "ttft_mean_ms": null
+    },
+    "kb_write_back": {
+      "attempts": [
+        {
+          "attempt": 1,
+          "opened_at": "2026-09-30T05:52:40.731304+00:00",
+          "result_type": "written",
+          "settled_at": "2026-09-30T05:52:40.735824+00:00",
+          "source": "close",
+          "status": "written"
+        }
+      ],
+      "backend": "local",
+      "end_time": "2026-09-30T05:52:40.735824+00:00",
+      "optimized_throughput": 4485.58196688822,
+      "queue": {
+        "dead_letter_lines": 0,
+        "flushed_bookmarks": 0,
+        "pending_lines": 0
+      },
+      "result_type": "written",
+      "scope": {
+        "conc": 64,
+        "isl": 1024,
+        "kernel_optimizer": "geak",
+        "osl": 1024,
+        "tp": 1
+      },
+      "status": "written",
+      "validated_gain_pct": 0.6355596791261355
+    },
+    "robustness": {
+      "escalated": false,
+      "stop_reason": "sweep_done"
+    },
+    "roofline_progress": {
+      "achieved_latency_ms": null,
+      "baseline_tput": 4457.253461093059,
+      "ceiling_available": false,
+      "ceiling_kind": "none",
+      "ceiling_ratio_target": 0.7,
+      "ceiling_tok_per_sec": null,
+      "cumulative_gain_pct": 0.6356,
+      "current_best_pct_of_ceiling": null,
+      "current_best_pct_of_latency_ceiling": null,
+      "current_best_pct_of_target": null,
+      "current_best_tput": 4485.58196688822,
+      "latency_ceiling_available": false,
+      "latency_ceiling_ms": null,
+      "latest_snapshot_id": null,
+      "roofline_failure_streak": 0,
+      "target_tok_per_sec": null,
+      "trajectory": [
+        {
+          "action": "baseline",
+          "extra_envs": {},
+          "flags": "",
+          "gain_pct": 0.0,
+          "label": "baseline",
+          "tput": 4457.253461093059,
+          "ts": "2026-09-30T05:02:42.076737+00:00"
+        },
+        {
+          "action": "replay_warm_recipe",
+          "extra_envs": {},
+          "flags": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+          "gain_pct": 0.6356,
+          "label": "warm_replay",
+          "tput": 4485.58196688822,
+          "ts": "2026-09-30T05:30:26.641047+00:00"
+        }
+      ],
+      "trajectory_incomplete": false
+    },
+    "start_time": "2026-09-30T05:52:40.725011+00:00",
+    "status": "succeeded",
+    "steps": [
+      {
+        "detail": null,
+        "status": "running",
+        "step": "sequencer_started",
+        "task_id": null,
+        "ts": "2026-09-30T05:52:40.725227+00:00"
+      },
+      {
+        "detail": "status=written backend=local",
+        "status": "done",
+        "step": "fact_finalize",
+        "task_id": null,
+        "ts": "2026-09-30T05:52:40.738163+00:00"
+      },
+      {
+        "detail": null,
+        "status": "done",
+        "step": "report",
+        "task_id": "f0ac2ba4033c4539bae0099e136e22fb",
+        "ts": "2026-09-30T05:52:40.795869+00:00"
+      },
+      {
+        "detail": null,
+        "status": "done",
+        "step": "session_breakdown",
+        "task_id": "06da465a655e4f8db9f08ee5d10ff628",
+        "ts": "2026-09-30T05:52:40.830055+00:00"
+      },
+      {
+        "detail": "/workspace/hyperloom-session-packages/Qwen3-8B_20260930T050241Z_912e74b6.zip",
+        "status": "done",
+        "step": "artifact_package",
+        "task_id": null,
+        "ts": "2026-09-30T05:52:40.883218+00:00"
+      },
+      {
+        "detail": null,
+        "status": "skipped",
+        "step": "ndjson_drain",
+        "task_id": null,
+        "ts": "2026-09-30T05:52:40.887116+00:00"
+      },
+      {
+        "detail": null,
+        "status": "done",
+        "step": "done",
+        "task_id": null,
+        "ts": "2026-09-30T05:52:40.891023+00:00"
+      }
+    ]
+  },
+  "critic": {
+    "iterations": [
+      {
+        "emit_path": "critic-workdir/000000/emit.json",
+        "iter": 0,
+        "iteration_id": "critic-iteration:context-:-framework-:-vllm-gpu_type-:-mi300x-macro_cycle-:0-model-:-Qwen3-8B-model_path-:-home-k:4417a433974a",
+        "judge_bundle_path": "critic-workdir/000000/judge_bundle.json",
+        "kb_priors": {
+          "client_mode": "inmemory",
+          "configured": true,
+          "limit": 5,
+          "mode": "per_proposal",
+          "prior_count": 0,
+          "referenced_in_verdict": false,
+          "requests": [
+            {
+              "cache": "miss",
+              "count": 0,
+              "msg_id": "2cfff095d0c34940904b6265a8747abf",
+              "topic": "target_analysis"
+            },
+            {
+              "cache": "miss",
+              "count": 0,
+              "msg_id": "3ad96aa96d4147b4b7a915071aaa4c52",
+              "topic": "baseline"
+            }
+          ],
+          "scope_filter": {
+            "framework": "vllm",
+            "model": "qwen3-8b",
+            "model_family": "qwen",
+            "org": "hyperloom",
+            "precision": "bf16",
+            "workload": "{'conc': 64, 'isl': 1024, 'max_model_len': 6144, 'osl': 1024, 'precision': 'bf16'}"
+          },
+          "skipped_reason": null
+        },
+        "kb_writes": [],
+        "macro_cycle": 0,
+        "phase": "PRELUDE",
+        "request_path": "critic-workdir/000000/request.json",
+        "review_path": "critic-workdir/000000/review.json",
+        "summary": "Capture the full engine launch configuration (cudagraph mode, block/chunk settings, scheduler flags) alongside the throughput number. The KB warm-start recipe claims ~14.5% from FULL_DECODE_ONLY cudagraph; that delta is only defensible later if the baseline explicitly records which cudagraph mode was active when it was measured. Also pin a `baseline_label` now \u2014 `missing_context` shows it unset, and an unlabeled baseline makes the OPTIMIZE-phase before/after comparison ambiguous.",
+        "topic": "advice",
+        "ts": "2026-09-30T05:03:19.543204+00:00",
+        "verdict": "2 approve",
+        "verdict_counts": {
+          "approve": 2
+        }
+      }
+    ]
+  },
+  "exported_at_utc": "2026-09-30T05:52:40+00:00",
+  "exporter_version": "session-breakdown-1.0.0",
+  "metadata": {
+    "exported_at_utc": "2026-09-30T05:52:40+00:00",
+    "grading": {
+      "benchmark_mode": "synthetic",
+      "objective": "output_throughput",
+      "tput_guard": {
+        "enabled": false,
+        "noise_pct": 5.0
+      }
+    },
+    "langfuse": {
+      "counts": {
+        "breakdown_recorded": 0,
+        "errors": 0,
+        "ext_shards_read": 0,
+        "forge_steps_read": 0,
+        "gemm_tuning_read": 0,
+        "generations_failed": 0,
+        "generations_paired": 0,
+        "generations_sent": 0,
+        "generations_text_only": 0,
+        "generations_token_only": 0,
+        "kb_spans_sent": 0,
+        "recipe_audit_read": 0,
+        "recipe_write_audit_read": 0,
+        "scores_sent": 0,
+        "session_start_recorded": 0,
+        "spans_opened": 0,
+        "specialist_intel_read": 0,
+        "status_updates_sent": 0,
+        "trajectory_spans_sent": 0
+      },
+      "disabled_reason": "disabled",
+      "enabled": false,
+      "session_id": "Qwen3-8B_20260930T050241Z_912e74b6",
+      "trace_id": "0d9ff162251e05e7b536b4afa8d7f54c",
+      "trace_url": null
+    },
+    "session": {
+      "claw_session_id": "",
+      "code_revision": "e6f6be18c",
+      "created_at_utc": "2026-09-30T05:02:41+00:00",
+      "elapsed_minutes": 49.98,
+      "ended_at_utc": "2026-09-30T05:52:40Z",
+      "host": "96a606a68514",
+      "image": "docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0",
+      "image_id": "vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0",
+      "max_minutes": 180,
+      "pid": 168752,
+      "recovery": {
+        "crash_count": 0,
+        "crash_timestamps": [],
+        "degraded_mode": false,
+        "last_tick_exception": null,
+        "recovered": false,
+        "resume_pending_revalidation": false
+      },
+      "sandbox_user_id": "",
+      "session_dir": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802",
+      "session_id": "Qwen3-8B_20260930T050241Z_912e74b6",
+      "start_ts": "2026-09-30T05:02:42.076737+00:00",
+      "tick_count": 2,
+      "total_elapsed_minutes": 49.97,
+      "user_data_path": "/home/hasith/AMD/hyperloom-data"
+    },
+    "task_config": {
+      "architecture": {
+        "architectures": [
+          "Qwen3ForCausalLM"
+        ],
+        "attention_type": "GQA",
+        "head_dim": 128,
+        "hidden_size": 4096,
+        "intermediate_size": 12288,
+        "is_moe": false,
+        "max_position_embeddings": 40960,
+        "model_class": "dense",
+        "model_family": "qwen3",
+        "model_type": "qwen3",
+        "num_attention_heads": 32,
+        "num_hidden_layers": 36,
+        "num_key_value_heads": 8,
+        "torch_dtype": "bfloat16",
+        "vocab_size": 151936
+      },
+      "conc": 64,
+      "framework_name": "vllm",
+      "framework_version": "0.27.1.dev5+gf46a9dfe2.d20260827",
+      "gpu_type": "mi300x",
+      "isl": 1024,
+      "launch_env": {},
+      "launch_server_args": "",
+      "max_model_len": 6144,
+      "model_name": "Qwen3-8B",
+      "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+      "objective": {
+        "kind": "time_only",
+        "value": null
+      },
+      "osl": 1024,
+      "precision": "bf16",
+      "tp": 1,
+      "workload_signature": "3f36ffc95b9a"
+    },
+    "versions": {
+      "framework": "vllm",
+      "framework_version": null,
+      "tools": {}
+    },
+    "warnings": [],
+    "workflow": {
+      "contract_digest": "51edcb99d1c16f83961757ecfd4da87666c186a5b2441a2d3575cec17713f99b",
+      "coordinator_internal_actions": [
+        "conc_sweep",
+        "kernel_agent",
+        "profile",
+        "replay_warm_recipe",
+        "roofline",
+        "targeted_build"
+      ],
+      "coordinator_reserved_actions": {
+        "ENABLEMENT": [
+          "baseline"
+        ]
+      },
+      "kernel_lane_task_kinds": [
+        "integrate",
+        "kernel_agent",
+        "profile",
+        "roofline"
+      ],
+      "llm_proposable_actions": {
+        "CLOSE": [
+          "report",
+          "session_breakdown"
+        ],
+        "ENABLEMENT": [
+          "integrate_patch",
+          "specialist",
+          "target_analysis"
+        ],
+        "FRAMEWORK_AGENT": [
+          "explore",
+          "integrate_patch",
+          "specialist"
+        ],
+        "KERNEL_AGENT": [
+          "integrate"
+        ],
+        "PRELUDE": [
+          "baseline",
+          "target_analysis"
+        ],
+        "SWEEP": []
+      },
+      "phase_actions": {
+        "CLOSE": [
+          "report",
+          "session_breakdown"
+        ],
+        "ENABLEMENT": [
+          "baseline",
+          "integrate_patch",
+          "profile",
+          "roofline",
+          "specialist",
+          "target_analysis",
+          "targeted_build"
+        ],
+        "FRAMEWORK_AGENT": [
+          "explore",
+          "integrate_patch",
+          "profile",
+          "roofline",
+          "specialist"
+        ],
+        "KERNEL_AGENT": [
+          "integrate",
+          "kernel_agent",
+          "profile",
+          "roofline"
+        ],
+        "PRELUDE": [
+          "baseline",
+          "profile",
+          "replay_warm_recipe",
+          "roofline",
+          "target_analysis"
+        ],
+        "SWEEP": [
+          "conc_sweep"
+        ]
+      },
+      "run_flags": {
+        "enablement_mode": "all",
+        "framework_agent_enabled": false,
+        "kernel_enabled": false
+      },
+      "workflow_contract_version": "hyperloom.workflow_evaluation.v1"
+    }
+  },
+  "outcome": {
+    "anchoring_eval": {
+      "accuracy": 0.9044730856709629,
+      "action_status": "succeeded",
+      "decision": "promoted",
+      "metric": "exact_match,strict-match",
+      "source_file": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/results_2026-09-30T05-14-45.171093.json",
+      "status": "succeeded",
+      "task": "gsm8k",
+      "task_id": "9b50a5c86682455d859d3309fad21a1b"
+    },
+    "baseline": {
+      "accuracy": 0.9044730856709629,
+      "e2el_mean_ms": 14693.476770704001,
+      "perf": {
+        "duration_seconds": 73.5161244161427,
+        "e2e_norm_intvty_p50": null,
+        "e2e_norm_intvty_p90": null,
+        "input_throughput": null,
+        "output_tput_per_gpu": null,
+        "request_error_rate": null,
+        "total_throughput": 8914.506922186118,
+        "tpot_p50_ms": 13.352485849974515,
+        "tpot_p90_ms": 13.964059376745018,
+        "ttft_p50_ms": 1015.1708699995652,
+        "ttft_p90_ms": 1425.3090170677751
+      },
+      "submission_invalid_reasons": [],
+      "submission_valid": null,
+      "throughput_tok_s_per_gpu": 4457.253461093059,
+      "ttft_mean_ms": 955.9007424228184
+    },
+    "final": {
+      "action_path": [
+        "replay_warm_recipe:warm_replay"
+      ],
+      "e2el_mean_ms": 14600.184744137368,
+      "extra_envs": {},
+      "extra_server_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "gain_pct": 0.6355596791261355,
+      "graded_on": "output_throughput",
+      "invocation": {
+        "framework_args": "",
+        "framework_args_source": "unrecorded",
+        "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834"
+      },
+      "perf": {
+        "duration_seconds": 73.05183639912866,
+        "e2e_norm_intvty_p50": null,
+        "e2e_norm_intvty_p90": null,
+        "input_throughput": null,
+        "output_tput_per_gpu": null,
+        "request_error_rate": null,
+        "total_throughput": 8971.16393377644,
+        "tpot_p50_ms": 13.28789061838934,
+        "tpot_p90_ms": 13.884192172101976,
+        "ttft_p50_ms": 1001.4789489796385,
+        "ttft_p90_ms": 1351.453568646685
+      },
+      "throughput_tok_s_per_gpu": 4485.58196688822,
+      "ttft_mean_ms": 936.4853060767928
+    },
+    "stage_reached": "close",
+    "status": "completed",
+    "stop_reason": "sweep_done",
+    "validation": {
+      "adoption_count": 1,
+      "attributed_gain_pct": 0.63556,
+      "attribution": {
+        "available": true,
+        "by_source": {
+          "framework_agent": {
+            "keep_count": 0,
+            "total_gain_pct": 0.0,
+            "unmeasured_keep_count": 0
+          },
+          "kernel": {
+            "by_backend": {
+              "forge": {
+                "keep_count": 0,
+                "total_gain_pct": 0.0,
+                "unmeasured_keep_count": 0
+              },
+              "geak": {
+                "keep_count": 0,
+                "total_gain_pct": 0.0,
+                "unmeasured_keep_count": 0
+              }
+            },
+            "keep_count": 0,
+            "total_gain_pct": 0.0,
+            "unmeasured_keep_count": 0
+          },
+          "warm_replay": {
+            "keep_count": 1,
+            "total_gain_pct": 0.63556,
+            "unmeasured_keep_count": 0
+          }
+        }
+      },
+      "chain_total_gain_pct": 0.63556,
+      "e2el_mean_ms": 14600.184744137368,
+      "graded_on": "output_throughput",
+      "guards": {
+        "chain_breaks": 0,
+        "unmeasured": 0
+      },
+      "measurement_basis": "e2e_rebench",
+      "notes": [],
+      "perf": {
+        "duration_seconds": 73.05183639912866,
+        "e2e_norm_intvty_p50": null,
+        "e2e_norm_intvty_p90": null,
+        "input_throughput": null,
+        "output_tput_per_gpu": null,
+        "request_error_rate": null,
+        "total_throughput": 8971.16393377644,
+        "tpot_p50_ms": 13.28789061838934,
+        "tpot_p90_ms": 13.884192172101976,
+        "ttft_p50_ms": 1001.4789489796385,
+        "ttft_p90_ms": 1351.453568646685
+      },
+      "reconciliation_gap_pct": -0.0,
+      "server_launch_flags": null,
+      "stack_changed_after_validation": false,
+      "ttft_e2el_source": "benchmark_report",
+      "ttft_mean_ms": 936.4853060767928,
+      "unattributed_gain_pct": 0.0,
+      "validated_at_stack_len": 1,
+      "validated_total_gain_pct": 0.6355596791261355,
+      "validated_ts": "2026-09-30T05:30:26.642965+00:00",
+      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834"
+    }
+  },
+  "robustness": {
+    "turns": []
+  },
+  "schema_version": "hyperloom.session_breakdown.v6.0",
+  "timeline": [
+    {
+      "end_time": "2026-09-30T05:02:34+00:00",
+      "ext": {
+        "hard_fail_step_id": null,
+        "run_kind": "fresh",
+        "runtime_snapshot": {
+          "benchmark_backend": "magpie",
+          "benchmark_interpreter": "/opt/python/bin/python3",
+          "inferencex_path": "/home/hasith/AMD/Hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+          "magpie_path": "/opt/python/lib/python3.14/site-packages",
+          "magpie_python": "/opt/python/bin/python3",
+          "provider_mode": "anthropic",
+          "tracelens_required": false,
+          "tracelens_route_hint": null
+        },
+        "steps": [
+          {
+            "category": "normalize",
+            "detail": {
+              "source": "/home/hasith/AMD/Hyperloom/.env",
+              "vars_loaded": 0
+            },
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "load_dotenv"
+          },
+          {
+            "category": "normalize",
+            "detail": {
+              "corrected_keys": [],
+              "env_file": "/home/hasith/AMD/hyperloom-data/runtime/kernel-agent.env.sh",
+              "vars_loaded": 2
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "load_kernel_agent_env"
+          },
+          {
+            "category": "normalize",
+            "detail": {
+              "keys_set": []
+            },
+            "skip_reason": "legacy_env_absent",
+            "status": "skipped",
+            "step_id": "normalize_legacy_deepseek_env"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "exit_code": 0
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "validate_credentials"
+          },
+          {
+            "category": "degrade",
+            "detail": {
+              "kb_withdrawn_override": false,
+              "recipe_kb": {
+                "enabled": true,
+                "reason": null
+              }
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "prepare_kb_environment"
+          },
+          {
+            "category": "install",
+            "detail": {
+              "already_present": [
+                "claude-agent-sdk>=0.2.110",
+                "openai-codex>=0.144",
+                "openai>=1.50",
+                "httpx>=0.27"
+              ],
+              "installed": []
+            },
+            "interpreter": "/opt/python/bin/python3",
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "ensure_python_sdks",
+            "target": "claude-agent-sdk>=0.2.110,openai-codex>=0.144,openai>=1.50,httpx>=0.27"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "tp_requested": 1,
+              "visible": 1,
+              "warn": null
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "check_gpu_visibility"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "min_gib": 16,
+              "shm_free_gib": 64.0
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "check_shm_disk"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "cpb": null,
+              "governor": "powersave",
+              "smt": "on"
+            },
+            "skip_reason": null,
+            "status": "warned",
+            "step_id": "check_platform_tuning"
+          },
+          {
+            "category": "install",
+            "interpreter": "/opt/python/bin/python3",
+            "skip_reason": null,
+            "spec": "ray[default]==2.44.1",
+            "status": "already_present",
+            "step_id": "ensure_ray",
+            "target": "ray",
+            "version_after": "2.55.0"
+          },
+          {
+            "category": "install",
+            "detail": {
+              "already_present": [
+                "aiohttp",
+                "tqdm",
+                "numpy",
+                "requests",
+                "transformers",
+                "huggingface_hub",
+                "datasets",
+                "pandas"
+              ],
+              "installed": []
+            },
+            "interpreter": "/opt/python/bin/python3",
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "ensure_bench_serving_deps",
+            "target": "benchmark_serving client deps"
+          },
+          {
+            "category": "install",
+            "interpreter": "/opt/python/bin/python3",
+            "message": "single-node InferenceX installs lm_eval on first use",
+            "skip_reason": "single_node_runtime_install",
+            "status": "skipped",
+            "step_id": "ensure_lm_eval",
+            "target": "lm_eval[api]"
+          },
+          {
+            "category": "install",
+            "detail": {
+              "already_present": [],
+              "failed": [],
+              "installed": [],
+              "invalid": [],
+              "manifest": "/home/hasith/AMD/Hyperloom/src/hyperloom/inference_optimizer/assets/framework_deps/vllm.txt",
+              "refused": []
+            },
+            "interpreter": "/opt/python/bin/python3",
+            "skip_reason": "no manifest at /home/hasith/AMD/Hyperloom/src/hyperloom/inference_optimizer/assets/framework_deps/vllm.txt",
+            "status": "skipped",
+            "step_id": "framework_deps",
+            "target": "vllm"
+          },
+          {
+            "category": "check",
+            "detail": {
+              "probe_interpreter": "/opt/python/bin/python3",
+              "rocm_verified": true
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "check_serving_framework",
+            "target": "vllm"
+          },
+          {
+            "category": "install",
+            "interpreter": "/opt/python/bin/python3",
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "ensure_magpie",
+            "target": "magpie-eval"
+          },
+          {
+            "category": "install",
+            "detail": {
+              "dest": "/home/hasith/AMD/Hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+              "exit_code": 0,
+              "network_fs": false,
+              "ref": "3d5581562f643f9bdeb8410cd924e2c70906c966",
+              "writable": true
+            },
+            "skip_reason": null,
+            "status": "already_present",
+            "step_id": "clone_inferencex",
+            "target": "InferenceX",
+            "version_after": "3d5581562f643f9bdeb8410cd924e2c70906c966"
+          },
+          {
+            "category": "patch",
+            "detail": {
+              "client_trust_compatible": true,
+              "eval_concurrency_compatible": true,
+              "inferencex_patch_anchors_ok": true
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "patch_magpie_eval_concurrency"
+          },
+          {
+            "category": "check",
+            "skip_reason": "no_kernel_and_roofline_disabled",
+            "status": "skipped",
+            "step_id": "check_tracelens_cli",
+            "target": "TraceLens"
+          },
+          {
+            "category": "check",
+            "skip_reason": "tracelens_not_required",
+            "status": "skipped",
+            "step_id": "check_tracelens_root",
+            "target": "TRACELENS_ROOT"
+          },
+          {
+            "category": "degrade",
+            "detail": {
+              "marker": "/home/hasith/AMD/hyperloom-data/runtime/recipe_kb/.kb_preflight.json",
+              "pr_monitor": {
+                "enabled": false,
+                "reason": "ir3_unreachable"
+              }
+            },
+            "skip_reason": "ir3_unreachable",
+            "status": "warned",
+            "step_id": "ir3_pr_monitor_probe"
+          },
+          {
+            "category": "diagnostic",
+            "detail": {
+              "aiter_jit_cache": {
+                "is_cold": false,
+                "kernel_count": 116,
+                "path": "/opt/python/lib/python3.14/site-packages/aiter/jit",
+                "probe_status": "found",
+                "size_mb": 1239
+              },
+              "anthropic_base_url": "https://api.anthropic.com",
+              "asset_root": "/home/hasith/AMD/Hyperloom/src/hyperloom/inference_optimizer",
+              "benchmark_silence_timeout_sec": 600.0,
+              "benchmark_timeout_sec": 7800.0,
+              "inferencex_path": "/home/hasith/AMD/Hyperloom/.cache/InferenceX@3d5581562f643f9bdeb8410cd924e2c70906c966",
+              "magpie_python": "/opt/python/bin/python3",
+              "recipe_kb_queue": {
+                "dead_letter": 0,
+                "flushed": 0,
+                "pending": 0,
+                "root": "/home/hasith/AMD/hyperloom-data/runtime/recipe_kb"
+              },
+              "session_dir": "/home/hasith/AMD/hyperloom-data"
+            },
+            "skip_reason": null,
+            "status": "applied",
+            "step_id": "diagnostics_snapshot"
+          }
+        ]
+      },
+      "kind": "install",
+      "start_time": "2026-09-30T05:02:20+00:00",
+      "status": "degraded",
+      "type": "install"
+    },
+    {
+      "end_time": "2026-09-30T05:02:42+00:00",
+      "ext": {
+        "checks": [
+          {
+            "detail": {
+              "action": "proceed",
+              "allow_mm_text_fallback": true,
+              "architecture": "Qwen3ForCausalLM",
+              "model_type": "qwen3",
+              "signal": null
+            },
+            "gate_id": "unsupported_model_arch",
+            "order": 1,
+            "skip_reason": null,
+            "status": "passed",
+            "verdict": "plain_text"
+          },
+          {
+            "detail": {
+              "config_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B/config.json",
+              "detector": null,
+              "incompatible": false,
+              "reason": null
+            },
+            "gate_id": "model_config_compat",
+            "order": 2,
+            "skip_reason": null,
+            "status": "passed"
+          },
+          {
+            "detail": {
+              "fits": true,
+              "headroom": 512,
+              "isl": 1024,
+              "max_position_embeddings": 40960,
+              "osl": 1024,
+              "policy": "no_context_length_override",
+              "required": 2560
+            },
+            "gate_id": "context_window",
+            "order": 3,
+            "skip_reason": null,
+            "status": "passed"
+          }
+        ],
+        "degraded": {
+          "active": false,
+          "warnings": []
+        },
+        "failed_gate_id": null,
+        "run_kind": "fresh",
+        "skip_reason": null,
+        "workload": {
+          "allow_mm_text_fallback": true,
+          "framework": "vllm",
+          "gpu_type": "mi300x",
+          "headroom_env": "HYPERLOOM_CONTEXT_HEADROOM_TOKENS",
+          "headroom_tokens": 512,
+          "isl": 1024,
+          "model_name": "Qwen3-8B",
+          "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+          "osl": 1024
+        }
+      },
+      "kind": "model_gate",
+      "start_time": "2026-09-30T05:02:42+00:00",
+      "status": "succeeded",
+      "type": "model_gate"
+    },
+    {
+      "blocked_by": null,
+      "business_outcome": null,
+      "end_time": "2026-09-30T05:52:10+00:00",
+      "ext": {
+        "actions": {
+          "count": 9,
+          "kinds": [
+            "baseline",
+            "profile",
+            "replay_warm_recipe",
+            "specialist",
+            "target_analysis"
+          ],
+          "rows": [
+            {
+              "action": "target_analysis",
+              "allowed": true,
+              "decision": "promoted",
+              "denial_rule": null,
+              "dispatch_class": "llm",
+              "dispatched_at": "2026-09-30T05:03:19+00:00",
+              "dispatched_unix": 1790744599.5604649,
+              "duration_sec": 0.041226,
+              "error_class": null,
+              "macro_cycle": 0,
+              "phase": "PRELUDE",
+              "settled_at": "2026-09-30T05:03:19+00:00",
+              "settled_unix": 1790744599.6016905,
+              "status": "succeeded",
+              "task_id": "0ffdbc03129a49188bbe7df5367965d9",
+              "tick": 1,
+              "workspace": null
+            },
+            {
+              "action": "baseline",
+              "allowed": true,
+              "decision": "promoted",
+              "denial_rule": null,
+              "dispatch_class": "llm",
+              "dispatched_at": "2026-09-30T05:03:19+00:00",
+              "dispatched_unix": 1790744599.5622602,
+              "duration_sec": 800.234125,
+              "error_class": null,
+              "macro_cycle": 0,
+              "phase": "PRELUDE",
+              "settled_at": "2026-09-30T05:16:39+00:00",
+              "settled_unix": 1790745399.796385,
+              "status": "succeeded",
+              "task_id": "9b50a5c86682455d859d3309fad21a1b",
+              "tick": 1,
+              "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/measure_round/benchmark_vllm_20260930_051447"
+            },
+            {
+              "action": "replay_warm_recipe",
+              "allowed": true,
+              "decision": "promoted",
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:16:39+00:00",
+              "dispatched_unix": 1790745399.8302546,
+              "duration_sec": 826.806211,
+              "error_class": null,
+              "macro_cycle": 0,
+              "phase": "PRELUDE",
+              "settled_at": "2026-09-30T05:30:26+00:00",
+              "settled_unix": 1790746226.6364653,
+              "status": "succeeded",
+              "task_id": "234d21306221428f8149c061bb5a36d0",
+              "tick": 1,
+              "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834"
+            },
+            {
+              "action": "specialist",
+              "allowed": true,
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:16:39+00:00",
+              "dispatched_unix": 1790745399.831878,
+              "duration_sec": null,
+              "macro_cycle": 0,
+              "phase": "PRELUDE",
+              "task_id": "8539fd4933d848438056b0bd186c454b",
+              "tick": 1
+            },
+            {
+              "action": "specialist",
+              "allowed": true,
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:16:39+00:00",
+              "dispatched_unix": 1790745399.8338146,
+              "duration_sec": null,
+              "macro_cycle": 0,
+              "phase": "PRELUDE",
+              "task_id": "bc6a5e73bb8e4a1381b2495f8ba6a5b1",
+              "tick": 1
+            },
+            {
+              "action": "specialist",
+              "allowed": true,
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:17:05+00:00",
+              "dispatched_unix": 1790745424.8322423,
+              "duration_sec": null,
+              "macro_cycle": 0,
+              "phase": "PRELUDE",
+              "task_id": "c7d0c03ab915439cbaeb6b9e5b83d506",
+              "tick": 1
+            },
+            {
+              "action": "specialist",
+              "allowed": true,
+              "confidence": 0.3,
+              "decision": "promoted",
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:17:37+00:00",
+              "dispatched_unix": 1790745457.0693278,
+              "domain": "static_recon_specialist",
+              "duration_sec": 64.843033,
+              "error_class": null,
+              "gap_canonical_id": "gap.static_recon.prelude",
+              "macro_cycle": 0,
+              "new_findings": [
+                "{'what': 'static_recon dispatch cannot read framework source: sandbox restricts all file reads/greps to the session working dir, so /opt/python/.../vllm and /app/vllm are unreadable even via dangerouslyDisableSandbox.', 'source': 'this dispatch (tool permission errors on Read/Grep/Bash-grep)', 'expected_impact': 'static_recon specialist is a no-op until the dispatcher adds the source roots to allowed read dirs', 'accuracy_risk': 'none', 'domain_tags': ['infra', 'static_recon']}",
+                "{'what': 'Seed checklist item rocm.moe.aiter_backend_activation_gap is not applicable to this run: Qwen3-8B is a dense model (moe=False), no fused_moe path is exercised.', 'source': 'mandate model features', 'expected_impact': 'drop this seed for dense Qwen3 sessions', 'accuracy_risk': 'none', 'domain_tags': ['moe', 'static_recon']}"
+              ],
+              "notes": [],
+              "phase": "PRELUDE",
+              "proposals_total": 2,
+              "reason": "",
+              "residual_questions": [
+                "Grant the specialist read access to /opt/python/lib/python3.14/site-packages/vllm and /app/vllm (allowed-read-dirs), otherwise do not dispatch static_recon.",
+                "Which VLLM_ROCM_USE_AITER_* sub-gates are actually compiled/available in this image (rocm/vllm 0.27.0 + aiter 0.1.20.post1)? Needs a source read to confirm before benching."
+              ],
+              "settled_at": "2026-09-30T05:18:42+00:00",
+              "settled_unix": 1790745521.912361,
+              "source": "specialist:14967110c4804b75a8b5d10b70490603",
+              "status": "succeeded",
+              "summary": "BLOCKED: the sandbox denies all reads outside /home/hasith/AMD/Hyperloom, so I could not grep the LIVE vLLM/AITER source (/opt/python/.../vllm, /app/vllm) \u2014 Read, Grep and Bash-grep were all refused, including with sandbox override. No source-verified bridge candidates could be produced. The seeded MoE candidate (rocm.moe.aiter_backend_activation_gap) is in any case N/A: Qwen3-8B is dense (moe=False). Emitting 2 low-risk env-level variants that exercise the ROCm AITER fast pa",
+              "tags": [
+                "static_recon"
+              ],
+              "task_id": "14967110c4804b75a8b5d10b70490603",
+              "tick": 1,
+              "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/specialist/14967110c4804b75a8b5d10b70490603"
+            },
+            {
+              "action": "specialist",
+              "allowed": true,
+              "confidence": 0.0,
+              "decision": "promoted",
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:17:47+00:00",
+              "dispatched_unix": 1790745467.7517896,
+              "domain": "research_scout_specialist",
+              "duration_sec": 25.617017,
+              "error_class": null,
+              "gap_canonical_id": "gap.research_scout.round0",
+              "macro_cycle": 0,
+              "new_findings": [],
+              "notes": [],
+              "phase": "PRELUDE",
+              "proposals_total": 0,
+              "reason": "backend_unexpected:NoIntentEmitted('claude reply contained no parseable emit_intent tool_use blocks (raw_text_len=0, tool_blocks=0)')",
+              "residual_questions": [],
+              "settled_at": "2026-09-30T05:18:13+00:00",
+              "settled_unix": 1790745493.3688068,
+              "source": "specialist:7bcd9d702eb64bca9d0d59f204a6265d",
+              "status": "succeeded",
+              "summary": "backend_unexpected:NoIntentEmitted('claude reply contained no parseable emit_intent tool_use blocks (raw_text_len=0, tool_blocks=0)')",
+              "tags": [
+                "research_scout"
+              ],
+              "task_id": "7bcd9d702eb64bca9d0d59f204a6265d",
+              "tick": 1,
+              "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/specialist/7bcd9d702eb64bca9d0d59f204a6265d"
+            },
+            {
+              "action": "profile",
+              "allowed": true,
+              "decision": "promoted",
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:30:26+00:00",
+              "dispatched_unix": 1790746226.6518452,
+              "duration_sec": 1303.545794,
+              "error_class": null,
+              "macro_cycle": 0,
+              "phase": "PRELUDE",
+              "settled_at": "2026-09-30T05:52:10+00:00",
+              "settled_unix": 1790747530.1976392,
+              "status": "succeeded",
+              "task_id": "acefef816fda43dd93dcec668bd0559e",
+              "tick": 1,
+              "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/profile/acefef816fda43dd93dcec668bd0559e/benchmark_vllm_20260930_053328"
+            }
+          ],
+          "settled": 6
+        },
+        "denials": {
+          "count": 0,
+          "rows": []
+        },
+        "duration_sec": 2967.67274,
+        "entered_at": "2026-09-30T05:02:42+00:00",
+        "entries": 1,
+        "exit_reason": "prelude_done",
+        "exited_at": "2026-09-30T05:52:10+00:00",
+        "macro_cycle": 0,
+        "markers": {
+          "count": 0,
+          "rows": []
+        },
+        "open": false,
+        "phase": "PRELUDE",
+        "proposals": {
+          "count": 2,
+          "materialized": 2,
+          "reviewed": 2,
+          "rows": [
+            {
+              "action": "target_analysis",
+              "candidate_id": null,
+              "critic_review": {
+                "advice_text": null,
+                "alternative_action": null,
+                "confidence": null,
+                "effective_verdict": "approve",
+                "failure_reason_code": null,
+                "held_to_rule": false,
+                "reasoning": "Archival/framework_op action per action_verdict_policy: transcribes target state to target_baseline.json, introduces no new measurement, so the before/after benchmark gate does not apply. In-phase for PRELUDE and no contradicting KB prior.",
+                "required_evidence": [],
+                "reviewed_at": "2026-09-30T05:03:19+00:00",
+                "risks": [],
+                "source": "critic",
+                "variants": [],
+                "verdict": "approve"
+              },
+              "from_agent": "orchestration",
+              "macro_cycle": 0,
+              "outcome": {
+                "denied": false,
+                "materialized": true,
+                "patch_verdict_key": null,
+                "reauthored": false,
+                "settled_at": "2026-09-30T05:03:19+00:00",
+                "task_id": "0ffdbc03129a49188bbe7df5367965d9"
+              },
+              "phase": "PRELUDE",
+              "predicted_gain_pct": 0.0,
+              "proposal_msg_id": "2cfff095d0c34940904b6265a8747abf",
+              "proposed_at": "2026-09-30T05:02:59+00:00",
+              "tick": 1,
+              "variant_name": null
+            },
+            {
+              "action": "baseline",
+              "candidate_id": null,
+              "critic_review": {
+                "advice_text": "Capture the full engine launch configuration (cudagraph mode, block/chunk settings, scheduler flags) alongside the throughput number. The KB warm-start recipe claims ~14.5% from FULL_DECODE_ONLY cudagraph; that delta is only defensible later if the baseline explicitly records which cudagraph mode was active when it was measured. Also pin a `baseline_label` now \u2014 `missing_context` shows it unset, and an unlabeled baseline makes the OPTIMIZE-phase before/after comparison ambiguous.",
+                "alternative_action": null,
+                "confidence": null,
+                "effective_verdict": "approve",
+                "failure_reason_code": null,
+                "held_to_rule": false,
+                "reasoning": "Exploration/framework_op: baseline_tput is absent, so this run IS the evidence every later gate depends on. Requiring a before/after here would deadlock the pipeline. Natural next step after target_analysis in PRELUDE sequencing.",
+                "required_evidence": [],
+                "reviewed_at": "2026-09-30T05:03:19+00:00",
+                "risks": [
+                  {
+                    "severity": "minor",
+                    "summary": "missing_context includes baseline_label/objective; an unlabeled baseline is harder to match against later candidate runs."
+                  }
+                ],
+                "source": "critic",
+                "variants": [],
+                "verdict": "approve"
+              },
+              "from_agent": "orchestration",
+              "macro_cycle": 0,
+              "outcome": {
+                "denied": false,
+                "materialized": true,
+                "patch_verdict_key": null,
+                "reauthored": false,
+                "settled_at": "2026-09-30T05:03:19+00:00",
+                "task_id": "9b50a5c86682455d859d3309fad21a1b"
+              },
+              "phase": "PRELUDE",
+              "predicted_gain_pct": 0.0,
+              "proposal_msg_id": "3ad96aa96d4147b4b7a915071aaa4c52",
+              "proposed_at": "2026-09-30T05:02:59+00:00",
+              "tick": 1,
+              "variant_name": null
+            }
+          ]
+        },
+        "segments": [
+          {
+            "duration_sec": 2967.672740459442,
+            "entered_at": "2026-09-30T05:02:42+00:00",
+            "entered_evidence": {
+              "predicate_inputs": {
+                "baseline": null,
+                "budget": null,
+                "current_phase": "",
+                "enablement_in_flight": false,
+                "global": {
+                  "closing_phase": false,
+                  "cycle_reloop_min_remaining_sec": 0.0,
+                  "session_remaining_sec": null,
+                  "stop_reason": "",
+                  "sweep_closeout_status": "",
+                  "target_reached_at": ""
+                },
+                "hint": null,
+                "macro_cycle": 0,
+                "now_unix": 1790744562.5359132,
+                "pending_work": null,
+                "phase_budget_pct": {
+                  "CLOSE": 0.02,
+                  "FRAMEWORK_AGENT": 0.0,
+                  "KERNEL_AGENT": 0.0,
+                  "PRELUDE": 0.03,
+                  "SWEEP": 0.9
+                },
+                "plateau": null,
+                "run_flags": {
+                  "enablement_enabled": true,
+                  "framework_agent_enabled": false,
+                  "kernel_enabled": false
+                },
+                "sweep_result": null
+              },
+              "trigger": "fresh_session"
+            },
+            "entered_reason": "phase_entered",
+            "entered_unix": 1790744562.535954,
+            "exit_evidence": {
+              "affordable_rounds": 45.01,
+              "baseline_tput": 4457.253461093059,
+              "fits_one_optimization_round": true,
+              "measured_round_sec": 171.3,
+              "optimize_skipped": true,
+              "predicate_inputs": {
+                "baseline": {
+                  "double_run": true,
+                  "failure_streak": 0,
+                  "measure_round_dropped": false,
+                  "phase_spent_sec": 2967.671941757202,
+                  "post_ready_runtime_sec": 460.39666748809816,
+                  "runtime_sec": 518.99,
+                  "session_usable_sec": 7712.347938537597,
+                  "tput": 4457.253461093059,
+                  "warm_replay_status": "reproduced",
+                  "warm_runtime_sec": 112.75
+                },
+                "budget": null,
+                "current_phase": "PRELUDE",
+                "enablement_in_flight": false,
+                "global": {
+                  "closing_phase": false,
+                  "cycle_reloop_min_remaining_sec": 0.0,
+                  "session_remaining_sec": null,
+                  "stop_reason": "",
+                  "sweep_closeout_status": "",
+                  "target_reached_at": ""
+                },
+                "hint": null,
+                "macro_cycle": 0,
+                "now_unix": 1790747530.2078958,
+                "pending_work": null,
+                "phase_budget_pct": {
+                  "CLOSE": 0.02,
+                  "FRAMEWORK_AGENT": 0.0,
+                  "KERNEL_AGENT": 0.0,
+                  "PRELUDE": 0.03,
+                  "SWEEP": 0.9
+                },
+                "plateau": null,
+                "run_flags": {
+                  "enablement_enabled": true,
+                  "framework_agent_enabled": false,
+                  "kernel_enabled": false
+                },
+                "sweep_result": null
+              },
+              "priced_by": "boot_plus_benchmark",
+              "session_usable_sec": 7712.3
+            },
+            "exit_reason": "prelude_done",
+            "exited_at": "2026-09-30T05:52:10+00:00",
+            "exited_unix": 1790747530.2086945,
+            "from_phase": "",
+            "sequence": 1,
+            "to_phase": "SWEEP"
+          }
+        ]
+      },
+      "failure": null,
+      "id": "prelude:0:phase",
+      "kind": "phase",
+      "process_status": "succeeded",
+      "start_time": "2026-09-30T05:02:42+00:00",
+      "status": "succeeded",
+      "type": "phase"
+    },
+    {
+      "blocked_by": null,
+      "business_outcome": null,
+      "end_time": "2026-09-30T05:30:26+00:00",
+      "ext": {
+        "actions": [
+          {
+            "accuracy_stage": null,
+            "cold_anchor": null,
+            "convergence": {
+              "cold_start_delta_pct": -0.06,
+              "converged": false,
+              "monotonic_increasing": false,
+              "reason": "insufficient_rounds",
+              "rounds_discarded": [
+                4459.7942008810205
+              ],
+              "rounds_used": [
+                4457.253461093059
+              ],
+              "spread_pct": null,
+              "value": null
+            },
+            "decision": "promoted",
+            "duration_sec": 800.225,
+            "end_time": "2026-09-30T05:16:39+00:00",
+            "eval_failure": null,
+            "failure": null,
+            "in_flight_run_index": null,
+            "invocation": {
+              "args_mode": "append",
+              "config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/baseline_config.with_envs.yaml",
+              "extra_envs": {},
+              "framework": "vllm",
+              "framework_args": "",
+              "framework_args_source": "launch_extra_server_args",
+              "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+              "observed_server_identity": {
+                "gpu_memory_utilization": 0.95,
+                "max_model_len": 6144,
+                "model": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+                "trust_remote_code": true
+              },
+              "observed_server_launch_flags": "",
+              "recipe_digest": "sha256:f658ff3d240ca9ca860398f8f39909caa8eafed3943f5b18d0229f27b9d843f0",
+              "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/server.log",
+              "warm_reuse": {
+                "provenance": "warmup_round",
+                "reused_ready_server": true,
+                "source_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/server.log"
+              }
+            },
+            "materialized_config": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/baseline_config.with_envs.yaml",
+            "measurement": {
+              "accuracy": 0.9044730856709629,
+              "accuracy_metric": "exact_match,strict-match",
+              "accuracy_source": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/results_2026-09-30T05-14-45.171093.json",
+              "accuracy_task": "gsm8k",
+              "benchmark_report_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/measure_round/benchmark_vllm_20260930_051447/benchmark_report.json",
+              "e2el_mean_ms": 14693.476770704001,
+              "perf": {
+                "duration_seconds": 73.5161244161427,
+                "e2e_norm_intvty_p50": null,
+                "e2e_norm_intvty_p90": null,
+                "input_throughput": null,
+                "output_tput_per_gpu": null,
+                "request_error_rate": null,
+                "total_throughput": 8914.506922186118,
+                "tpot_p50_ms": 13.352485849974515,
+                "tpot_p90_ms": 13.964059376745018,
+                "ttft_p50_ms": 1015.1708699995652,
+                "ttft_p90_ms": 1425.3090170677751
+              },
+              "submission_invalid_reasons": [],
+              "submission_valid": null,
+              "throughput_tok_s_per_gpu": 4457.253461093059,
+              "throughput_unit": "tok/s",
+              "tpot_mean_ms": 13.428715570167332,
+              "tpot_source": "benchmark_report",
+              "ttft_e2el_source": "benchmark_report",
+              "ttft_mean_ms": 955.9007424228184,
+              "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/measure_round/benchmark_vllm_20260930_051447"
+            },
+            "request": {
+              "config_path": "",
+              "establishes_quality_ref": true,
+              "failure_streak_before": 0,
+              "framework": "vllm",
+              "output_dir": "",
+              "reason": "",
+              "requested_timeout_sec": null,
+              "task_id": "9b50a5c86682455d859d3309fad21a1b",
+              "task_kind": "baseline",
+              "total_failures_before": 0
+            },
+            "run_eval_disabled": false,
+            "runs": [
+              {
+                "attempt_reason": "initial",
+                "end_time": "2026-09-30T05:16:39+00:00",
+                "error_class": "",
+                "invocation": {
+                  "args_mode": "append",
+                  "config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/baseline_config.with_envs.yaml",
+                  "extra_envs": {},
+                  "framework": "vllm",
+                  "framework_args": "",
+                  "framework_args_source": "launch_extra_server_args",
+                  "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B"
+                },
+                "rounds": [
+                  {
+                    "duration_sec": 519.022,
+                    "end_time": "2026-09-30T05:14:47+00:00",
+                    "failure": null,
+                    "invocation": {
+                      "observed_server_identity": {
+                        "gpu_memory_utilization": 0.95,
+                        "max_model_len": 6144,
+                        "model": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+                        "trust_remote_code": true
+                      },
+                      "observed_server_launch_flags": "",
+                      "recipe_digest": "sha256:f658ff3d240ca9ca860398f8f39909caa8eafed3943f5b18d0229f27b9d843f0",
+                      "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/server.log",
+                      "warm_reuse": {
+                        "provenance": "fresh_or_unobserved",
+                        "reused_ready_server": false,
+                        "source_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/server.log"
+                      }
+                    },
+                    "label": "warmup",
+                    "measurement": {
+                      "accuracy": 0.9044730856709629,
+                      "accuracy_metric": "exact_match,strict-match",
+                      "accuracy_source": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/results_2026-09-30T05-14-45.171093.json",
+                      "accuracy_task": "gsm8k",
+                      "benchmark_report_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/benchmark_report.json",
+                      "e2el_mean_ms": 14684.291639464209,
+                      "perf": {
+                        "duration_seconds": 73.47424236196093,
+                        "e2e_norm_intvty_p50": null,
+                        "e2e_norm_intvty_p90": null,
+                        "input_throughput": null,
+                        "output_tput_per_gpu": null,
+                        "request_error_rate": null,
+                        "total_throughput": 8919.588401762041,
+                        "tpot_p50_ms": 13.287643726754894,
+                        "tpot_p90_ms": 13.937619324197279,
+                        "ttft_p50_ms": 1042.8108628839254,
+                        "ttft_p90_ms": 1417.844785633497
+                      },
+                      "submission_invalid_reasons": [],
+                      "submission_valid": null,
+                      "throughput_tok_s_per_gpu": 4459.7942008810205,
+                      "throughput_unit": "tok/s",
+                      "tpot_mean_ms": 13.37470754095252,
+                      "tpot_source": "benchmark_report",
+                      "ttft_e2el_source": "benchmark_report",
+                      "ttft_mean_ms": 1001.9658250697829,
+                      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611"
+                    },
+                    "run_eval_disabled": false,
+                    "start_time": "2026-09-30T05:06:07+00:00",
+                    "status": "succeeded",
+                    "timeout_sec": 7800,
+                    "timing": {
+                      "post_ready_runtime_sec": 460.39666748809816,
+                      "subprocess_runtime_sec": 518.99
+                    },
+                    "warnings": {
+                      "count": 1,
+                      "messages": [
+                        "raw_inferencex_result_used"
+                      ]
+                    }
+                  },
+                  {
+                    "duration_sec": 112.776,
+                    "end_time": "2026-09-30T05:16:39+00:00",
+                    "failure": null,
+                    "invocation": {
+                      "observed_server_identity": {},
+                      "observed_server_launch_flags": "",
+                      "recipe_digest": "sha256:f658ff3d240ca9ca860398f8f39909caa8eafed3943f5b18d0229f27b9d843f0",
+                      "server_log_path": "",
+                      "warm_reuse": {
+                        "provenance": "fresh_or_unobserved",
+                        "reused_ready_server": false,
+                        "source_server_log_path": ""
+                      }
+                    },
+                    "label": "measure",
+                    "measurement": {
+                      "accuracy": null,
+                      "accuracy_metric": "",
+                      "accuracy_source": "",
+                      "accuracy_task": "",
+                      "benchmark_report_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/measure_round/benchmark_vllm_20260930_051447/benchmark_report.json",
+                      "e2el_mean_ms": 14693.476770704001,
+                      "perf": {
+                        "duration_seconds": 73.5161244161427,
+                        "e2e_norm_intvty_p50": null,
+                        "e2e_norm_intvty_p90": null,
+                        "input_throughput": null,
+                        "output_tput_per_gpu": null,
+                        "request_error_rate": null,
+                        "total_throughput": 8914.506922186118,
+                        "tpot_p50_ms": 13.352485849974515,
+                        "tpot_p90_ms": 13.964059376745018,
+                        "ttft_p50_ms": 1015.1708699995652,
+                        "ttft_p90_ms": 1425.3090170677751
+                      },
+                      "submission_invalid_reasons": [],
+                      "submission_valid": null,
+                      "throughput_tok_s_per_gpu": 4457.253461093059,
+                      "throughput_unit": "tok/s",
+                      "tpot_mean_ms": 13.428715570167332,
+                      "tpot_source": "benchmark_report",
+                      "ttft_e2el_source": "benchmark_report",
+                      "ttft_mean_ms": 955.9007424228184,
+                      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/measure_round/benchmark_vllm_20260930_051447"
+                    },
+                    "run_eval_disabled": false,
+                    "start_time": "2026-09-30T05:14:47+00:00",
+                    "status": "succeeded",
+                    "timeout_sec": 7800,
+                    "timing": {
+                      "post_ready_runtime_sec": 112.75131225585938,
+                      "subprocess_runtime_sec": 112.75
+                    },
+                    "warnings": {
+                      "count": 1,
+                      "messages": [
+                        "raw_inferencex_result_used"
+                      ]
+                    }
+                  }
+                ],
+                "run_index": 1,
+                "start_time": "2026-09-30T05:03:19+00:00",
+                "status": "succeeded",
+                "warnings": {
+                  "count": 2,
+                  "messages": [
+                    "raw_inferencex_result_used",
+                    "baseline_double_run_discarded_first"
+                  ]
+                }
+              }
+            ],
+            "start_time": "2026-09-30T05:03:19+00:00",
+            "status": "succeeded",
+            "task_id": "9b50a5c86682455d859d3309fad21a1b",
+            "timing": {
+              "post_ready_runtime_sec": 460.39666748809816,
+              "subprocess_runtime_sec": 518.99
+            },
+            "warmup_round_tput": 4459.7942008810205,
+            "warnings": {
+              "count": 2,
+              "messages": [
+                "raw_inferencex_result_used",
+                "baseline_double_run_discarded_first"
+              ]
+            }
+          },
+          {
+            "accuracy_stage": null,
+            "cold_anchor": null,
+            "convergence": {
+              "cold_start_delta_pct": -0.34,
+              "converged": false,
+              "monotonic_increasing": false,
+              "reason": "insufficient_rounds",
+              "rounds_discarded": [
+                4501.03982568609
+              ],
+              "rounds_used": [
+                4485.58196688822
+              ],
+              "spread_pct": null,
+              "value": null
+            },
+            "decision": "",
+            "duration_sec": 826.794,
+            "end_time": "2026-09-30T05:30:26+00:00",
+            "eval_failure": null,
+            "failure": null,
+            "in_flight_run_index": null,
+            "invocation": {
+              "args_mode": "append",
+              "config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/baseline_config.with_envs.yaml",
+              "extra_envs": {},
+              "framework": "vllm",
+              "framework_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+              "framework_args_source": "launch_extra_server_args",
+              "materialized_server_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+              "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+              "observed_server_identity": {},
+              "observed_server_launch_flags": "",
+              "recipe_digest": "sha256:398ffa26c8eb55370ba054bcbd2a5c50cdd1faa31b6941ef7ca0ecb57b2bc11f",
+              "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/warmup_round/benchmark_vllm_20260930_051944/server.log",
+              "warm_reuse": {
+                "provenance": "warmup_round",
+                "reused_ready_server": true,
+                "source_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/warmup_round/benchmark_vllm_20260930_051944/server.log"
+              }
+            },
+            "materialized_config": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/baseline_config.with_envs.yaml",
+            "measurement": {
+              "accuracy": null,
+              "accuracy_metric": "",
+              "accuracy_source": "",
+              "accuracy_task": "",
+              "benchmark_report_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834/benchmark_report.json",
+              "e2el_mean_ms": 14600.184744137368,
+              "perf": {
+                "duration_seconds": 73.05183639912866,
+                "e2e_norm_intvty_p50": null,
+                "e2e_norm_intvty_p90": null,
+                "input_throughput": null,
+                "output_tput_per_gpu": null,
+                "request_error_rate": null,
+                "total_throughput": 8971.16393377644,
+                "tpot_p50_ms": 13.28789061838934,
+                "tpot_p90_ms": 13.884192172101976,
+                "ttft_p50_ms": 1001.4789489796385,
+                "ttft_p90_ms": 1351.453568646685
+              },
+              "submission_invalid_reasons": [],
+              "submission_valid": null,
+              "throughput_tok_s_per_gpu": 4485.58196688822,
+              "throughput_unit": "tok/s",
+              "tpot_mean_ms": 13.356499939453153,
+              "tpot_source": "benchmark_report",
+              "ttft_e2el_source": "benchmark_report",
+              "ttft_mean_ms": 936.4853060767928,
+              "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834"
+            },
+            "request": {
+              "config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/baseline_config.with_envs.yaml",
+              "establishes_quality_ref": false,
+              "failure_streak_before": 0,
+              "framework": "vllm",
+              "output_dir": "",
+              "reason": "warm_replay_prelude",
+              "requested_timeout_sec": null,
+              "task_id": "234d21306221428f8149c061bb5a36d0",
+              "task_kind": "replay_warm_recipe",
+              "total_failures_before": 0
+            },
+            "run_eval_disabled": false,
+            "runs": [
+              {
+                "attempt_reason": "initial",
+                "end_time": "2026-09-30T05:30:26+00:00",
+                "error_class": "",
+                "invocation": {
+                  "args_mode": "append",
+                  "config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/baseline_config.with_envs.yaml",
+                  "extra_envs": {},
+                  "framework": "vllm",
+                  "framework_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+                  "framework_args_source": "launch_extra_server_args",
+                  "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B"
+                },
+                "rounds": [
+                  {
+                    "duration_sec": 531.485,
+                    "end_time": "2026-09-30T05:28:23+00:00",
+                    "failure": null,
+                    "invocation": {
+                      "materialized_server_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+                      "observed_server_identity": {},
+                      "observed_server_launch_flags": "",
+                      "recipe_digest": "sha256:398ffa26c8eb55370ba054bcbd2a5c50cdd1faa31b6941ef7ca0ecb57b2bc11f",
+                      "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/warmup_round/benchmark_vllm_20260930_051944/server.log",
+                      "warm_reuse": {
+                        "provenance": "fresh_or_unobserved",
+                        "reused_ready_server": false,
+                        "source_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/warmup_round/benchmark_vllm_20260930_051944/server.log"
+                      }
+                    },
+                    "label": "warmup",
+                    "measurement": {
+                      "accuracy": 0.9075056861258529,
+                      "accuracy_metric": "exact_match,strict-match",
+                      "accuracy_source": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/warmup_round/benchmark_vllm_20260930_051944/results_2026-09-30T05-28-21.444247.json",
+                      "accuracy_task": "gsm8k",
+                      "benchmark_report_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/warmup_round/benchmark_vllm_20260930_051944/benchmark_report.json",
+                      "e2el_mean_ms": 14550.330156853306,
+                      "perf": {
+                        "duration_seconds": 72.80095548811369,
+                        "e2e_norm_intvty_p50": null,
+                        "e2e_norm_intvty_p90": null,
+                        "input_throughput": null,
+                        "output_tput_per_gpu": null,
+                        "request_error_rate": null,
+                        "total_throughput": 9002.07965137218,
+                        "tpot_p50_ms": 13.235696821194962,
+                        "tpot_p90_ms": 13.846923317600913,
+                        "ttft_p50_ms": 1001.8971050158143,
+                        "ttft_p90_ms": 1349.1562642622746
+                      },
+                      "submission_invalid_reasons": [],
+                      "submission_valid": null,
+                      "throughput_tok_s_per_gpu": 4501.03982568609,
+                      "throughput_unit": "tok/s",
+                      "tpot_mean_ms": 13.30951689874867,
+                      "tpot_source": "benchmark_report",
+                      "ttft_e2el_source": "benchmark_report",
+                      "ttft_mean_ms": 934.6943694334186,
+                      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/warmup_round/benchmark_vllm_20260930_051944"
+                    },
+                    "run_eval_disabled": false,
+                    "start_time": "2026-09-30T05:19:31+00:00",
+                    "status": "succeeded",
+                    "timeout_sec": 7800,
+                    "timing": {
+                      "post_ready_runtime_sec": 480.873468416214,
+                      "subprocess_runtime_sec": 531.46
+                    },
+                    "warnings": {
+                      "count": 1,
+                      "messages": [
+                        "raw_inferencex_result_used"
+                      ]
+                    }
+                  },
+                  {
+                    "duration_sec": 123.143,
+                    "end_time": "2026-09-30T05:30:26+00:00",
+                    "failure": null,
+                    "invocation": {
+                      "materialized_server_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+                      "observed_server_identity": {},
+                      "observed_server_launch_flags": "",
+                      "recipe_digest": "sha256:398ffa26c8eb55370ba054bcbd2a5c50cdd1faa31b6941ef7ca0ecb57b2bc11f",
+                      "server_log_path": "",
+                      "warm_reuse": {
+                        "provenance": "fresh_or_unobserved",
+                        "reused_ready_server": false,
+                        "source_server_log_path": ""
+                      }
+                    },
+                    "label": "measure",
+                    "measurement": {
+                      "accuracy": null,
+                      "accuracy_metric": "",
+                      "accuracy_source": "",
+                      "accuracy_task": "",
+                      "benchmark_report_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834/benchmark_report.json",
+                      "e2el_mean_ms": 14600.184744137368,
+                      "perf": {
+                        "duration_seconds": 73.05183639912866,
+                        "e2e_norm_intvty_p50": null,
+                        "e2e_norm_intvty_p90": null,
+                        "input_throughput": null,
+                        "output_tput_per_gpu": null,
+                        "request_error_rate": null,
+                        "total_throughput": 8971.16393377644,
+                        "tpot_p50_ms": 13.28789061838934,
+                        "tpot_p90_ms": 13.884192172101976,
+                        "ttft_p50_ms": 1001.4789489796385,
+                        "ttft_p90_ms": 1351.453568646685
+                      },
+                      "submission_invalid_reasons": [],
+                      "submission_valid": null,
+                      "throughput_tok_s_per_gpu": 4485.58196688822,
+                      "throughput_unit": "tok/s",
+                      "tpot_mean_ms": 13.356499939453153,
+                      "tpot_source": "benchmark_report",
+                      "ttft_e2el_source": "benchmark_report",
+                      "ttft_mean_ms": 936.4853060767928,
+                      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834"
+                    },
+                    "run_eval_disabled": false,
+                    "start_time": "2026-09-30T05:28:23+00:00",
+                    "status": "succeeded",
+                    "timeout_sec": 7800,
+                    "timing": {
+                      "post_ready_runtime_sec": 123.11963129043579,
+                      "subprocess_runtime_sec": 123.12
+                    },
+                    "warnings": {
+                      "count": 1,
+                      "messages": [
+                        "raw_inferencex_result_used"
+                      ]
+                    }
+                  }
+                ],
+                "run_index": 1,
+                "start_time": "2026-09-30T05:16:39+00:00",
+                "status": "succeeded",
+                "warnings": {
+                  "count": 2,
+                  "messages": [
+                    "raw_inferencex_result_used",
+                    "baseline_double_run_discarded_first"
+                  ]
+                }
+              }
+            ],
+            "start_time": "2026-09-30T05:16:39+00:00",
+            "status": "succeeded",
+            "task_id": "234d21306221428f8149c061bb5a36d0",
+            "timing": {
+              "post_ready_runtime_sec": 480.873468416214,
+              "subprocess_runtime_sec": 531.46
+            },
+            "warmup_round_tput": 4501.03982568609,
+            "warnings": {
+              "count": 2,
+              "messages": [
+                "raw_inferencex_result_used",
+                "baseline_double_run_discarded_first"
+              ]
+            }
+          }
+        ],
+        "anchoring_eval": {
+          "accuracy": 0.9044730856709629,
+          "action_status": "succeeded",
+          "decision": "promoted",
+          "metric": "exact_match,strict-match",
+          "source_file": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/baseline/9b50a5c86682455d859d3309fad21a1b/warmup_round/benchmark_vllm_20260930_050611/results_2026-09-30T05-14-45.171093.json",
+          "status": "succeeded",
+          "task": "gsm8k",
+          "task_id": "9b50a5c86682455d859d3309fad21a1b"
+        }
+      },
+      "failure": null,
+      "id": "prelude:0:baseline",
+      "kind": "baseline",
+      "process_status": "succeeded",
+      "start_time": "2026-09-30T05:03:19+00:00",
+      "status": "succeeded",
+      "type": "baseline"
+    },
+    {
+      "blocked_by": null,
+      "business_outcome": null,
+      "ext": {
+        "request": {
+          "baseline_action_ref": "234d21306221428f8149c061bb5a36d0",
+          "confidence": 1.0,
+          "config_donor_tier": "self",
+          "config_source": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+          "donor": {
+            "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+            "gain_pct": 14.459609464408747,
+            "model": "Qwen3-8B",
+            "session_id": "20260929T173113Z-c99641a3"
+          },
+          "expected_gain_pct": 14.459609464408747,
+          "kernel_count": 0,
+          "min_reproduce_pct": 0.8,
+          "recipe_suppressed": false,
+          "session_baseline_tput": 4457.253461093059,
+          "task_id": "234d21306221428f8149c061bb5a36d0",
+          "tier": "exact"
+        }
+      },
+      "failure": null,
+      "id": "prelude:0:warm_replay",
+      "kind": "warm_replay",
+      "process_status": "running",
+      "start_time": "2026-09-30T05:16:39+00:00",
+      "status": "running",
+      "type": "warm_replay"
+    },
+    {
+      "blocked_by": null,
+      "business_outcome": "reproduced",
+      "end_time": "2026-09-30T05:30:26+00:00",
+      "ext": {
+        "applied": {
+          "extra_envs": {},
+          "extra_server_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+          "kernel": {
+            "kept": 0,
+            "reverted": 0,
+            "status": "empty",
+            "total": 0,
+            "validation": "combined_recipe_kernel"
+          }
+        },
+        "blocked_by": null,
+        "duration_sec": 0.009,
+        "failure": null,
+        "gates": [
+          {
+            "gate": "tput_valid",
+            "observed": 4485.58196688822,
+            "passed": true,
+            "reason": "the replay and its anchor both measured",
+            "threshold": 4457.253461093059,
+            "ts": "2026-09-30T05:30:26+00:00"
+          },
+          {
+            "gate": "accuracy",
+            "observed": 0.9075056861258529,
+            "passed": true,
+            "reason": "no regression against the baseline reference",
+            "threshold": 0.9044730856709629,
+            "ts": "2026-09-30T05:30:26+00:00"
+          },
+          {
+            "gate": "keep_threshold",
+            "observed": 0.6355596791261409,
+            "passed": true,
+            "reason": "legacy local replay keeps any positive gain",
+            "threshold": 0.0,
+            "ts": "2026-09-30T05:30:26+00:00"
+          },
+          {
+            "gate": "promotion",
+            "observed": null,
+            "passed": true,
+            "reason": "every patched checkout the replay measured on was promoted",
+            "threshold": null,
+            "ts": "2026-09-30T05:30:26+00:00"
+          },
+          {
+            "gate": "params_present",
+            "observed": null,
+            "passed": true,
+            "reason": "the replay carries params that can be pushed onto the stack",
+            "threshold": null,
+            "ts": "2026-09-30T05:30:26+00:00"
+          }
+        ],
+        "measurement": {
+          "accuracy": 0.9075056861258529,
+          "after_tput": 4485.58196688822,
+          "baseline_accuracy": 0.9044730856709629,
+          "before_tput": 4457.253461093059,
+          "cold_tput": 4501.03982568609,
+          "eval_ran": true,
+          "gain_pct": 0.6355596791261409,
+          "hot_tput": 4485.58196688822
+        },
+        "promotion": {
+          "promoted_checkout": "",
+          "replayed_patch_refs": [],
+          "stack_entry": {
+            "accuracy": 0.9075056861258529,
+            "cold_tput": 4501.03982568609,
+            "gain_pct": 0.636,
+            "hot_tput": 4485.58196688822,
+            "source_confidence": 1.0,
+            "source_tier": "exact"
+          }
+        },
+        "request": {
+          "baseline_action_ref": "234d21306221428f8149c061bb5a36d0",
+          "confidence": 1.0,
+          "config_donor_tier": "self",
+          "config_source": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+          "donor": {
+            "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+            "gain_pct": 14.459609464408747,
+            "model": "Qwen3-8B",
+            "session_id": "20260929T173113Z-c99641a3"
+          },
+          "expected_gain_pct": 14.459609464408747,
+          "kernel_count": 0,
+          "min_reproduce_pct": 0.8,
+          "recipe_suppressed": null,
+          "session_baseline_tput": 4457.253461093059,
+          "task_id": "234d21306221428f8149c061bb5a36d0",
+          "tier": "exact"
+        },
+        "rollback": null,
+        "skip": null,
+        "verdict": {
+          "below_historical_reproduce_pct": true,
+          "error_class": "",
+          "historical_reproduce_bar_pct": 11.568,
+          "keep_threshold_pct": 0.0,
+          "outcome_status": "reproduced",
+          "reason": "",
+          "settled_at": "2026-09-30T05:30:26+00:00"
+        }
+      },
+      "failure": null,
+      "id": "prelude:0:warm_replay",
+      "kind": "warm_replay",
+      "process_status": "succeeded",
+      "start_time": "2026-09-30T05:30:26+00:00",
+      "status": "succeeded",
+      "type": "warm_replay"
+    },
+    {
+      "blocked_by": null,
+      "business_outcome": null,
+      "end_time": "2026-09-30T05:52:40+00:00",
+      "ext": {
+        "actions": {
+          "count": 0,
+          "kinds": [],
+          "rows": [],
+          "settled": 0
+        },
+        "denials": {
+          "count": 0,
+          "rows": []
+        },
+        "duration_sec": 30.5064,
+        "entered_at": "2026-09-30T05:52:10+00:00",
+        "entries": 1,
+        "exit_reason": "sweep_done",
+        "exited_at": "2026-09-30T05:52:40+00:00",
+        "macro_cycle": 0,
+        "markers": {
+          "count": 0,
+          "rows": []
+        },
+        "open": false,
+        "phase": "SWEEP",
+        "proposals": {
+          "count": 0,
+          "materialized": 0,
+          "reviewed": 0,
+          "rows": []
+        },
+        "segments": [
+          {
+            "duration_sec": 30.506399631500244,
+            "entered_at": "2026-09-30T05:52:10+00:00",
+            "entered_evidence": {
+              "affordable_rounds": 45.01,
+              "baseline_tput": 4457.253461093059,
+              "fits_one_optimization_round": true,
+              "measured_round_sec": 171.3,
+              "optimize_skipped": true,
+              "predicate_inputs": {
+                "baseline": {
+                  "double_run": true,
+                  "failure_streak": 0,
+                  "measure_round_dropped": false,
+                  "phase_spent_sec": 2967.671941757202,
+                  "post_ready_runtime_sec": 460.39666748809816,
+                  "runtime_sec": 518.99,
+                  "session_usable_sec": 7712.347938537597,
+                  "tput": 4457.253461093059,
+                  "warm_replay_status": "reproduced",
+                  "warm_runtime_sec": 112.75
+                },
+                "budget": null,
+                "current_phase": "PRELUDE",
+                "enablement_in_flight": false,
+                "global": {
+                  "closing_phase": false,
+                  "cycle_reloop_min_remaining_sec": 0.0,
+                  "session_remaining_sec": null,
+                  "stop_reason": "",
+                  "sweep_closeout_status": "",
+                  "target_reached_at": ""
+                },
+                "hint": null,
+                "macro_cycle": 0,
+                "now_unix": 1790747530.2078958,
+                "pending_work": null,
+                "phase_budget_pct": {
+                  "CLOSE": 0.02,
+                  "FRAMEWORK_AGENT": 0.0,
+                  "KERNEL_AGENT": 0.0,
+                  "PRELUDE": 0.03,
+                  "SWEEP": 0.9
+                },
+                "plateau": null,
+                "run_flags": {
+                  "enablement_enabled": true,
+                  "framework_agent_enabled": false,
+                  "kernel_enabled": false
+                },
+                "sweep_result": null
+              },
+              "priced_by": "boot_plus_benchmark",
+              "session_usable_sec": 7712.3
+            },
+            "entered_reason": "prelude_done",
+            "entered_unix": 1790747530.2086945,
+            "exit_evidence": {
+              "cycle_gain_delta": 0.63556,
+              "cycle_gained": false,
+              "macro_cycle": 0,
+              "min_gain_pct": 1.0,
+              "min_remaining_sec_effective": 5400.0,
+              "next_cycle": 1,
+              "no_gain_cycle_streak_effective": 1,
+              "predicate_inputs": {
+                "baseline": null,
+                "budget": {
+                  "cap_sec": 9720.0,
+                  "cumulative_elapsed_sec": 30.504659414291382,
+                  "entry_elapsed_sec": 30.504659414291382,
+                  "remaining_sec": 7631.574096757432
+                },
+                "current_phase": "SWEEP",
+                "enablement_in_flight": false,
+                "global": {
+                  "closing_phase": false,
+                  "cycle_reloop_min_remaining_sec": 0.0,
+                  "session_remaining_sec": null,
+                  "stop_reason": "",
+                  "sweep_closeout_status": "skipped",
+                  "target_reached_at": ""
+                },
+                "hint": null,
+                "macro_cycle": 0,
+                "now_unix": 1790747560.7133539,
+                "pending_work": null,
+                "phase_budget_pct": {
+                  "CLOSE": 0.02,
+                  "FRAMEWORK_AGENT": 0.0,
+                  "KERNEL_AGENT": 0.0,
+                  "PRELUDE": 0.03,
+                  "SWEEP": 0.9
+                },
+                "plateau": null,
+                "run_flags": {
+                  "enablement_enabled": true,
+                  "framework_agent_enabled": false,
+                  "kernel_enabled": false
+                },
+                "sweep_result": {
+                  "budget_exhausted": false,
+                  "reloop": {
+                    "current_gain_pct": 0.6355596791261355,
+                    "gain_at_cycle_start_pct": 0.0,
+                    "max_cycles": 1000,
+                    "min_gain_pct": 1.0,
+                    "min_remaining_sec": 5400.0,
+                    "no_gain_cycles": 3,
+                    "prior_no_gain_cycle_streak": 0,
+                    "saturated_directions": {},
+                    "session_remaining_sec": 7801.842513561249
+                  },
+                  "skip_reason": "disabled",
+                  "status": "skipped",
+                  "successful_pairs": 0,
+                  "summary_present": false,
+                  "was_skipped": true
+                }
+              },
+              "reloop": true,
+              "sweep_skip_budget_exhausted": false,
+              "sweep_skip_reason": "disabled",
+              "sweep_status": "skipped",
+              "sweep_was_skipped": true
+            },
+            "exit_reason": "sweep_done",
+            "exited_at": "2026-09-30T05:52:40+00:00",
+            "exited_unix": 1790747560.715094,
+            "from_phase": "PRELUDE",
+            "sequence": 2,
+            "to_phase": "CLOSE"
+          }
+        ]
+      },
+      "failure": null,
+      "id": "sweep:0:phase",
+      "kind": "phase",
+      "process_status": "succeeded",
+      "start_time": "2026-09-30T05:52:10+00:00",
+      "status": "succeeded",
+      "type": "phase"
+    },
+    {
+      "blocked_by": null,
+      "business_outcome": null,
+      "end_time": "2026-09-30T05:52:40+00:00",
+      "ext": {
+        "adoptions": {
+          "by_source": {
+            "explore": {
+              "count": 0,
+              "total_gain_pct": 0.0,
+              "unmeasured": 0
+            },
+            "framework_agent": {
+              "count": 0,
+              "total_gain_pct": 0.0,
+              "unmeasured": 0
+            },
+            "kernel": {
+              "by_backend": {
+                "forge": {
+                  "count": 0,
+                  "total_gain_pct": 0.0,
+                  "unmeasured": 0
+                },
+                "geak": {
+                  "count": 0,
+                  "total_gain_pct": 0.0,
+                  "unmeasured": 0
+                },
+                "unattributed": {
+                  "count": 0,
+                  "total_gain_pct": 0.0,
+                  "unmeasured": 0
+                }
+              },
+              "count": 0,
+              "total_gain_pct": 0.0,
+              "unmeasured": 0
+            },
+            "unattributed": {
+              "count": 0,
+              "total_gain_pct": 0.0,
+              "unmeasured": 0
+            },
+            "warm_replay": {
+              "count": 1,
+              "total_gain_pct": 0.63556,
+              "unmeasured": 0
+            }
+          },
+          "count": 1,
+          "rows": [
+            {
+              "accepted_kernels": [],
+              "accuracy": 0.9075056861258529,
+              "action": "replay_warm_recipe",
+              "attribution_eligible": null,
+              "backend": null,
+              "baseline_tput": 4457.253461093059,
+              "contribution_pct": 0.63556,
+              "cumulative_gain_pct": 0.63556,
+              "degrade_reason": "",
+              "fingerprint": "0afe41eff4e5aec0",
+              "gap_canonical_id": null,
+              "kernel_id": null,
+              "lever_kind": null,
+              "local_gain_pct": 0.63556,
+              "objective": "output_throughput",
+              "operation_kind": "param",
+              "provenance": null,
+              "recorded_at": "2026-09-30T05:30:26+00:00",
+              "scope": null,
+              "source": "warm_replay",
+              "source_phase": "PRELUDE",
+              "stack_index": 0,
+              "task_id": "234d21306221428f8149c061bb5a36d0",
+              "throughput_after": 4485.58196688822,
+              "throughput_before": 4457.253461093059,
+              "ts": "2026-09-30T05:30:26.641047+00:00",
+              "variant_name": "warm_replay"
+            }
+          ]
+        },
+        "attributed_gain_pct": 0.63556,
+        "baseline_tput": 4457.253461093059,
+        "chain_total_gain_pct": 0.63556,
+        "guards": {
+          "chain_breaks": 0,
+          "unmeasured": 0
+        },
+        "objective": "output_throughput",
+        "reconciliation_gap_pct": -0.0,
+        "unattributed_gain_pct": 0.0,
+        "validated_total_gain_pct": 0.6355596791261355,
+        "validations": {
+          "at_head": true,
+          "count": 1,
+          "rows": [
+            {
+              "baseline_tput": 4457.253461093059,
+              "e2el_mean_ms": 14600.184744137368,
+              "graded_objective": "output_throughput",
+              "measurement_basis": "e2e_rebench",
+              "perf": {
+                "duration_seconds": 73.05183639912866,
+                "e2e_norm_intvty_p50": null,
+                "e2e_norm_intvty_p90": null,
+                "input_throughput": null,
+                "output_tput_per_gpu": null,
+                "request_error_rate": null,
+                "total_throughput": 8971.16393377644,
+                "tpot_p50_ms": 13.28789061838934,
+                "tpot_p90_ms": 13.884192172101976,
+                "ttft_p50_ms": 1001.4789489796385,
+                "ttft_p90_ms": 1351.453568646685
+              },
+              "server_launch_flags": "",
+              "source": "writeback",
+              "stack_len": 1,
+              "ts": "2026-09-30T05:30:26.642965+00:00",
+              "ttft_e2el_source": "benchmark_report",
+              "ttft_mean_ms": 936.4853060767928,
+              "validated_gain_pct": 0.6355596791261355,
+              "validated_tput": 4485.58196688822,
+              "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834"
+            }
+          ],
+          "settled": {
+            "baseline_tput": 4457.253461093059,
+            "e2el_mean_ms": 14600.184744137368,
+            "graded_objective": "output_throughput",
+            "measurement_basis": "e2e_rebench",
+            "perf": {
+              "duration_seconds": 73.05183639912866,
+              "e2e_norm_intvty_p50": null,
+              "e2e_norm_intvty_p90": null,
+              "input_throughput": null,
+              "output_tput_per_gpu": null,
+              "request_error_rate": null,
+              "total_throughput": 8971.16393377644,
+              "tpot_p50_ms": 13.28789061838934,
+              "tpot_p90_ms": 13.884192172101976,
+              "ttft_p50_ms": 1001.4789489796385,
+              "ttft_p90_ms": 1351.453568646685
+            },
+            "server_launch_flags": "",
+            "source": "writeback",
+            "stack_len": 1,
+            "ts": "2026-09-30T05:30:26.642965+00:00",
+            "ttft_e2el_source": "benchmark_report",
+            "ttft_mean_ms": 936.4853060767928,
+            "validated_gain_pct": 0.6355596791261355,
+            "validated_tput": 4485.58196688822,
+            "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T050241Z-76dd3802/runs/replay_warm_recipe/234d21306221428f8149c061bb5a36d0/measure_round/benchmark_vllm_20260930_052834"
+          }
+        }
+      },
+      "failure": null,
+      "id": "stack:0:stack",
+      "kind": "stack",
+      "process_status": "succeeded",
+      "status": "succeeded",
+      "type": "stack"
+    },
+    {
+      "blocked_by": null,
+      "business_outcome": null,
+      "ext": {
+        "actions": {
+          "count": 2,
+          "kinds": [
+            "report",
+            "session_breakdown"
+          ],
+          "rows": [
+            {
+              "action": "session_breakdown",
+              "allowed": true,
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:52:40+00:00",
+              "dispatched_unix": 1790747560.8022647,
+              "duration_sec": null,
+              "macro_cycle": 0,
+              "phase": "CLOSE",
+              "task_id": "06da465a655e4f8db9f08ee5d10ff628",
+              "tick": 2
+            },
+            {
+              "action": "report",
+              "allowed": true,
+              "denial_rule": null,
+              "dispatch_class": "coordinator",
+              "dispatched_at": "2026-09-30T05:52:40+00:00",
+              "dispatched_unix": 1790747560.7453063,
+              "duration_sec": null,
+              "macro_cycle": 0,
+              "phase": "CLOSE",
+              "task_id": "f0ac2ba4033c4539bae0099e136e22fb",
+              "tick": 2
+            }
+          ],
+          "settled": 0
+        },
+        "denials": {
+          "count": 0,
+          "rows": []
+        },
+        "duration_sec": null,
+        "entered_at": "2026-09-30T05:52:40+00:00",
+        "entries": 1,
+        "exit_reason": "",
+        "exited_at": "",
+        "macro_cycle": 0,
+        "markers": {
+          "count": 0,
+          "rows": []
+        },
+        "open": true,
+        "phase": "CLOSE",
+        "proposals": {
+          "count": 0,
+          "materialized": 0,
+          "reviewed": 0,
+          "rows": []
+        },
+        "segments": [
+          {
+            "entered_at": "2026-09-30T05:52:40+00:00",
+            "entered_evidence": {
+              "cycle_gain_delta": 0.63556,
+              "cycle_gained": false,
+              "macro_cycle": 0,
+              "min_gain_pct": 1.0,
+              "min_remaining_sec_effective": 5400.0,
+              "next_cycle": 1,
+              "no_gain_cycle_streak_effective": 1,
+              "predicate_inputs": {
+                "baseline": null,
+                "budget": {
+                  "cap_sec": 9720.0,
+                  "cumulative_elapsed_sec": 30.504659414291382,
+                  "entry_elapsed_sec": 30.504659414291382,
+                  "remaining_sec": 7631.574096757432
+                },
+                "current_phase": "SWEEP",
+                "enablement_in_flight": false,
+                "global": {
+                  "closing_phase": false,
+                  "cycle_reloop_min_remaining_sec": 0.0,
+                  "session_remaining_sec": null,
+                  "stop_reason": "",
+                  "sweep_closeout_status": "skipped",
+                  "target_reached_at": ""
+                },
+                "hint": null,
+                "macro_cycle": 0,
+                "now_unix": 1790747560.7133539,
+                "pending_work": null,
+                "phase_budget_pct": {
+                  "CLOSE": 0.02,
+                  "FRAMEWORK_AGENT": 0.0,
+                  "KERNEL_AGENT": 0.0,
+                  "PRELUDE": 0.03,
+                  "SWEEP": 0.9
+                },
+                "plateau": null,
+                "run_flags": {
+                  "enablement_enabled": true,
+                  "framework_agent_enabled": false,
+                  "kernel_enabled": false
+                },
+                "sweep_result": {
+                  "budget_exhausted": false,
+                  "reloop": {
+                    "current_gain_pct": 0.6355596791261355,
+                    "gain_at_cycle_start_pct": 0.0,
+                    "max_cycles": 1000,
+                    "min_gain_pct": 1.0,
+                    "min_remaining_sec": 5400.0,
+                    "no_gain_cycles": 3,
+                    "prior_no_gain_cycle_streak": 0,
+                    "saturated_directions": {},
+                    "session_remaining_sec": 7801.842513561249
+                  },
+                  "skip_reason": "disabled",
+                  "status": "skipped",
+                  "successful_pairs": 0,
+                  "summary_present": false,
+                  "was_skipped": true
+                }
+              },
+              "reloop": true,
+              "sweep_skip_budget_exhausted": false,
+              "sweep_skip_reason": "disabled",
+              "sweep_status": "skipped",
+              "sweep_was_skipped": true
+            },
+            "entered_reason": "sweep_done",
+            "entered_unix": 1790747560.715094,
+            "from_phase": "SWEEP",
+            "sequence": 3
+          }
+        ]
+      },
+      "failure": null,
+      "id": "close:0:phase",
+      "kind": "phase",
+      "process_status": "interrupted",
+      "start_time": "2026-09-30T05:52:40+00:00",
+      "status": "interrupted",
+      "type": "phase"
+    }
+  ]
+}
