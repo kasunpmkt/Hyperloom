@@ -105,8 +105,21 @@ TTFT p50 is the most stable latency metric here, so latency gains are easiest to
 
 ### `ref-moe-fp4`
 
-_Filled in from `ref-moe-fp4/noise{1,2,3}/` (runs in progress)._ Until then, two stock samples exist:
-1462.1 tok/s (the full run's baseline) and 1523.1 tok/s (`ab-stock1`), about 4% apart.
+| Metric | Run 1 | Run 2 | Run 3 | Min | Max | Mean | Spread |
+|---|---|---|---|---|---|---|---|
+| Output throughput (tok/s) | 1531.6 | 1521.3 | 1463.4 | 1463.4 | 1531.6 | 1505.4 | **4.53%** |
+| TTFT p50 (ms) | 859.3 | 876.2 | 903.5 | 859.3 | 903.5 | 879.6 | 5.02% |
+| TTFT p90 (ms) | 1652.1 | 1648.5 | 2184.2 | 1648.5 | 2184.2 | 1828.3 | 29.30% |
+| TPOT p50 (ms) | 41.29 | 41.20 | 42.63 | 41.20 | 42.63 | 41.71 | **3.43%** |
+| TPOT p90 (ms) | 42.20 | 42.97 | 43.80 | 42.20 | 43.80 | 42.99 | 3.80% |
+| E2EL p99 (ms) | 44168 | 45075 | 47581 | 44168 | 47581 | 45608 | 7.48% |
+| GSM8K | 0.965 | 0.965 | 0.964 | 0.964 | 0.965 | 0.965 | 0.08% |
+
+With the two stock baselines measured on 1 Oct (1462.1 in `today/`, 1523.1 in `ab-stock1/`) there are five
+throughput samples, mean 1500.3, spread **4.6%**. They fall into two clusters, about 1463 (2 runs) and about
+1525 (3 runs), and the slow runs also have a much higher TTFT p90 (2184 and 2859 ms against ~1650). That
+looks like two server states rather than continuous noise; until it is explained, use **5%** as this
+workload's throughput band and treat TTFT p90 as ungraded.
 
 ### Accuracy band
 
@@ -149,7 +162,7 @@ One full run with the default chain (`ref-moe-fp4/today/`, 6-hour preset):
 | KERNEL_AGENT (GEAK) | Tuned `triton_kernels` MXFP4 MoE launch settings: +20.7% in GEAK's own harness. The run was stopped at the plan-usage limit while GEAK finished, and the resumed run dropped the result (#43). |
 
 The run has no `session_breakdown.json` because it never reached CLOSE; `state.json` and `kb_row.json`
-are its record. Its +2.75% is inside the two stock samples' 4% spread.
+are its record. Its +2.75% is inside the workload's 5% band: inconclusive.
 
 The kernel result, measured separately with the stock-baseline method (the GEAK add-on on the server's
 `PYTHONPATH`, no agents):
@@ -162,9 +175,9 @@ The kernel result, measured separately with the stock-baseline method (the GEAK 
 | `ab-geak2` | GEAK settings | 1826.3 | 33.63 | 0.961 |
 | `ab-geak-aiter1` | GEAK settings + AITER attention | **1867.8** | 33.54 | 0.964 |
 
-GEAK's settings give **+21.3%** (mean against mean), and with AITER attention **+25.1%**, accuracy
-unchanged. Against this workload, the number to beat is the stock band; the reachable best measured so
-far is 1867.8 tok/s.
+Against the five-run stock mean (1500.3 tok/s), GEAK's settings give **+20.7%** (mean of two runs) and
+with AITER attention **+24.5%**, accuracy unchanged; both are far outside the 5% band. The best measured
+configuration so far is 1867.8 tok/s.
 
 ## Layout
 
