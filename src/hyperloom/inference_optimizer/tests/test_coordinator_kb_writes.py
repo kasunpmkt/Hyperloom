@@ -118,34 +118,6 @@ def test_kb_amend_recipe_is_noop_in_remote_mode(tmp_path: Path) -> None:
     coord._kb_amend_recipe(append_lesson={"statement": "must not write", "measured_impact": ""})
 
 
-def test_record_fact_per_variant_stamps_best_config_on_keep(tmp_path: Path) -> None:
-    """KEEP with structured variant args must write best_config for warm-replay."""
-    from types import SimpleNamespace
-
-    coord = _make_coordinator(tmp_path)
-    task = SimpleNamespace(
-        kind="explore",
-        task_id="t-keep-bc",
-        params={},
-    )
-    coord._record_fact_per_variant(
-        task=task,
-        source_session_id="sess-1",
-        variant_outcome={
-            "outcome": "KEEP",
-            "variant_name": "disable_radix",
-            "variant": {"extra_server_args": "--disable-radix-cache"},
-            "metrics": {"gain_pct": 0.66, "output_throughput": 6700.0},
-        },
-    )
-    row = coord.recipe_kb.get_recipe(canonical_id=_expected_cid())
-    assert row is not None
-    bc = row.get("best_config") or {}
-    assert bc.get("extra_server_args") == "--disable-radix-cache"
-    assert float(row.get("best_throughput") or 0.0) == 6700.0
-    assert any("disable-radix-cache" in str(l.get("statement") or "") for l in (row.get("lessons") or []))
-
-
 def test_record_fact_per_variant_does_not_clobber_better_best_config(
     tmp_path: Path,
 ) -> None:
@@ -164,6 +136,7 @@ def test_record_fact_per_variant_does_not_clobber_better_best_config(
         best_config={"extra_server_args": "--page-size 32"},
         best_throughput=7000.0,
     )
+    coord.shared_state.current_best = {"extra_server_args": "--disable-radix-cache", "tput": 6600.0}
     task = SimpleNamespace(kind="explore", task_id="t-weaker", params={})
     coord._record_fact_per_variant(
         task=task,
@@ -543,6 +516,67 @@ def test_lift_then_validation_leaves_the_recipe_publishable(tmp_path: Path) -> N
 
     assert outcome["result_type"] == "written"
     assert coord.recipe_kb.get_recipe(canonical_id=_expected_cid())["best_throughput"] == 1100.0
+
+
+_KV_FP8 = "--kv-cache-dtype fp8"
+_FULL_DECODE = '--compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}'
+
+
+def _keep_kv_fp8_then_full_decode(coord: Coordinator) -> None:
+    """Lift two explore levers the way a session does: each winner carries only its own delta."""
+    state = coord.shared_state
+    state.baseline_tput = 1000.0
+    state.current_best = {"action": "baseline", "tput": 1000.0, "extra_server_args": "", "extra_envs": {}}
+    for name, args, tput in (("kv_fp8", _KV_FP8, 1120.0), ("full_decode_cudagraph", _FULL_DECODE, 1145.0)):
+        assert coord._lift_to_current_best(
+            "explore",
+            tput,
+            {
+                "name": name,
+                "extra_server_args": args,
+                "candidate_extra_server_args": args,
+                "recipe_delta": {"extra_server_args": args, "args_mode": "append"},
+            },
+        )
+
+
+def _assert_both_levers(best_config: dict) -> None:
+    args = best_config.get("extra_server_args", "")
+    assert _KV_FP8 in args and _FULL_DECODE in args, f"best_config lost a lever: {args!r}"
+
+
+def test_keep_amend_records_every_kept_lever(tmp_path: Path) -> None:
+    """A KEEP of the second lever stamps the cumulative config, not that lever's delta."""
+    from types import SimpleNamespace
+
+    coord = _make_coordinator(tmp_path)
+    _keep_kv_fp8_then_full_decode(coord)
+
+    coord._record_fact_per_variant(
+        task=SimpleNamespace(kind="explore", task_id="t-full-decode", params={}),
+        source_session_id="sess-1",
+        variant_outcome={
+            "outcome": "KEEP",
+            "variant_name": "full_decode_cudagraph",
+            "variant": {"extra_server_args": _FULL_DECODE},
+            "metrics": {"gain_pct": 2.2, "output_throughput": 1145.0},
+        },
+    )
+
+    row = coord.recipe_kb.get_recipe(canonical_id=_expected_cid())
+    _assert_both_levers(row["best_config"])
+    assert row["best_throughput"] == 1145.0
+    assert any("FULL_DECODE_ONLY" in str(lesson.get("statement") or "") for lesson in row["lessons"])
+
+
+def test_close_finalize_records_every_kept_lever(tmp_path: Path) -> None:
+    coord = _make_coordinator(tmp_path)
+    _keep_kv_fp8_then_full_decode(coord)
+    assert coord._update_cumulative_gain_validated(1145.0, {"output_throughput": 1145.0})
+
+    assert coord.finalize_recipe_and_journal()["result_type"] == "written"
+
+    _assert_both_levers(coord.recipe_kb.get_recipe(canonical_id=_expected_cid())["best_config"])
 
 
 # kernel_optimizations[].e2e_decision must carry the integrate verdict, not only the micro-layer decision.

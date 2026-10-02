@@ -1855,7 +1855,6 @@ class WritebackCollaborator:
         change: str,
         gain_pct: float | None,
         throughput_after: float | None,
-        best_config_candidate: dict[str, Any] | None,
         evidence_refs: list[str],
         pitfall_severity_dict: dict[str, Any],
         variant_name: str | None = None,
@@ -1874,8 +1873,6 @@ class WritebackCollaborator:
             change: Summarized change string (used in the statement).
             gain_pct: Measured gain percentage, or ``None``.
             throughput_after: Measured throughput after the change, or ``None``.
-            best_config_candidate: Pre-extracted best-config dict (differs
-                between per-task and per-variant callers).
             evidence_refs: List of evidence reference strings to stamp on the
                 provenance (caller builds task-only or task+variant refs).
             pitfall_severity_dict: The dict passed to ``_pitfall_severity_for``
@@ -1914,10 +1911,11 @@ class WritebackCollaborator:
                 measured_at=now_iso,
             )
             live = self._read_local_recipe_row()
+            kept_config = self._kept_best_config()
             recipe_overrides = self._kb_best_config_overrides_for_keep(
                 live=live,
-                best_config_candidate=best_config_candidate,
-                throughput_after=throughput_after,
+                best_config_candidate=kept_config,
+                throughput_after=kept_config.get("tput"),
             )
             self._kb_amend_recipe(
                 append_lesson={
@@ -2017,10 +2015,6 @@ class WritebackCollaborator:
             change=change,
             gain_pct=gain_pct,
             throughput_after=throughput_after,
-            best_config_candidate=self._extract_kept_best_config(
-                task=task,
-                result_dict=result_dict,
-            ),
             # evidence_refs (log:task-...) gives traceability since source_session_id lands in attrs.
             evidence_refs=[f"log:task-{task.task_id}"],
             pitfall_severity_dict=result_dict,
@@ -2181,10 +2175,6 @@ class WritebackCollaborator:
             change=change,
             gain_pct=gain_pct,
             throughput_after=throughput_after,
-            best_config_candidate=self._extract_kept_best_config(
-                task=task,
-                variant_attrs=change_attrs,
-            ),
             # Workload-shape tags — see _record_fact_per_task.
             evidence_refs=[f"log:task-{task.task_id}", f"variant:{variant_name}"],
             pitfall_severity_dict={
@@ -2397,6 +2387,33 @@ class WritebackCollaborator:
                     reverted_rows.append(row)
         return kept_sources, kept_by_gap, reverted_rows
 
+    def _kept_best_config(self) -> dict[str, Any]:
+        """The recipe ``best_config`` for the session's kept configuration.
+
+        A warm replay launches this config in place of the baseline, so it must
+        carry every kept lever. A stack entry's ``candidate_extra_server_args``
+        is only that lever's delta; its ``extra_server_args`` is the cumulative
+        launch string the lift built.
+        """
+        ss = self.shared_state
+        current_best = getattr(ss, "current_best", {}) or {}
+        opt_stack = getattr(ss, "optimization_stack", []) or []
+        # RecipeKB best_config keys on the canonical extra_server_args field.
+        best_config: dict[str, Any] = {}
+        if isinstance(current_best, dict):
+            cb_args = current_best.get("extra_server_args")
+            if cb_args:
+                best_config["extra_server_args"] = str(cb_args)
+            for key in ("extra_envs", "name", "tput", "accuracy"):
+                if key in current_best:
+                    best_config[key] = current_best[key]
+        # Prefer the last validated stack layer for launch args (current_best may carry a corrupted string).
+        if opt_stack and isinstance(opt_stack[-1], dict):
+            stack_args = str(opt_stack[-1].get("extra_server_args") or "").strip()
+            if stack_args:
+                best_config["extra_server_args"] = stack_args
+        return best_config
+
     def _build_recipe_attrs_from_state(self) -> dict[str, Any]:
         """Materialise the recipe-shaped view of :class:`SharedState` (defensive getattr).
 
@@ -2410,24 +2427,7 @@ class WritebackCollaborator:
         opt_stack = getattr(ss, "optimization_stack", []) or []
         gain_per_stack = getattr(ss, "gain_per_stack_entry", []) or []
         last_failures = getattr(ss, "last_action_failures", []) or []
-        # RecipeKB best_config keys on the canonical extra_server_args field.
-        best_config: dict[str, Any] = {}
-        if isinstance(current_best, dict):
-            cb_args = current_best.get("extra_server_args")
-            if cb_args:
-                best_config["extra_server_args"] = str(cb_args)
-            for key in ("extra_envs", "name", "tput", "accuracy"):
-                if key in current_best:
-                    best_config[key] = current_best[key]
-        # Prefer the last validated stack layer for launch args (current_best may carry a corrupted string).
-        if opt_stack:
-            last_entry = opt_stack[-1]
-            if isinstance(last_entry, dict):
-                stack_args = str(
-                    last_entry.get("candidate_extra_server_args") or last_entry.get("extra_server_args") or "",
-                ).strip()
-                if stack_args:
-                    best_config["extra_server_args"] = stack_args
+        best_config = self._kept_best_config()
         sediment_on = bool(getattr(ss, "recipe_sediment_enabled", True))
         kept_sources, kept_by_gap, reverted_rows = self._collect_attempt_provenance() if sediment_on else ({}, {}, [])
         what_worked: list[dict[str, Any]] = []

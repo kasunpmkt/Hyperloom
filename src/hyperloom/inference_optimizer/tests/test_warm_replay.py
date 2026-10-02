@@ -1122,12 +1122,22 @@ def test_promote_warm_replay_double_run_uses_hot_measure_round(tmp_path):
     assert coord.shared_state.cumulative_gain_validated == 23.0
 
 
-def test_promote_warm_replay_adopts_on_any_positive_gain(tmp_path):
-    """Any replay tput above baseline seeds the stack, even below the historical reproduce bar."""
+@pytest.mark.parametrize(
+    ("expected_gain", "measured_tput", "required"),
+    [
+        # The #21 noise3 replay: a +14.46% recipe measured +0.64%.
+        (14.46, 603.84, 11.568),
+        (25.0, 660.0, 20.0),
+        # No recorded gain: the session keep threshold (1.0% at cycle 0) binds.
+        (0.0, 603.0, 1.0),
+    ],
+)
+def test_promote_warm_replay_below_required_gain_is_drift(tmp_path, expected_gain, measured_tput, required):
+    """A replay below max(keep threshold, expected x min_reproduce) is not reproduced and pushes nothing."""
     coord = _make_coord(tmp_path, warm_start_recipe=_warm_recipe_t1())
     coord.shared_state.warm_replay_outcome = {
         "status": "in_flight",
-        "expected_gain_pct": 25.0,
+        "expected_gain_pct": expected_gain,
         "warm_recipe_tier": "exact",
     }
     task = _StubTask(
@@ -1136,16 +1146,31 @@ def test_promote_warm_replay_adopts_on_any_positive_gain(tmp_path):
             "baseline_tput_anchor": 600.0,
         }
     )
-    # +10% vs baseline; below the historical bar but still adopted.
-    result = {"status": "succeeded", "output_throughput": 660.0}
-    coord._promote_warm_replay(result, task=task)
+    coord._promote_warm_replay({"status": "succeeded", "output_throughput": measured_tput}, task=task)
 
     outcome = coord.shared_state.warm_replay_outcome
-    assert outcome["status"] == "reproduced"
-    assert outcome["actual_gain_pct"] == 10.0
-    assert outcome.get("below_historical_reproduce_pct") is True
-    assert len(coord.shared_state.optimization_stack) == 1
-    assert coord.shared_state.current_best["action"] == "replay_warm_recipe"
+    assert outcome["status"] == "drift"
+    assert f"required {required:+.2f}%" in outcome["reason"]
+    assert outcome.get("below_historical_reproduce_pct", False) is (expected_gain > 0)
+    assert coord.shared_state.optimization_stack == []
+    assert coord.shared_state.current_best == {}
+    assert coord.shared_state.cumulative_gain_validated == 0.0
+
+
+@pytest.mark.asyncio
+async def test_replaying_a_two_lever_recipe_applies_both_levers(tmp_path):
+    """The replay launches the recipe's whole best_config and stacks it as one entry."""
+    both = '--kv-cache-dtype fp8 --compilation-config {"cudagraph_mode":"FULL_DECODE_ONLY"}'
+    coord = _make_coord(tmp_path, warm_start_recipe=_warm_recipe_t1(extra_server_args=both, expected_gain_pct=14.46))
+
+    task = await coord._maybe_enqueue_warm_replay(baseline_tput=600.0)
+    assert task.params["extra_server_args"] == both
+
+    coord._promote_warm_replay({"status": "succeeded", "output_throughput": 686.0}, task=task)
+
+    assert coord.shared_state.warm_replay_outcome["status"] == "reproduced"
+    assert coord.shared_state.optimization_stack[0]["extra_server_args"] == both
+    assert coord.shared_state.current_best["extra_server_args"] == both
 
 
 def test_promote_warm_replay_no_gain_is_drift(tmp_path):
@@ -1172,7 +1197,7 @@ def test_promote_warm_replay_no_gain_is_drift(tmp_path):
 
 
 def test_promote_warm_replay_succeeded_but_zero_gain_is_drift(tmp_path):
-    """``expected_gain_pct=0`` → any positive measurement is reproduced; zero/negative falls to drift."""
+    """``expected_gain_pct=0`` and no measured gain falls to drift."""
     coord = _make_coord(tmp_path, warm_start_recipe=_warm_recipe_t1())
     coord.shared_state.warm_replay_outcome = {
         "status": "in_flight",
@@ -2100,6 +2125,7 @@ async def test_low_confidence_recipe_does_not_suppress_kernel(tmp_path):
     assert task.params["recipe_extra_envs"] == {}
     assert task.params["extra_server_args"] == "--kernel"
     assert coord.shared_state.warm_replay_outcome["recipe_suppressed"] is True
+    assert coord.shared_state.warm_replay_outcome["expected_gain_pct"] == 0.0
     coord._promote_warm_replay(
         {"status": "succeeded", "output_throughput": 612.0},
         task=task,
@@ -2585,7 +2611,8 @@ def test_checkout_promotion_failure_retains_pending_when_rollback_fails(tmp_path
     assert coord.shared_state.warm_replay_pending == {"task_id": "warm"}
 
 
-def test_current_contract_threshold_preserves_local_legacy_positive_gain(tmp_path):
+def test_current_and_legacy_replays_share_the_keep_threshold(tmp_path):
+    """+0.5% clears no bar: both contracts reject it against the 1.0% cycle-0 keep threshold."""
     current = _make_coord(
         tmp_path / "current",
         warm_start_recipe=_warm_recipe_t1(),
@@ -2617,7 +2644,8 @@ def test_current_contract_threshold_preserves_local_legacy_positive_gain(tmp_pat
             }
         ),
     )
-    assert legacy.shared_state.warm_replay_outcome["status"] == "reproduced"
+    assert legacy.shared_state.warm_replay_outcome["status"] == "drift"
+    assert legacy.shared_state.warm_replay_outcome["keep_threshold_pct"] == pytest.approx(1.0)
 
 
 def test_zero_and_nonfinite_combined_thresholds(tmp_path):
