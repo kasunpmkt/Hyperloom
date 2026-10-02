@@ -1342,6 +1342,16 @@ class V6PhaseExt(TypedDict, total=False):
     markers: dict[str, Any]
     proposals: dict[str, Any]
     denials: dict[str, Any]
+    reactor_turns: dict[str, V6PhaseReactorTurns]
+
+
+class V6PhaseReactorTurns(TypedDict, total=False):
+    """One reactor role's ticks in one phase: the LLM turns it took, and the ones the reactor gate sat out while the
+    phase was owned by an in-flight task. ``reasons`` counts why each tick went the way it did."""
+
+    run: int
+    skipped: int
+    reasons: dict[str, int]
 
 
 class V6StackAdoption(TypedDict, total=False):

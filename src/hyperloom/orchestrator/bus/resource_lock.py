@@ -678,6 +678,12 @@ class SqliteLeaseBackend:
         )
         return {str(r["holder_id"]) for r in rows}
 
+    async def task_lease_expiry_unix(self, task_id: str) -> float | None:
+        """Return when the earliest lane row ``task_id`` holds expires, or ``None`` when it holds none."""
+        row = await self.db.fetchone("SELECT MIN(expires_at) AS expires_at FROM leases WHERE task_id = ?", (task_id,))
+        expires = str(row["expires_at"] or "") if row else ""
+        return datetime.fromisoformat(expires).timestamp() if expires else None
+
     async def lane_holders(self) -> dict[str, int]:
         """Return ``{lane: holder_count}`` for every retained ownership row."""
         rows = await self.db.fetchall("SELECT lane, COUNT(*) AS n FROM leases GROUP BY lane")
@@ -775,6 +781,10 @@ class ResourceLockManager:
             set[str]: Round ids holding :data:`BRINGUP_ROUND_LANE` then.
         """
         return await self.backend.bringup_round_holders(now_unix)
+
+    async def task_lease_expiry_unix(self, task_id: str) -> float | None:
+        """Return when the earliest lane row ``task_id`` holds expires, via the backend."""
+        return await self.backend.task_lease_expiry_unix(task_id)
 
     async def lane_holders(self) -> dict[str, int]:
         """Return ``{lane: live_holder_count}`` via the backend."""

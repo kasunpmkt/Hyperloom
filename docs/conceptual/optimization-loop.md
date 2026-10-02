@@ -348,7 +348,17 @@ turn never depends on what an earlier turn happened to remember.
   recall.
 
 Critic is likewise reactive and stateless per tick. Runtime RCA and automatic
-supervision are not roles in this loop. Stopped sessions require an explicit
+supervision are not roles in this loop.
+
+A role does not take a turn on every tick while its phase is owned by one
+in-flight task (KERNEL under its `kernel_agent` delegation): such a turn could
+only re-read unchanged state and hold. The reactor gate
+(`orchestrator/loop/reactor_gate.py`) sits the role out until the task leaves
+flight, the phase or its owner changes, mail other than the other role's routine
+observations arrives, the owner's lease or the phase budget is within two
+minutes of its end, the run starts closing, or ten minutes have passed since the
+role's last turn. Each phase event's `ext.reactor_turns` counts the turns run
+and sat out per role. Stopped sessions require an explicit
 operator `--resume-from` decision; `recover-session` only reconstructs artifacts
 offline.
 
