@@ -1,0 +1,76 @@
+{
+  "aiter_version": "0.1.20.post1",
+  "architectures": [
+    "Qwen3ForCausalLM"
+  ],
+  "authority": "EXPERIENTIAL",
+  "best_config": {},
+  "best_throughput": 0.0,
+  "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+  "conc": 4,
+  "confidence": 0.85,
+  "created_at": "2026-09-30T12:59:50.309225+00:00",
+  "ep": 1,
+  "evidence_refs": [],
+  "framework_name": "vllm",
+  "framework_version": "0.27.1.dev5+gf46a9dfe2.d20260827",
+  "hardware": "mi300x",
+  "image_digest": "docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0",
+  "isl": 1024,
+  "kernel_optimizations": [],
+  "last_profiled": "",
+  "lessons": [],
+  "max_model_len": 6144,
+  "model": "Qwen3-8B",
+  "model_class": "dense",
+  "model_name": "Qwen3-8B",
+  "model_type": "qwen3",
+  "osl": 1024,
+  "pitfalls": [],
+  "precision": "bf16",
+  "provenance": {
+    "details": {
+      "evidence": [
+        "log:session-20260930T125949Z-b387e5ca"
+      ],
+      "phase": "close_finalize"
+    },
+    "generated_at": "2026-09-30T15:34:59.536733+00:00",
+    "generator": "coordinator",
+    "source": "hyperloom-inference-optimizer"
+  },
+  "remaining_gaps": [],
+  "rocm_version": "10.0.0",
+  "sessions": [
+    {
+      "actions_taken": [],
+      "date": "2026-09-30T15:34:59.536145+00:00",
+      "gain_pct": 0.0,
+      "session_id": "20260930T125949Z-b387e5ca",
+      "stack_len": 0,
+      "throughput_after": 596.320937705323,
+      "throughput_before": 596.320937705323
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "0.1.20.post1",
+    "rocm_version": "10.0.0",
+    "vllm_version": "0.27.1.dev5+gf46a9dfe2.d20260827.rocm100"
+  },
+  "tp": 1,
+  "updated_at": "2026-09-30T15:34:59.536870+00:00",
+  "version": 2,
+  "what_failed": [
+    {
+      "gain_pct": null,
+      "name": "aiter_master_on",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "async_scheduling",
+      "reason": "reverted"
+    }
+  ],
+  "what_worked": []
+}

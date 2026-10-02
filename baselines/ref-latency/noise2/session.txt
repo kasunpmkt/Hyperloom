@@ -1,0 +1,2 @@
+run tag: gt-ref-latency-noise2
+session: 20260930T102654Z-c0db95e5

@@ -1,0 +1,2 @@
+run tag: gt-ref-dense-bf16-noise1
+session: 20260930T031907Z-e6c6caa2

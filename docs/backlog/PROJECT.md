@@ -68,6 +68,21 @@ public draft.
 when its delta against ground truth is **outside the noise band**. A delta inside the
 band is recorded as `inconclusive`, never as `keep`.
 
+### Recipe KB state
+
+Hyperloom's recipe KB (`$KNOWLEDGE_LOCAL_ROOT`, default `$USER_DATA_PATH/knowledge`) is keyed by
+model, GPU, framework, architecture, framework version and precision, not by concurrency or
+sequence length. Every run reads it (T0 warm replay, agent priors) and writes it back, including a
+baseline-only run. A shared KB therefore makes each run depend on the runs before it, which the
+noise band cannot absorb.
+
+**Every ground-truth and experiment run starts from an empty KB of its own:** point
+`KNOWLEDGE_LOCAL_ROOT` at a new empty directory per run. Keep the KB features enabled (no
+`--degraded-kb`); an empty KB only removes the carried-over knowledge. The persistent
+`$USER_DATA_PATH/knowledge` is for production use of Hyperloom only. An issue that changes the KB
+itself (storage, replay, priors) adds a second comparison from a frozen, versioned KB snapshot,
+copied fresh for each run.
+
 ## Experiment log
 
 The log has two levels. One rule governs both: **numbers are extracted by a script from
@@ -138,10 +153,10 @@ Filled in by issue #21 and kept current here:
 
 | Item | Value |
 |---|---|
-| Workstation | _(hostname, Ubuntu version)_ |
-| GPUs | _(model × count)_ |
-| ROCm / driver | _(version)_ |
-| Run mode | `docker` (validated stack); container image tag: _(tag)_ |
-| Workspace clone | _(absolute path; always the same path, so Claude's memory stays in one place)_ |
-| `USER_DATA_PATH` | _(persistent disk; holds the recipe KB and session dirs; backed up)_ |
-| Hyperloom wheel | 1.1.2 |
+| Workstation | `xe9680-3`, Ubuntu 22.04.5 LTS (kernel 5.15.0-130); shared with other users |
+| GPUs | 8× AMD Instinct MI300X (gfx942); this project uses host GPU 7 only |
+| ROCm / driver | host ROCk module 6.10.5; container ROCm 10.0.0 (HIP 7.15) |
+| Run mode | `docker` (validated stack); container image tag: `rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0`, one long-running container `hyperloom-hasith` that sees only GPU 7, started with `--init` |
+| Workspace clone | `/home/hasith/AMD/Hyperloom` |
+| `USER_DATA_PATH` | `/home/hasith/AMD/hyperloom-data` (local disk; backup not confirmed, so anything that must be kept is committed under `baselines/` or `experiments/`); per-run KBs under `kb-runs/<run tag>/` |
+| Hyperloom | source checkout (not the 1.1.2 wheel); the ground truth was measured at `main` `aac3eee24` |

@@ -1,0 +1,130 @@
+{
+  "aiter_version": "0.1.20.post1",
+  "architectures": [
+    "Qwen3ForCausalLM"
+  ],
+  "authority": "EXPERIENTIAL",
+  "best_config": {
+    "extra_envs": {
+      "VLLM_ROCM_USE_AITER": "1",
+      "VLLM_ROCM_USE_AITER_LINEAR": "1",
+      "VLLM_ROCM_USE_AITER_RMSNORM": "1"
+    },
+    "tput": 4474.745581930181
+  },
+  "best_throughput": 4474.745581930181,
+  "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+  "conc": 64,
+  "confidence": 0.85,
+  "created_at": "2026-09-30T06:21:06.095191+00:00",
+  "ep": 1,
+  "evidence_refs": [],
+  "framework_name": "vllm",
+  "framework_version": "0.27.1.dev5+gf46a9dfe2.d20260827",
+  "hardware": "mi300x",
+  "image_digest": "docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0",
+  "isl": 1024,
+  "kernel_optimizations": [],
+  "last_profiled": "2026-09-30T07:54:42.644990+00:00",
+  "lessons": [
+    {
+      "measured_impact": {
+        "gain_pct": 1.9161993251347222,
+        "measured_at": "2026-09-30T07:54:42+00:00",
+        "stack_depth_at_apply": 1
+      },
+      "statement": "[vllm] env: VLLM_ROCM_USE_AITER=1 VLLM_ROCM_USE_AITER_LINEAR=1 VLLM_ROCM_USE_AITER_RMSNORM=1 on Qwen3-8B/mi300x"
+    }
+  ],
+  "max_model_len": 6144,
+  "model": "Qwen3-8B",
+  "model_class": "dense",
+  "model_name": "Qwen3-8B",
+  "model_type": "qwen3",
+  "osl": 1024,
+  "pitfalls": [],
+  "precision": "bf16",
+  "provenance": {
+    "details": {
+      "evidence": [
+        "log:session-20260930T062105Z-a76f3fb6"
+      ],
+      "phase": "close_finalize"
+    },
+    "generated_at": "2026-09-30T09:08:05.530143+00:00",
+    "generator": "coordinator",
+    "source": "hyperloom-inference-optimizer"
+  },
+  "remaining_gaps": [],
+  "rocm_version": "10.0.0",
+  "sessions": [
+    {
+      "actions_taken": [
+        "aiter-master-on"
+      ],
+      "date": "2026-09-30T09:08:05.529458+00:00",
+      "gain_pct": 1.9161993251347222,
+      "session_id": "20260930T062105Z-a76f3fb6",
+      "stack_len": 1,
+      "throughput_after": 4474.745581930181,
+      "throughput_before": 4390.6126911726515
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "0.1.20.post1",
+    "rocm_version": "10.0.0",
+    "vllm_version": "0.27.1.dev5+gf46a9dfe2.d20260827.rocm100"
+  },
+  "tp": 1,
+  "updated_at": "2026-09-30T09:08:05.530251+00:00",
+  "version": 3,
+  "what_failed": [
+    {
+      "gain_pct": null,
+      "name": "aiter-attention-on",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "aiter-full-stack",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "batch-scale-seqs256",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "async-sched-full-cudagraph",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "async-sched-full-graph",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "kfd-busywait-completion",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "async-sched-only",
+      "reason": "reverted"
+    }
+  ],
+  "what_worked": [
+    {
+      "extra_envs": {
+        "VLLM_ROCM_USE_AITER": "1",
+        "VLLM_ROCM_USE_AITER_LINEAR": "1",
+        "VLLM_ROCM_USE_AITER_RMSNORM": "1"
+      },
+      "extra_server_args": "",
+      "gain_pct": 1.9161993251347222,
+      "name": "aiter-master-on"
+    }
+  ]
+}

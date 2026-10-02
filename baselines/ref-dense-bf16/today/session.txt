@@ -1,0 +1,2 @@
+run tag: gt-ref-dense-bf16-today
+session: 20260930T062105Z-a76f3fb6

@@ -1,0 +1,2 @@
+run tag: gt-ref-dense-bf16-settings1
+session: 20260930T155855Z-efcd0719

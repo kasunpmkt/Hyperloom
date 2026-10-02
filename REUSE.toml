@@ -59,3 +59,10 @@ path = "docs/backlog/**"
 precedence = "override"
 SPDX-FileCopyrightText = "2026 KRAI Ltd. - Hasith Ishara"
 SPDX-License-Identifier = "MIT"
+
+# Fork-local ground truth (issue #21): the measured artifacts of our own runs and their README.
+[[annotations]]
+path = "baselines/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 KRAI Ltd. - Hasith Ishara"
+SPDX-License-Identifier = "MIT"
