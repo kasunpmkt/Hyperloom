@@ -84,11 +84,12 @@ offers and Hyperloom lacks:
 - [ ] HL-25 Resume drops a finished GEAK result and skips to SWEEP
 - [ ] HL-26 Store a validated GEAK overlay in the recipe KB and replay it on the next run
 - [ ] HL-27 Give the KERNEL delegation a usage budget and stop GEAK when the run stops
+- [ ] HL-28 Don't run an LLM turn every tick while a delegated task is in flight
 
 ### Execution order (as arranged in project 4)
 HL-B0 → HL-03 → HL-21 → HL-22 → HL-23 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
-HL-24 and HL-25 (bugs), HL-26 (after HL-24 and HL-25), HL-27, HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
+HL-24 and HL-25 (bugs), HL-26 (after HL-24 and HL-25), HL-27, HL-28, HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
 draft.
 
@@ -1256,6 +1257,50 @@ tuning sessions, model choice per role) belong to the GEAK repo and are not part
 - [ ] `session_breakdown.json` reports GEAK token usage per role for a run with a KERNEL delegation.
 - [ ] A test stops the optimizer during a (mocked) GEAK delegation; no GEAK or `claude` process survives it.
 - [ ] A delegation that reaches its usage budget is stopped and its on-disk result is handled as in HL-25.
+
+---
+
+## [HL-28] Don't run an LLM turn every tick while a delegated task is in flight
+<!-- labels: type:feature, domain:inference, area:kernel, priority:P1 -->
+
+### Problem / use case
+`Coordinator.tick` runs `_reactor_pass` for every role on every tick, and `_reactor_turn` always calls the
+backend: a fresh agent session with the full composed prompt and tool schemas. That happens even when nothing
+can change until a delegated task finishes.
+
+In the gpt-oss-120b run (1 Oct, `--tick-interval-sec 30`), the KERNEL phase delegated to GEAK at 08:21. Between
+08:22 and 10:05 the orchestrator started **124 Opus sessions**, about one a minute. Each had a ~40,000-character
+status prompt, checked `get_running_tasks`, and ended with a hold, e.g. `tick67 hold: no state change ...
+kernel_agent task c4b884f9 is still the sole in-flight work`.
+
+Measured from the session transcripts, weighting tokens by API price ratios (cache read 0.1x, cache write
+1.25x, output 5x input):
+
+| | Share of the run's AI usage |
+|---|---|
+| Orchestrator ticks during the KERNEL delegation | **32.2%** (525 turns, 21.8M cache-read, 3.0M cache-write tokens) |
+| All of GEAK | 54% |
+| The whole FRAMEWORK phase (7 candidates) | 4.0% |
+
+These ticks add to GEAK's own usage in the same window. During it, plan usage went from 62% to 82% of the
+5-hour limit in 25 minutes, which stopped the run (HL-25).
+
+### Proposed solution
+Skip a role's reactor LLM turn when its state has not changed since its last turn and a delegated task is
+still within its lease. Wake it on an event instead: the task completes, fails or times out, the lease is near
+its end, the phase budget is near its end, or a message or intent is addressed to it. Keep a slow heartbeat
+turn (for example every 10 minutes) so a stuck task is still noticed. Count skipped turns in
+`session_breakdown.json`.
+
+This is separate from HL-27, which limits what GEAK itself spends.
+
+### Acceptance criteria
+- [ ] A test runs a KERNEL phase with a long-running mocked delegation; the reactor is not called on ticks
+      where nothing changed, and it is called when the task completes.
+- [ ] A delegation that runs past its lease or the phase budget still wakes the role.
+- [ ] `session_breakdown.json` reports reactor turns run and skipped per phase.
+- [ ] On a rerun of the gpt-oss-120b workload, orchestrator usage during the KERNEL delegation falls by at
+      least 80%, and the run's result is unchanged.
 
 ---
 
