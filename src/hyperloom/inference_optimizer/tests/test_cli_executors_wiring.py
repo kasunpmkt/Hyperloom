@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+
+import pytest
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -47,19 +49,62 @@ def test_build_specialist_executor_inprocess_when_no_claude(monkeypatch, tmp_pat
     assert callable(executor)
 
 
-def test_build_specialist_executor_subprocess_fallback_warns(monkeypatch, tmp_path, caplog):
-    """subprocess requested but no claude binary -> warns + falls back."""
+def _no_claude_anywhere(monkeypatch, tmp_path) -> None:
     import shutil
 
+    from hyperloom.orchestrator.specialists import subprocess_
+
     monkeypatch.setattr(shutil, "which", lambda _n: "")
-    with caplog.at_level(logging.WARNING, logger=cli_executors.log.name):
-        executor = _build_specialist_executor(
-            _spec_args("subprocess"),
-            session_dir=tmp_path,
-            knowledge_plane=None,
-        )
+    monkeypatch.delenv("GEAK_CLAUDE_BIN", raising=False)
+    monkeypatch.setattr(subprocess_, "_CLAUDE_INSTALL_PATHS", (str(tmp_path / "absent" / "claude"),))
+
+
+def test_resolve_claude_executable_order(monkeypatch, tmp_path):
+    """Explicit, then PATH, then the installer's GEAK_CLAUDE_BIN, then its locations; "" when there is none."""
+    import shutil
+
+    from hyperloom.orchestrator.specialists import subprocess_
+
+    def _cli(name):
+        path = tmp_path / name / "claude"
+        path.parent.mkdir(parents=True)
+        path.write_text("#!/bin/sh\n", encoding="utf-8")
+        path.chmod(0o755)
+        return str(path)
+
+    pinned, installed = _cli("pinned"), _cli("installed")
+    _no_claude_anywhere(monkeypatch, tmp_path)
+    assert subprocess_.resolve_claude_executable() == ""
+    monkeypatch.setattr(subprocess_, "_CLAUDE_INSTALL_PATHS", (installed,))
+    assert subprocess_.resolve_claude_executable() == installed
+    monkeypatch.setenv("GEAK_CLAUDE_BIN", pinned)
+    assert subprocess_.resolve_claude_executable() == pinned
+    monkeypatch.setattr(shutil, "which", lambda _n: "/usr/bin/claude")
+    assert subprocess_.resolve_claude_executable() == "/usr/bin/claude"
+    assert subprocess_.resolve_claude_executable("/opt/x/claude") == "/opt/x/claude"
+
+
+def test_build_specialist_executor_subprocess_without_a_claude_cli_fails_loudly(monkeypatch, tmp_path):
+    """In-process specialists cannot read or write source, so a missing CLI must not quietly select them."""
+    _no_claude_anywhere(monkeypatch, tmp_path)
+    with pytest.raises(RuntimeError, match="--specialist-dispatch-mode inprocess"):
+        _build_specialist_executor(_spec_args("subprocess"), session_dir=tmp_path, knowledge_plane=None)
+
+
+def test_build_specialist_executor_finds_the_installed_cli_off_path(monkeypatch, tmp_path, caplog):
+    """The validated container: the installer's CLI sits in ~/.local/bin, which its PATH lacks."""
+    from hyperloom.orchestrator.specialists import subprocess_
+
+    _no_claude_anywhere(monkeypatch, tmp_path)
+    cli = tmp_path / ".local" / "bin" / "claude"
+    cli.parent.mkdir(parents=True)
+    cli.write_text("#!/bin/sh\n", encoding="utf-8")
+    cli.chmod(0o755)
+    monkeypatch.setattr(subprocess_, "_CLAUDE_INSTALL_PATHS", (str(cli),))
+    with caplog.at_level(logging.INFO, logger=cli_executors.log.name):
+        executor = _build_specialist_executor(_spec_args("subprocess"), session_dir=tmp_path, knowledge_plane=None)
     assert callable(executor)
-    assert any("claude" in rec.message for rec in caplog.records)
+    assert any(f"specialists: subprocess via {cli}" in rec.getMessage() for rec in caplog.records)
 
 
 def test_build_specialist_executor_subprocess_with_knowledge_plane(monkeypatch, tmp_path):
