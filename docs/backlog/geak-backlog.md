@@ -10,8 +10,8 @@ Session paths are relative to `USER_DATA_PATH` (`/home/hasith/AMD/hyperloom-data
 
 | Key | Problem | Hyperloom-side mitigation |
 |---|---|---|
-| GK-01 | Teardown misses a re-parented vLLM `EngineCore` | reap the session's GEAK servers when the delegation returns; check free VRAM before every server boot |
-| GK-02 | `run_e2e` does not stop the servers its stages started when it exits | same as GK-01 |
+| GK-01 | Teardown misses a re-parented vLLM `EngineCore` | #61: reap the delegation's leftover servers when it returns; check free VRAM before every server boot |
+| GK-02 | `run_e2e` does not stop the servers its stages started when it exits | #61 (same as GK-01) |
 | GK-03 | An interrupted run is flushed as a final `no_gain` | #58: record that Hyperloom stopped GEAK, re-delegate fresh on resume |
 | GK-04 | No per-role usage report and no usage budget | #54 |
 | GK-05 | Token waste inside GEAK's agents | none beyond a budget (#54) |
