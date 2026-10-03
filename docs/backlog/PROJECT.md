@@ -47,6 +47,7 @@ development.
 | What | Where |
 |---|---|
 | Issue texts, labels, execution order | [`docs/backlog/issues.md`](issues.md) (source of truth; sync with `create_issues.py --update`) |
+| GEAK upstream problems (fixes this fork cannot make) | [`docs/backlog/geak-backlog.md`](geak-backlog.md) |
 | Tracking issue | GitHub issue #1 in this fork; child issues #2–#21, #35–#40, #43–#45, #47 and #54–#58 |
 | Board | GitHub project `users/ishara0925/projects/4`, arranged in execution order |
 | Ground truth | `baselines/` (produced by issue #21) |
