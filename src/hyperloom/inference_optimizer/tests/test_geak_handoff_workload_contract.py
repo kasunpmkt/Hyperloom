@@ -14,6 +14,7 @@ import pytest
 import yaml
 
 from hyperloom.orchestrator.loop.coordinator import Coordinator
+from hyperloom.orchestrator.phases.kernel import GeakTimeouts
 from hyperloom.orchestrator.state.shared_state import SharedState
 
 
@@ -204,7 +205,7 @@ async def test_agentx_geak_metric_aligned_result_is_only_a_proposal_proxy(
         "hyperloom.orchestrator.actions.executors._kernel_agent_tool._kernel_agent_tool_path",
         lambda _name: tmp_path / "mock_geak_runner.py",
     )
-    coord.phase_kernel._geak_timeouts = lambda: (60, 90, False)
+    coord.phase_kernel._geak_timeouts = lambda: GeakTimeouts(60, 90, False)
     captured_env = {}
 
     def _start_runner(_cmd, *, env, **_kwargs):

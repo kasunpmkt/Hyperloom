@@ -20,7 +20,7 @@ from collections.abc import Mapping
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, NamedTuple
 from . import geak_rebench as _geak_rebench
 from . import machine_state as _phase_state
 from hyperloom.common.env import env_bool
@@ -197,6 +197,15 @@ def _record_geak_integration(entry: dict[str, Any], *, kernel_id: str, macro_cyc
         gain_attributed=bool(entry.get("validated", True)),
         settled_at=str(entry.get("updated_at") or ""),
     )
+
+
+class GeakTimeouts(NamedTuple):
+    """How long the GEAK delegation may run, and what it leaves for Hyperloom's own re-validation."""
+
+    runner_timeout: int
+    kill_timeout: int
+    budget_known: bool
+    revalidation_reserve_sec: int = 0
 
 
 class KernelPhase(CoordinatorCollaborator):
@@ -978,13 +987,13 @@ class KernelPhase(CoordinatorCollaborator):
             log.warning("launch_server_script: could not resolve from the recipe", exc_info=True)
             return ""
 
-    def _geak_timeouts(self) -> tuple[int, int, bool]:
+    def _geak_timeouts(self) -> GeakTimeouts:
         """Resolve the GEAK e2e timeouts from the live run budget."""
         # Standalone fallback ONLY: the 12h (43200s) default applies when no run deadline is set (budget_known=False).
         env_default_timeout = int(os.environ.get("GEAK_E2E_TIMEOUT_S", "43200"))
         deadline = self._run_deadline
         if deadline is None:
-            return env_default_timeout, env_default_timeout + 600, False
+            return GeakTimeouts(env_default_timeout, env_default_timeout + 600, False)
         remaining = deadline.remaining()
         grace = self.shared_state.closing_reserve_sec()
         margin = float(os.environ.get("GEAK_BUDGET_MARGIN_S", "300"))
@@ -997,10 +1006,18 @@ class KernelPhase(CoordinatorCollaborator):
         )
         if phase_rem is not None:
             kill_budget = min(kill_budget, float(phase_rem))
+        # GEAK's result counts only once Hyperloom re-measures it, which is a baseline round on the same harness.
+        reserve = (
+            _phase_state.baseline_round_cost_sec(
+                self.shared_state, double_run=bool(getattr(self.shared_state, "baseline_double_run", True))
+            )
+            or 0.0
+        )
+        kill_budget -= reserve
         # The runner self-stops ``margin`` before the hard subprocess kill, which reserves the closing-grace window.
         kill_timeout = int(max(0.0, kill_budget))
         runner_timeout = int(max(0.0, kill_budget - margin))
-        return runner_timeout, kill_timeout, True
+        return GeakTimeouts(runner_timeout, kill_timeout, True, int(round(reserve)))
 
     def _kernel_rewrite_controller_timeouts(self) -> tuple[int, int]:
         """Return the Controller soft budget and Hyperloom hard timeout."""
@@ -1389,14 +1406,23 @@ class KernelPhase(CoordinatorCollaborator):
             return
 
         # Budget-aware timeouts: shrink to the remaining run deadline and always reserve the closing-grace window.
-        runner_timeout, kill_timeout, budget_known = self._geak_timeouts()
+        runner_timeout, kill_timeout, budget_known, revalidation_reserve = self._geak_timeouts()
+        if budget_known:
+            self._record_phase_entry_evidence(
+                geak_budget={
+                    "runner_timeout_s": runner_timeout,
+                    "kill_timeout_s": kill_timeout,
+                    "revalidation_reserve_s": revalidation_reserve,
+                }
+            )
         min_run = int(os.environ.get("GEAK_MIN_RUN_S", "600"))
         if budget_known and runner_timeout < min_run:
             log.warning(
-                "GEAK: only %ds budget remains (< min %ds); skipping e2e "
-                "and winding down to SWEEP so the closing report runs in time.",
+                "GEAK: only %ds budget remains (< min %ds) after reserving %ds to re-validate its result; "
+                "skipping e2e and winding down to SWEEP so the closing report runs in time.",
                 runner_timeout,
                 min_run,
+                revalidation_reserve,
             )
             _finish_skip(
                 {
@@ -1404,8 +1430,8 @@ class KernelPhase(CoordinatorCollaborator):
                     "error_class": "insufficient_budget",
                     "error": (
                         f"only {runner_timeout}s of KERNEL budget remained "
-                        f"(< min {min_run}s); skipped to protect the closing "
-                        f"report window"
+                        f"(< min {min_run}s) after reserving {revalidation_reserve}s to re-validate GEAK's result; "
+                        f"skipped to protect the closing report window"
                     ),
                     "runner_timeout_s": runner_timeout,
                 },
@@ -1422,10 +1448,12 @@ class KernelPhase(CoordinatorCollaborator):
             str(runner_timeout),
         ]
         log.info(
-            "KERNEL entry: delegating to GEAK e2e (from=%s) runner_timeout=%ds kill_timeout=%ds budget_known=%s cmd=%s",
+            "KERNEL entry: delegating to GEAK e2e (from=%s) runner_timeout=%ds kill_timeout=%ds "
+            "revalidation_reserve=%ds budget_known=%s cmd=%s",
             from_phase or "<unknown>",
             runner_timeout,
             kill_timeout,
+            revalidation_reserve,
             budget_known,
             " ".join(cmd),
         )
