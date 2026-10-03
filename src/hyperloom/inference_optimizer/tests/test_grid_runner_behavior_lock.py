@@ -272,6 +272,27 @@ class TestKeepGoingAsymmetry:
         assert results[0].error_class == "magpie_nonzero_invalid_measurement"
         assert results[0].returncode == 1
 
+    def test_a_boot_refused_on_an_occupied_gpu_names_the_holder(self, tmp_path, monkeypatch):
+        """vLLM refusing to start on memory another process holds is not this variant's failure."""
+        monkeypatch.setattr(gr, "REPORT_SETTLE_SECONDS", 0.0)
+        monkeypatch.setenv("INFERENCE_OPTIMIZER_RUN_GRID_WARMUP", "0")
+        monkeypatch.setattr(gr, "gpu_holders_summary", lambda: "pid 1598749 (VLLM::EngineCore, 175.0 GiB)")
+        base = tmp_path / "base.yaml"
+        _write_base_yaml(base)
+        refusal = (
+            "ValueError: Free memory on device cuda:0 (8.08/191.98 GiB) on startup is less than desired GPU memory "
+            "utilization (0.95, 182.39 GiB). Decrease GPU memory utilization or reduce GPU memory used by other processes."
+        )
+
+        def _refused(cmd, *a, **k):
+            out_idx = cmd.index("--output-dir")
+            _invalid_rc0_workspace(Path(cmd[out_idx + 1]))
+            return subprocess.CompletedProcess(cmd, 1, "", refusal)
+
+        results = self._run(_refused, base, tmp_path / "out")
+        assert results[0].error_class == "gpu_preoccupied"
+        assert "GPU memory held by: pid 1598749 (VLLM::EngineCore, 175.0 GiB)" in (results[0].error or "")
+
     def test_rc_nonzero_blank_pipe_uses_report_errors(self, tmp_path, monkeypatch):
         """Last-resort: empty pipe and no log files, diagnostic only in report.errors."""
         monkeypatch.setattr(gr, "REPORT_SETTLE_SECONDS", 0.0)

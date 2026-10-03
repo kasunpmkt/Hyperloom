@@ -1499,6 +1499,8 @@ class KernelPhase(CoordinatorCollaborator):
             stderr_tail = (proc.stderr or "")[-2000:]
             if proc.returncode != 0:
                 log.warning("GEAK runner rc=%s: %s", proc.returncode, stderr_tail)
+            # The runner's one-line summary names any process it had to reap from GEAK's output dir.
+            log.info("GEAK runner done: %s", (proc.stdout or "").strip()[-500:])
         except asyncio.CancelledError:
             # The worker thread keeps waiting on a runner nobody would stop; SIGTERM makes it take its tree down.
             for runner_proc in launched:

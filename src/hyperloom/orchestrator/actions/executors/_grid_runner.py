@@ -65,6 +65,7 @@ from .benchmark_result import (
     snapshot_workspaces,
 )
 from ._gpu_metrics import write_gpu_metrics_from_report
+from ._gpu_preoccupied import GPU_PREOCCUPIED, gpu_holders_summary, is_insufficient_gpu_memory
 from .benchmark_backend import build_benchmark_command
 from ._inferencex_patcher import (
     ensure_benchmark_lib_eval_start_patched,
@@ -1875,6 +1876,13 @@ async def run_grid(
                 if not error.strip():
                     error = redact_secret_values(_report_errors_summary(report))
                 invalid_class = "magpie_nonzero_invalid_measurement"
+                # The server refused to boot on memory another process holds: name the holder, and keep the refusal
+                # from reading as this variant's failure.
+                if is_insufficient_gpu_memory(error):
+                    invalid_class = GPU_PREOCCUPIED
+                    holders = gpu_holders_summary()
+                    if holders:
+                        error = f"{error}\nGPU memory held by: {holders}"
             elif not report:
                 error = death_excerpt or "benchmark_report missing"
                 invalid_class = "benchmark_report_missing"

@@ -12,10 +12,10 @@ from unittest.mock import patch
 
 from hyperloom.common.rocm_smi import GpuVram
 from hyperloom.orchestrator.actions.executors import roofline as rf
-from hyperloom.orchestrator.actions.executors.baseline import (
-    _is_cuda_graph_capture_failure,
-    _is_insufficient_gpu_memory,
+from hyperloom.orchestrator.actions.executors._gpu_preoccupied import (
+    is_insufficient_gpu_memory as _is_insufficient_gpu_memory,
 )
+from hyperloom.orchestrator.actions.executors.baseline import _is_cuda_graph_capture_failure
 from hyperloom.orchestrator.actions.executors._aiter_jit import is_aiter_jit_registry_mismatch
 
 

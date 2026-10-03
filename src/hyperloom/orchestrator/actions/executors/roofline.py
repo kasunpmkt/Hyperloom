@@ -582,10 +582,8 @@ class RooflineExecutor:
             "on",
         }
         framework = self._resolve_framework(ctx)
-        from .baseline import (
-            _classify_cuda_graph_capture_failure,
-            _is_insufficient_gpu_memory,
-        )
+        from ._gpu_preoccupied import is_insufficient_gpu_memory as _is_insufficient_gpu_memory
+        from .baseline import _classify_cuda_graph_capture_failure
 
         _self_task_id = str(getattr(ctx.task, "task_id", "") or "")
         # Every ``_failed`` return below goes through ``_fail`` so a failure exit added later cannot be the one that
