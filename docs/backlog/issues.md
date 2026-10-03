@@ -85,11 +85,17 @@ offers and Hyperloom lacks:
 - [ ] HL-26 Store a validated GEAK overlay in the recipe KB and replay it on the next run
 - [ ] HL-27 Give the KERNEL delegation a usage budget and stop GEAK when the run stops
 - [ ] HL-28 Don't run an LLM turn every tick while a delegated task is in flight
+- [ ] HL-29 Report GEAK's Claude usage per role, and give the KERNEL delegation a usage budget
+- [ ] HL-30 GEAK's timeout leaves no time to re-validate its result
+- [ ] HL-31 Without `claude` on PATH, specialists silently lose source access
+- [ ] HL-32 Inline TraceLens analysis freezes the coordinator and dominates PRELUDE's cost
+- [ ] HL-33 (GEAK, upstream) An interrupted GEAK run is flushed as a final `no_gain`
 
 ### Execution order (as arranged in project 4)
 HL-B0 → HL-03 → HL-21 → HL-22 → HL-23 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
-HL-24 and HL-25 (bugs), HL-26 (after HL-24 and HL-25), HL-27, HL-28, HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
+HL-24 and HL-25 (bugs), HL-26 (after HL-24 and HL-25), HL-27, HL-28, HL-29 (after HL-27), HL-30 and HL-31 (bugs),
+HL-32, HL-33 (upstream GEAK), HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
 draft.
 
@@ -1301,6 +1307,138 @@ This is separate from HL-27, which limits what GEAK itself spends.
 - [ ] `session_breakdown.json` reports reactor turns run and skipped per phase.
 - [ ] On a rerun of the gpt-oss-120b workload, orchestrator usage during the KERNEL delegation falls by at
       least 80%, and the run's result is unchanged.
+
+---
+
+## [HL-29] Report GEAK's Claude usage per role, and give the KERNEL delegation a usage budget
+<!-- labels: type:feature, domain:inference, area:kernel, priority:P2 -->
+
+### Problem / use case
+Split out of HL-27 (parts 1–2). Part 3, stopping GEAK with the run, is in the PR for HL-27.
+
+In the gpt-oss-120b run of 1 Oct, GEAK used more input tokens than all 149 of Hyperloom's own agent calls in the same run (55.5M against 25.0M cache-read tokens), within 2 of the run's 8 hours. `session_breakdown.json` shows none of it, and nothing stops GEAK from spending the whole plan window: the run was stopped by the 80% plan-usage rule while GEAK was the main spender.
+
+There is no clean source for that usage yet:
+- GEAK's Claude transcripts land in the container user's shared `~/.claude/projects/<GEAK checkout>-e2e-workflow/` directory. It is keyed by GEAK's working directory, so every GEAK run from every session is mixed in it, and no field says which GEAK role (setup, tuning, verify, …) a session belongs to.
+- `result.json` carries no usage.
+
+### Proposed solution
+1. Pick the source:
+   - (a) **Upstream:** GEAK reports per-role usage (input, output, cache-read and cache-write tokens, model) in `result.json` and in a running file it updates during the delegation. AGENTS.md's "fix upstream" points here.
+   - (b) **Hyperloom-side:** give the GEAK child its own Claude config directory inside the session (`CLAUDE_CONFIG_DIR=<session>/geak/claude`) so its transcripts are per session. Attribute roles from GEAK's prompts. This has to be checked against GEAK's credential and settings handling first.
+2. Read that usage into `session_breakdown.json`, on the KERNEL event, per GEAK role, next to the framework agents' usage.
+3. Add `--kernel-usage-budget` (tokens or a share of the run's budget). Pass it to GEAK where GEAK supports it; otherwise Hyperloom stops the delegation at the budget, using the runner teardown from HL-27, and recovers what is on disk as in HL-25.
+
+Related: the optimizer's own SIGTERM drain was pre-empted on 1 Oct by a native failure-signal handler (absl-style stack dump, process killed at once). Finding which import installs it, and keeping Hyperloom's drain, is worth a separate bug.
+
+### Acceptance criteria
+- [ ] `session_breakdown.json` reports GEAK token usage per role for a run with a KERNEL delegation.
+- [ ] A delegation that reaches its usage budget is stopped, and its on-disk result is handled as in HL-25.
+- [ ] The chosen source is recorded in `docs/components/geak.md`.
+
+---
+
+## [HL-30] GEAK's timeout leaves no time to re-validate its result
+<!-- labels: type:bug, domain:inference, area:kernel, priority:P1 -->
+
+### Problem / use case
+In the gpt-oss-120b rerun (2 Oct, session `gpt-oss-120b/20261002T172218Z-4e7ac5a0`, `--max-hours 6`), GEAK
+finished `status: ok` with +20.0% on its own harness at 23:00:58, 21 minutes before the session's end. Hyperloom never
+measured it: the re-validation round (`needs 1215s`) plus the closing reserve did not fit, and the result was recorded
+`revalidation_status: failed`, `session_time_exhausted`. The run reported 3.24% instead of about 24.6%. Only a manual
+`--resume-from … --extend-hours 1` re-measured it: 1826.9 tok/s, GSM8K 0.9682, kept; 24.59% validated.
+
+The cause: `_geak_timeouts` in `orchestrator/phases/kernel.py` sizes GEAK's runner timeout as the session time left,
+minus the closing reserve and a 300 s margin. It does not reserve the round Hyperloom itself must run on GEAK's result,
+so a GEAK that uses its allowance always finishes too late to count.
+
+### Proposed solution
+Subtract one re-validation round from GEAK's allowance: the measured duration of the session's baseline double-run
+(warmup + measured round), which is the shape of the rebench. If what remains is below `GEAK_MIN_RUN_S`, skip GEAK as
+today. Record the reserved window in the KERNEL event's evidence.
+
+### Acceptance criteria
+- [ ] A test with a run deadline shows GEAK's runner timeout leaves at least one baseline round plus the closing reserve.
+- [ ] A GEAK that uses its whole allowance is still re-validated in the same run.
+
+---
+
+## [HL-31] Without `claude` on PATH, specialists silently lose source access and every source patch fails
+<!-- labels: type:bug, domain:inference, area:search, priority:P1 -->
+
+### Problem / use case
+`_register_executors` (`inference_optimizer/cli/executors.py`) runs specialists as `claude` CLI subprocesses, each in
+its own workspace with `bypassPermissions`, but only if `shutil.which("claude")` finds the CLI. In the validated Docker
+setup it does not: the CLI is installed at `/root/.local/bin/claude` (GEAK runs it from there), which is not on the
+container's PATH. Hyperloom then
+logs one warning and falls back to an in-process backend that runs with Claude Code's default permissions and only the
+optimizer's working directory (the repo checkout) allowed.
+
+Every specialist then fails. In the 2 Oct gpt-oss rerun, FRAMEWORK specialists hit 63 refused tool calls (reading vLLM's
+source, the session's own TraceLens `analysis.md`, even `mkdir` of their own `runs/specialist/<id>/src`), ran out of their
+8 turns, and crashed. The orchestrator then reported "specialist arm suspended - sandbox blocks all source reads/writes".
+The same `Reached maximum number of turns (8)` crashes are in every earlier run on this container (9 and 12 per run), so
+source patches have never run here. With `/root/.local/bin` on PATH (2–3 Oct 9 h run), the PRELUDE specialists completed
+with 11 hints and 0 refused calls.
+
+### Proposed solution
+1. Resolve the installed CLI (its install path, or the `GEAK_CLAUDE_BIN` setup already writes to `.env`), not only PATH;
+   or have setup put it on PATH in the runtime env.
+2. Never degrade silently: if subprocess mode was requested and no CLI is found, fail preflight with the reason, or give
+   the in-process specialists the same workspace, allowed directories and permission mode. A run must not proceed with the
+   source arm quietly disabled.
+3. Report the specialist dispatch mode in `session_breakdown.json` metadata.
+
+### Acceptance criteria
+- [ ] In the validated Docker setup, specialists run in subprocess mode without any PATH change by the operator.
+- [ ] A test with no CLI available fails preflight (or runs in-process with workspace access) instead of falling back
+      to an in-process backend that cannot read or write source.
+
+---
+
+## [HL-32] The TraceLens trace analysis runs inline, freezing the coordinator for ~20 min, and is PRELUDE's largest cost
+<!-- labels: type:bug, domain:inference, area:search, priority:P2 -->
+
+### Problem / use case
+`trace_analyze` runs the LLM-backed TraceLens analysis (its own Claude agent with sub-agents), taking about 20 minutes on
+gpt-oss-120b. It runs inline: as PRELUDE's roofline step, and as an inline "fast action"
+(`INFERENCE_OPTIMIZER_INLINE_FAST_ACTIONS`, on by default) when the orchestrator requests it in its reactor turn. Either way
+the tick loop is blocked for its whole duration:
+- Qwen3-8B, 2 Oct: the orchestrator's first KERNEL turn requested `trace_analyze`. `state.tick` stayed at 2 from 16:16 to
+  16:37, the critic got no turn, and the `kernel_agent` task (GEAK) was not dispatched until it returned.
+- gpt-oss-120b, 1 Oct (`main`): no reactor turn during PRELUDE's 06:12–06:32 analysis.
+
+It is also the largest cost in PRELUDE: 3.8 M of 4.8 M weighted tokens on 1 Oct and 3.9 M of 4.7 M on 2 Oct (about 80%).
+
+### Proposed solution
+1. Run `trace_analyze` as a dispatched task, never as an inline fast action; keep inline execution for actions that are
+   actually cheap.
+2. Reuse an analysis of the same trace instead of re-running it, and consider the deterministic TraceLens path where the
+   LLM pass adds little.
+
+### Acceptance criteria
+- [ ] A test shows a `trace_analyze` request does not block the tick loop.
+- [ ] PRELUDE token use on gpt-oss-120b drops measurably against the 2 Oct figure.
+
+---
+
+## [HL-33] (GEAK, upstream) An interrupted GEAK run is flushed as a final `no_gain`
+<!-- labels: type:bug, domain:inference, area:kernel, priority:P2 -->
+
+### Problem / use case
+On SIGTERM, GEAK's `run_e2e` flushes `result.json` with `status: no_gain`, `throughput_speedup: 1.0` (Qwen3-8B, 2 Oct,
+stopped 33 min into GEAK). On resume, `run_e2e` continues from the pinned eval dir, sees that run as finished, and returns
+`no_gain` at once, so the interrupted work is lost. With #53, a stopped run now does stop GEAK, which makes this the
+common case after a usage-limit stop. Before #53, GEAK kept running and finished on its own; on 1 Oct that is how the +21%
+result existed at all.
+
+### Proposed solution
+GEAK marks a SIGTERM-flushed run as `interrupted` (or partial), not a final verdict, and continues it from its eval dir on
+the next run. Hyperloom treats `interrupted` as re-runnable, not settled. Pin the GEAK fix per AGENTS.md.
+
+### Acceptance criteria
+- [ ] A GEAK run stopped mid-tuning and then resumed continues its work instead of returning `no_gain`.
+- [ ] Hyperloom's resume recovery re-delegates an `interrupted` result rather than settling it.
 
 ---
 

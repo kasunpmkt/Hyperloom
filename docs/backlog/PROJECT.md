@@ -47,7 +47,7 @@ development.
 | What | Where |
 |---|---|
 | Issue texts, labels, execution order | [`docs/backlog/issues.md`](issues.md) (source of truth; sync with `create_issues.py --update`) |
-| Tracking issue | GitHub issue #1 in this fork; child issues #2–#21, #35–#40 and #43–#45, #47 |
+| Tracking issue | GitHub issue #1 in this fork; child issues #2–#21, #35–#40, #43–#45, #47 and #54–#58 |
 | Board | GitHub project `users/ishara0925/projects/4`, arranged in execution order |
 | Ground truth | `baselines/` (produced by issue #21) |
 | Experiment records | `experiments/` and the generated `RESULTS.md` (see below) |
@@ -57,7 +57,8 @@ development.
 closed before starting it. Work in a branch named `issue-<N>`.
 
 Execution order: #21 → #4 → #37 → #38 → #39 → #3 → #35 → #2 → #5 → #7 → #6 → #15 → #12 → #10 → #13 → #16 →
-#17 → #11 → #14 → #8 → #18 → #19 → #9 → #20. Issues #40 and #43 (bugs), #44 (after #40 and #43), #45, #47, #18, #19 and #9 have no dependency
+#17 → #11 → #14 → #8 → #18 → #19 → #9 → #20. Issues #40 and #43 (bugs), #44 (after #40 and #43), #45, #47, #54 (after #45), #55 and #56 (bugs), #57,
+#58 (upstream GEAK), #18, #19 and #9 have no dependency
 on the main chain and can run in parallel. #8 proceeds only if #6 showed a gain with a
 public draft.
 
