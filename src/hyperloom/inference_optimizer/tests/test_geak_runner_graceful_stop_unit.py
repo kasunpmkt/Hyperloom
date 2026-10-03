@@ -280,5 +280,58 @@ def test_a_sigterm_to_the_runner_stops_run_e2e_and_its_children(tmp_path, monkey
     assert json.loads((runner.stdout.read() or b"{}").decode())["status"] == "error"
 
 
+def test_processes_geak_left_in_its_output_dir_are_reaped_and_bystanders_are_not(tmp_path, monkeypatch):
+    """GEAK's teardown can miss a re-parented vLLM EngineCore; the runner owns the output dir and clears it."""
+    out = tmp_path / "out"
+    eval_dir = out / "e2e_cycle0"
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    pids_file = tmp_path / "leftover.pids"
+    runner = _write_fake_runner(
+        tmp_path,
+        f"""
+        import json, os, subprocess, sys
+        os.makedirs({str(eval_dir)!r}, exist_ok=True)
+        sleeper = [sys.executable, "-c", "import time; time.sleep(300)"]
+        # Detached like a setsid'd server whose API process has gone: neither stays a descendant of run_e2e. Servers
+        # log to files, so neither holds run_e2e's pipes.
+        quiet = dict(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        in_dir = subprocess.Popen(sleeper, cwd={str(eval_dir)!r}, **quiet)
+        pid_file_env = dict(os.environ, MAGPIE_SERVER_PID_FILE={str(eval_dir / "server.pid")!r})
+        by_pid_file = subprocess.Popen(sleeper, cwd={str(elsewhere)!r}, env=pid_file_env, **quiet)
+        open({str(pids_file)!r}, "w").write(f"{{in_dir.pid}} {{by_pid_file.pid}}")
+        with open(sys.argv[2], "w") as fh:
+            json.dump({{"status": "ok", "throughput_speedup": 1.2}}, fh)
+    """,
+    )
+    monkeypatch.setenv("GEAK_E2E_RUNNER", str(runner))
+    bystander = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(300)"], cwd=elsewhere)
+    try:
+        out_result = psr.call_geak(_handoff(), out, timeout_s=60)
+        leftovers = [int(pid) for pid in pids_file.read_text().split()]
+
+        assert out_result["status"] == "ok"
+        assert sorted(out_result["reaped_pids"]) == sorted(leftovers)
+        assert _wait_until_gone(leftovers, timeout_s=5) == []
+        assert _alive(bystander.pid)
+    finally:
+        bystander.kill()
+        bystander.wait()
+
+
+def test_a_clean_geak_run_reaps_nothing(tmp_path, monkeypatch):
+    runner = _write_fake_runner(
+        tmp_path,
+        """
+        import json, sys
+        with open(sys.argv[2], "w") as fh:
+            json.dump({"status": "ok"}, fh)
+    """,
+    )
+    monkeypatch.setenv("GEAK_E2E_RUNNER", str(runner))
+
+    assert "reaped_pids" not in psr.call_geak(_handoff(), tmp_path / "out", timeout_s=60)
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))

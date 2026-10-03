@@ -10,7 +10,7 @@ import json
 import pytest
 
 from hyperloom.common import rocm_smi
-from hyperloom.common.rocm_smi import GpuVram, gpu_vram_usage
+from hyperloom.common.rocm_smi import GpuHolder, GpuVram, gpu_holders, gpu_vram_usage
 
 _TOTAL_B = 288 * 1024**3
 _TOTAL_MIB = 288 * 1024.0
@@ -89,3 +89,23 @@ def test_none_on_unusable_output(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(rocm_smi.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(OSError("no device")))
     assert gpu_vram_usage() is None
+
+
+def test_holders_parse_pid_name_and_vram(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``--showpids`` rows become one holder each; a malformed row is skipped."""
+    _stub_output(
+        monkeypatch,
+        {
+            "system": {
+                "PID1598749": f"unknown, 1, {179217 * 1024**2}, 0, 0",
+                "PID7": "python3, 1, 1048576, 0, 0",
+                "PIDx": "?",
+            }
+        },
+    )
+    assert gpu_holders() == [GpuHolder(1598749, "unknown", 179217.0), GpuHolder(7, "python3", 1.0)]
+
+
+def test_holders_none_on_unusable_output(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rocm_smi.subprocess, "run", lambda *a, **k: _FakeProc(1, "boom"))
+    assert gpu_holders() is None

@@ -1263,6 +1263,34 @@ async def test_a_failed_revalidation_settles_the_verdict_and_keeps_the_stack(coo
 
 
 @pytest.mark.asyncio
+async def test_a_revalidation_refused_on_an_occupied_gpu_stays_retryable(coordinator) -> None:
+    """A boot refused on memory another process holds is not a verdict on GEAK's result."""
+    from hyperloom.orchestrator.actions.executors._gpu_preoccupied import GPU_PREOCCUPIED
+    from hyperloom.orchestrator.phases.geak_rebench import geak_verdict_is_terminal
+
+    c = coordinator
+    st = c.shared_state
+    _arm_geak_win(st)
+
+    async def _explore(_ctx):
+        return {
+            "status": "failed",
+            "error_class": GPU_PREOCCUPIED,
+            "error": "Free memory on device cuda:0 (8.08/191.98 GiB) on startup is less than desired GPU memory "
+            "utilization (0.95, 182.39 GiB).\nGPU memory held by: pid 1598749 (VLLM::EngineCore, 175.0 GiB)",
+        }
+
+    c.sub.register_executor("explore", _explore)
+
+    await c.phase_kernel._revalidate_geak_candidate(reason="geak_e2e_win")
+
+    assert st.geak_result["revalidation_status"] == GPU_PREOCCUPIED
+    assert "pid 1598749" in st.geak_result["revalidation_error"]
+    assert not geak_verdict_is_terminal(st.geak_result)
+    assert st.current_best["action"] == "baseline"
+
+
+@pytest.mark.asyncio
 async def test_a_cancelled_revalidation_is_recorded_before_it_propagates(coordinator) -> None:
     from concurrent.futures import CancelledError as FuturesCancelledError
 

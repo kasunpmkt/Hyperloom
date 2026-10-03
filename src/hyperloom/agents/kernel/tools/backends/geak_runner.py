@@ -17,6 +17,64 @@ from pathlib import Path
 
 #: How often the runner checks whether it was told to stop or lost the optimizer that started it.
 STOP_POLL_S = 2.0
+#: Seconds a leftover process gets between SIGTERM and SIGKILL.
+REAP_GRACE_S = 10.0
+_PID_FILE_VAR = b"MAGPIE_SERVER_PID_FILE="
+
+
+def _is_under(path: str, root: str) -> bool:
+    return path == root or path.startswith(root + os.sep)
+
+
+def _owned_by(pid_dir: Path, root: str) -> bool:
+    """Whether the process works in ``root`` or serves from a Magpie pid file under it."""
+    try:
+        if _is_under(os.readlink(pid_dir / "cwd"), root):
+            return True
+        environ = (pid_dir / "environ").read_bytes()
+    except OSError:
+        return False
+    for entry in environ.split(b"\0"):
+        if entry.startswith(_PID_FILE_VAR):
+            return _is_under(os.path.realpath(entry[len(_PID_FILE_VAR) :].decode(errors="replace")), root)
+    return False
+
+
+def _alive(pid: int) -> bool:
+    try:
+        state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
+    except (OSError, IndexError):
+        return False
+    return state != "Z"
+
+
+def reap_leftovers(output_dir: Path, *, grace_s: float = REAP_GRACE_S) -> list[int]:
+    """Stop every process GEAK left running in ``output_dir``; return their pids.
+
+    GEAK's own teardown misses a vLLM ``EngineCore`` whose API server exited first: it is re-parented to pid 1 and
+    leaves its process group and parent chain, so nothing above it can reach it (docs/backlog/geak-backlog.md GK-01),
+    and it holds the GPU for every later measurement. Ownership is by location, never by name: whatever still works in
+    the delegation's output dir, or serves from a pid file under it, was started for this delegation.
+    """
+    root = os.path.realpath(output_dir)
+    me = os.getpid()
+    pids = [
+        int(entry.name)
+        for entry in Path("/proc").iterdir()
+        if entry.name.isdigit() and int(entry.name) != me and _owned_by(entry, root)
+    ]
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        for pid in pids:
+            try:
+                os.kill(pid, sig)
+            except ProcessLookupError:
+                pass
+        deadline = time.monotonic() + grace_s
+        while any(_alive(pid) for pid in pids) and time.monotonic() < deadline:
+            time.sleep(0.2)
+        if not any(_alive(pid) for pid in pids):
+            break
+    return pids
 
 
 def _resolve_runner() -> str:
@@ -129,6 +187,7 @@ def call_geak(
             stdout, stderr = proc.communicate()
             returncode = -1
         break
+    reaped = reap_leftovers(output_dir)
     stdout_tail = (stdout or "")[-4000:]
     stderr_tail = (stderr or "")[-4000:]
 
@@ -157,6 +216,8 @@ def call_geak(
     )
     if stopped_by:
         result["stopped_by"] = stopped_by
+    if reaped:
+        result["reaped_pids"] = reaped
     return result
 
 
@@ -186,6 +247,7 @@ def _main(argv: list[str]) -> int:
                 "status": out.get("status"),
                 "speedup": out.get("throughput_speedup"),
                 "result_path": out.get("result_path"),
+                "reaped_pids": out.get("reaped_pids", []),
             }
         )
     )

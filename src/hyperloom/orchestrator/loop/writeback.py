@@ -47,6 +47,7 @@ from hyperloom.inference_optimizer.session.optimization_journal import (
     summarize_change,
 )
 from ..actions.executors._accuracy_gate import ENABLEMENT_REVALIDATION_REASON
+from ..actions.executors._gpu_preoccupied import GPU_PREOCCUPIED
 from ..actions.executors._grid_base import is_kept as _is_kept
 from hyperloom.inference_optimizer.grid_server_args import strip_benchmark_harness_flags
 from ..actions.executors._subprocess_kill import AGENTX_PREFLIGHT_ERROR_CLASS
@@ -1490,15 +1491,19 @@ class WritebackCollaborator:
             result_payload["status"] = "failed"
         any_changed = False
         if task.kind == "explore" and bool((task.params or {}).get("geak_fallback")):
+            error_class = str(result_payload.get("error_class") or "")
+            # A boot refused on a GPU someone else holds says nothing about GEAK's result; the status stays
+            # non-terminal, so a later KERNEL entry measures it again.
+            status = GPU_PREOCCUPIED if error_class == GPU_PREOCCUPIED else "failed"
             geak_result = {
                 **(self.shared_state.geak_result or {}),
-                "revalidation_status": "failed",
-                "revalidation_error_class": str(result_payload.get("error_class") or ""),
+                "revalidation_status": status,
+                "revalidation_error_class": error_class,
                 "revalidation_error": str(result_payload.get("error") or result_payload.get("reason") or "")[:500],
             }
             self.shared_state.geak_result = geak_result
             self._record_geak_rebench_conclusion(
-                final_status="failed",
+                final_status=status,
                 final_error_class=geak_result["revalidation_error_class"],
                 final_error=geak_result["revalidation_error"],
             )
