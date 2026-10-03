@@ -90,12 +90,13 @@ offers and Hyperloom lacks:
 - [ ] HL-31 Without `claude` on PATH, specialists silently lose source access
 - [ ] HL-32 Inline TraceLens analysis freezes the coordinator and dominates PRELUDE's cost
 - [ ] HL-33 (GEAK, upstream) An interrupted GEAK run is flushed as a final `no_gain`
+- [ ] HL-34 Reap the KERNEL delegation's leftover servers and check free VRAM before every server boot
 
 ### Execution order (as arranged in project 4)
 HL-B0 → HL-03 → HL-21 → HL-22 → HL-23 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
 HL-24 and HL-25 (bugs), HL-26 (after HL-24 and HL-25), HL-27, HL-28, HL-29 (after HL-27), HL-30 and HL-31 (bugs),
-HL-32, HL-33 (upstream GEAK), HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
+HL-32, HL-33 (upstream GEAK), HL-34 (bug), HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
 draft.
 
@@ -1439,6 +1440,42 @@ the next run. Hyperloom treats `interrupted` as re-runnable, not settled. Pin th
 ### Acceptance criteria
 - [ ] A GEAK run stopped mid-tuning and then resumed continues its work instead of returning `no_gain`.
 - [ ] Hyperloom's resume recovery re-delegates an `interrupted` result rather than settling it.
+
+---
+
+## [HL-34] Reap the KERNEL delegation's leftover servers and check free VRAM before every server boot
+<!-- labels: type:bug, domain:inference, area:kernel, priority:P1 -->
+
+### Problem / use case
+A vLLM server left running by the KERNEL delegation makes every later measurement in the session fail, and Hyperloom
+reports that as candidate failures.
+
+gpt-oss-120b, 3 Oct, session `gpt-oss-120b/20261003T031805Z-c30ce6cd`:
+- During GEAK's tuning stage, a Magpie-launched vLLM server's API server exited, but its `VLLM::EngineCore`
+  (pid 1598749, parent pid 1) kept 93% of GPU 7 after GEAK returned `ok` at about 11:14. GEAK's teardown misses it;
+  see `docs/backlog/geak-backlog.md` GK-01/GK-02. The GEAK repo cannot be changed for now.
+- Every vLLM boot Hyperloom tried afterwards failed in about 30 s with `Free memory on device cuda:0 (8.08/191.98 GiB)
+  on startup is less than desired GPU memory utilization (0.95, 182.39 GiB)`. That covered the re-validation of
+  GEAK's +27.4% result (`revalidation_status: failed`) and all 8 SWEEP boots (`failed_pairs: 8`, `sweep_failed`).
+- The run reported +8.16% instead of keeping GEAK's result. Nothing in the session named the cause; the orphan was
+  found and stopped by hand after the run.
+
+### Proposed solution
+1. **Reap the delegation's leftovers.** When `geak_runner` finishes, after `run_e2e` exits or is stopped, it stops every
+   process that still belongs to the delegation's output dir: a working directory under it, or a `MAGPIE_SERVER_PID_FILE`
+   under it. The runner launched GEAK into that dir, so the match cannot reach anyone else's process. Never match by
+   process name. Record what was reaped in the GEAK result.
+2. **Check the GPU before every server boot.** Before a benchmark or server lifecycle boots vLLM, compare free VRAM
+   with what the launch needs. If the GPU is held, fail the step as `gpu_busy`, naming the holding pids, instead of
+   letting vLLM fail and counting it as a candidate failure. A GEAK re-validation that hits `gpu_busy` is retried after
+   reclaim, not settled as `failed`.
+
+### Acceptance criteria
+- [ ] A test with a stub `run_e2e` that leaves a detached process (parent pid 1, its own session) under the output dir
+      shows the runner stops it, and a process outside the dir is left alone.
+- [ ] A test with the GPU held shows a server boot fails as `gpu_busy` naming the pid, and GEAK's re-validation is not
+      recorded as `failed` for that reason.
+- [ ] `docs/backlog/geak-backlog.md` GK-01/GK-02 point at this issue.
 
 ---
 
