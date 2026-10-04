@@ -125,6 +125,25 @@ def test_real_trace_end_to_end(tmp_path, capsys, monkeypatch):
     assert len(kr["kernels"]) == len(result["hot_kernels"])
 
 
+def test_a_trace_over_the_gpu_event_cap_reports_the_retained_prefix(tmp_path, capsys, monkeypatch):
+    """A capped trace is analysed from the events the reader kept, not reported as having no kernels."""
+    monkeypatch.setattr(bta._reader, "_MAX_BUFFERED_GPU_EVENTS", 1)
+    trace = tmp_path / "t.trace.json"
+    trace.write_bytes(json.dumps({"traceEvents": _TRACE_EVENTS}).encode("utf-8"))
+
+    rc, result, _ = _run(_base_argv(tmp_path, str(trace)), capsys)
+
+    assert rc == 0
+    # Only the first kernel fits under the cap; the GEMM after it is dropped.
+    assert [k["kernel_category"] for k in result["hot_kernels"]] == ["SDPA"]
+    assert result["timeline"]["total_time_ms"] > 0
+    assert not result["analysis_degraded"]
+    codes = {w["code"] for w in result["trace_health_warnings"]}
+    assert "bypass_trace_aggregation_truncated" in codes
+    report = Path(result["trace_report_path"]).read_text(encoding="utf-8")
+    assert "No GPU kernels found" not in report
+
+
 def test_gzip_trace_end_to_end(tmp_path, capsys, monkeypatch):
     trace = tmp_path / "t.trace.json.gz"
     with gzip.open(trace, "wb") as f:

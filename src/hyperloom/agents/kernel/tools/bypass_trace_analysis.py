@@ -518,17 +518,6 @@ def main(argv: list[str] | None = None) -> int:
                 "message": f"bypass reader could not analyze trace: {analyze.get('error', 'unknown')}",
             }
         )
-    elif analyze.get("truncated"):
-        trace_health_warnings.append(
-            {
-                "code": "bypass_trace_aggregation_truncated",
-                "severity": "warning",
-                "message": (
-                    "trace aggregation reached its safety cap; kernel rankings use only "
-                    f"the retained prefix ({analyze.get('truncation_reason', 'unknown')})."
-                ),
-            }
-        )
         analyze = {
             "status": "ok",
             "timeline": {},
@@ -538,6 +527,17 @@ def main(argv: list[str] | None = None) -> int:
             "aggregation_scope": "full_trace",
         }
     else:
+        if analyze.get("truncated"):
+            trace_health_warnings.append(
+                {
+                    "code": "bypass_trace_aggregation_truncated",
+                    "severity": "warning",
+                    "message": (
+                        "trace aggregation reached its safety cap; kernel rankings use only "
+                        f"the retained prefix ({analyze.get('truncation_reason', 'unknown')})."
+                    ),
+                }
+            )
         stream_errors = [str(error) for error in (analyze.get("stream_errors") or [])]
         if stream_errors:
             analysis_degraded = True
