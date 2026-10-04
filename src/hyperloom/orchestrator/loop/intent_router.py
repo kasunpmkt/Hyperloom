@@ -1089,7 +1089,7 @@ class IntentRouter:
     def _record_trace_analyze_on_timeline(
         self,
         *,
-        request_msg: Any,
+        request_msg_id: str,
         source: str,
         payload: dict[str, Any],
         result: dict[str, Any],
@@ -1105,16 +1105,117 @@ class IntentRouter:
 
         record_trace_analyze_request(
             macro_cycle=int(getattr(self.shared_state, "macro_cycle", 0) or 0),
-            run_id=str(getattr(request_msg, "msg_id", "") or ""),
+            run_id=request_msg_id,
             status=str(result.get("status") or ""),
             result=result,
             requested_by=source,
-            request_msg_id=str(getattr(request_msg, "msg_id", "") or ""),
+            request_msg_id=request_msg_id,
             trace_input=str(payload.get("trace_path") or payload.get("trace_input") or ""),
             top_k=payload.get("top_k"),
             snapshot=getattr(self.shared_state, "last_trace_analyze", None),
             cache_hit=cache_hit,
         )
+
+    async def _run_kernel_handler(
+        self, kind: str, handler: Any, payload: dict[str, Any], *, source: str
+    ) -> dict[str, Any]:
+        """Run one programmatic kernel step, bracketed by START / END lifecycle events."""
+        started = time.monotonic()
+        self._emit_lifecycle(step=kind, status="START", artifacts=_lifecycle_paths(payload))
+        try:
+            async with self._kernel_step_heartbeat(kind, started):
+                result = await handler(payload, session_dir=self.session_dir)
+        except Exception as exc:
+            log.exception("kernel_request_handler[%s] crashed for source=%s", kind, source)
+            result = {"status": "failed", "error_class": "handler_exception", "error": repr(exc)}
+        detail = " ".join(
+            str(p)
+            for p in (
+                result.get("decision"),
+                result.get("status"),
+                f"kernel={result.get('kernel_id')}" if result.get("kernel_id") else "",
+            )
+            if p
+        )
+        self._emit_lifecycle(
+            step=kind,
+            status="ERROR" if str(result.get("status", "")).lower() in ("failed", "error") else "END",
+            artifacts=_lifecycle_paths(result),
+            detail=detail,
+            duration_s=time.monotonic() - started,
+        )
+        return result
+
+    async def _respond_to_kernel_request(
+        self, *, kind: str, source: str, request_msg_id: str, result: dict[str, Any], response_source: str
+    ) -> None:
+        await self.bus.append_and_seq(
+            Message.new(
+                "kernel_agent",
+                source,
+                "response",
+                {
+                    "in_reply_to": request_msg_id,
+                    "kind": f"{kind}_done",
+                    "status": result.get("status", "ok"),
+                    "result": result,
+                    "source": response_source,
+                },
+                in_reply_to=request_msg_id,
+            )
+        )
+
+    async def _dispatch_trace_analyze(self, *, source: str, request_msg_id: str, payload: dict[str, Any]) -> None:
+        """Hand a trace analysis to a background task, so the tick goes on while TraceLens runs.
+
+        The requester gets a ``queued`` reply now and the analysis as a second
+        ``trace_analyze_done`` reply to the same request when the task lands. A
+        repeat request for a trace already being analysed is pointed at that task.
+        """
+        trace_input = payload.get("trace_input")
+        pending = [*await self.tasks.queued(), *await self.tasks.running()]
+        task = next(
+            (t for t in pending if t.kind == "trace_analyze" and (t.params or {}).get("trace_input") == trace_input),
+            None,
+        )
+        if task is None:
+            task, _ = await self.tasks.create_or_return_existing(
+                kind="trace_analyze",
+                params={**payload, "request_msg_id": request_msg_id, "requested_by": source},
+                idempotency_key=f"trace_analyze-{request_msg_id}",
+                dispatch_class="coordinator",
+            )
+        await self._respond_to_kernel_request(
+            kind="trace_analyze",
+            source=source,
+            request_msg_id=request_msg_id,
+            result={"status": "queued", "task_id": task.task_id},
+            response_source="dispatched_task",
+        )
+
+    async def _run_trace_analyze_task(self, ctx: Any) -> dict[str, Any]:
+        """Executor for a dispatched ``trace_analyze``: run it, answer the request, and cache the analysis."""
+        params = dict(ctx.task.params or {})
+        request_msg_id = str(params.pop("request_msg_id", ""))
+        source = str(params.pop("requested_by", ""))
+        result = await self._run_kernel_handler("trace_analyze", get_handler("trace_analyze"), params, source=source)
+        await self._respond_to_kernel_request(
+            kind="trace_analyze",
+            source=source,
+            request_msg_id=request_msg_id,
+            result=result,
+            response_source="programmatic_handler",
+        )
+        status = str(result.get("status", "")).lower()
+        if status in ("failed", "error"):
+            self._record_request_failure(kind="trace_analyze", request_msg_id=request_msg_id, result=result)
+        elif status in ("ok", "succeeded"):
+            self.shared_state.record_trace_analyze(params, result)
+            self.shared_state.save(self.session_dir)
+        self._record_trace_analyze_on_timeline(
+            request_msg_id=request_msg_id, source=source, payload=params, result=result, cache_hit=False
+        )
+        return result
 
     async def _handle_request(self, source: str, intent: Intent) -> None:
         """Route a REQUEST intent to its programmatic handler."""
@@ -1198,6 +1299,11 @@ class IntentRouter:
                     artifacts=_lifecycle_paths(result),
                     detail="cache_hit",
                 )
+            elif kind == "trace_analyze":
+                await self._dispatch_trace_analyze(
+                    source=source, request_msg_id=request_msg.msg_id, payload=merged_payload
+                )
+                return
             else:
                 rejected = self.shared_state.find_rejected_kernel_patch(merged_payload) if kind == "integrate" else None
                 if rejected is not None:
@@ -1260,81 +1366,27 @@ class IntentRouter:
                             )
                             return
 
-                    handler_kwargs: dict[str, Any] = {
-                        "session_dir": self.session_dir,
-                    }
-                    # Bracket the programmatic kernel step with START / END lifecycle events.
-                    _lc_t0 = time.monotonic()
-                    self._emit_lifecycle(
-                        step=kind,
-                        status="START",
-                        artifacts=_lifecycle_paths(merged_payload),
-                    )
                     try:
-                        async with self._kernel_step_heartbeat(kind, _lc_t0):
-                            result = await handler(
-                                merged_payload,
-                                **handler_kwargs,
-                            )
-                    except Exception as exc:
-                        log.exception(
-                            "kernel_request_handler[%s] crashed for source=%s",
-                            kind,
-                            source,
-                        )
-                        result = {
-                            "status": "failed",
-                            "error_class": "handler_exception",
-                            "error": repr(exc),
-                        }
+                        result = await self._run_kernel_handler(kind, handler, merged_payload, source=source)
                     finally:
                         if handler_lease is not None:
                             await self.locks.release(handler_lease)
-                    _lc_status = "ERROR" if str(result.get("status", "")).lower() in ("failed", "error") else "END"
-                    _lc_detail = " ".join(
-                        str(p)
-                        for p in (
-                            result.get("decision"),
-                            result.get("status"),
-                            f"kernel={result.get('kernel_id')}" if result.get("kernel_id") else "",
-                        )
-                        if p
-                    )
-                    self._emit_lifecycle(
-                        step=kind,
-                        status=_lc_status,
-                        artifacts=_lifecycle_paths(result),
-                        detail=_lc_detail,
-                        duration_s=time.monotonic() - _lc_t0,
-                    )
-            await self.bus.append_and_seq(
-                Message.new(
-                    "kernel_agent",
-                    source,
-                    "response",
-                    {
-                        "in_reply_to": request_msg.msg_id,
-                        "kind": f"{kind}_done",
-                        "status": result.get("status", "ok"),
-                        "result": result,
-                        "source": cache_hit_source or "programmatic_handler",
-                    },
-                    in_reply_to=request_msg.msg_id,
-                )
+            await self._respond_to_kernel_request(
+                kind=kind,
+                source=source,
+                request_msg_id=request_msg.msg_id,
+                result=result,
+                response_source=cache_hit_source or "programmatic_handler",
             )
             if str(result.get("status", "")).lower() in ("failed", "error"):
                 self._record_request_failure(kind=kind, request_msg_id=request_msg.msg_id, result=result)
-            # Cache trace_analyze output (successful runs only).
-            if kind == "trace_analyze" and cache_hit_source is None and result.get("status") in ("ok", "succeeded"):
-                self.shared_state.record_trace_analyze(merged_payload, result)
-                self.shared_state.save(self.session_dir)
             if kind == "trace_analyze":
                 self._record_trace_analyze_on_timeline(
-                    request_msg=request_msg,
+                    request_msg_id=request_msg.msg_id,
                     source=source,
                     payload=merged_payload,
                     result=result,
-                    cache_hit=cache_hit_source is not None,
+                    cache_hit=True,
                 )
             if kind == "integrate":
                 if result.get("status") != "skipped":

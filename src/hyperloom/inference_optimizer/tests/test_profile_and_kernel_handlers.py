@@ -54,6 +54,7 @@ from hyperloom.orchestrator.loop.sub_agent_runner import (
 from hyperloom.inference_optimizer.session.manifest import build_manifest
 from hyperloom.inference_optimizer.session.paths import make_session_dir
 from hyperloom.orchestrator.bus.storage import SqliteConnection
+from ._trace_analyze_task import run_dispatched_trace_analyze
 
 
 # fixtures
@@ -3991,8 +3992,13 @@ async def test_coordinator_request_trace_analyze_uses_handler(session_dir):
             assert req_msgs, "request must be mirrored to kernel inbox"
             req_id = req_msgs[0].msg_id
 
+            queued = await c.bus.tail(topic="response", to_agent="orchestration")
+            assert [m.payload["status"] for m in queued] == ["queued"]
+            assert queued[0].payload["in_reply_to"] == req_id
+            await run_dispatched_trace_analyze(c)
+
             resp_msgs = await c.bus.tail(topic="response", to_agent="orchestration")
-            assert resp_msgs, "handler must emit RESPONSE without LLM"
+            assert len(resp_msgs) == 2, "handler must emit RESPONSE without LLM"
             r = resp_msgs[0]
             assert r.from_agent == "kernel_agent"
             assert r.payload["kind"] == "trace_analyze_done"
@@ -4082,6 +4088,7 @@ async def test_coordinator_request_handler_exception_recorded(session_dir):
                     payload={"target_agent": "kernel_agent", "kind": "trace_analyze"},
                 ),
             )
+            await run_dispatched_trace_analyze(c)
             resp_msgs = await c.bus.tail(topic="response", to_agent="orchestration")
             assert resp_msgs
             r = resp_msgs[0]
