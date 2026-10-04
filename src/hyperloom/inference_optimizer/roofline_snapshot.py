@@ -84,8 +84,9 @@ def extract_workload_summary(analysis_md_path: str | Path) -> dict[str, Any]:
     except OSError:
         return out
     rows = _parse_executive_table(text)
-    out["compute_pct"] = _parse_pct(rows.get("Compute %"))
-    out["idle_pct"] = _parse_pct(rows.get("Idle %"))
+    # TraceLens agent labels first, then the shared renderer's (bypass route), where busy is the compute share.
+    out["compute_pct"] = _parse_pct(rows.get("Compute %") or rows.get("GPU Busy %"))
+    out["idle_pct"] = _parse_pct(rows.get("Idle %") or rows.get("GPU Idle %"))
     out["comm_pct"] = _parse_pct(rows.get("Exposed Communication %") or rows.get("Communication %"))
     out["top_bottleneck"] = _parse_top_bottleneck(rows.get("Top Bottleneck Category"))
     return out
