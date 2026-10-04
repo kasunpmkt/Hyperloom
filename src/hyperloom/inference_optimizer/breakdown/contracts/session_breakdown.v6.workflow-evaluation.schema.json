@@ -36,7 +36,7 @@
               "const": "hyperloom.workflow_evaluation.v1"
             },
             "contract_digest": {
-              "const": "51edcb99d1c16f83961757ecfd4da87666c186a5b2441a2d3575cec17713f99b"
+              "const": "5374906d4cfe9eb81c7a240a511e90e133cf6461ecb9c9d368e0105784c0bd5e"
             },
             "run_flags": {
               "type": "object",
@@ -136,7 +136,8 @@
                 "profile",
                 "replay_warm_recipe",
                 "roofline",
-                "targeted_build"
+                "targeted_build",
+                "trace_analyze"
               ]
             },
             "coordinator_reserved_actions": {

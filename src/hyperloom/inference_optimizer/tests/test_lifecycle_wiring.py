@@ -22,6 +22,7 @@ from hyperloom.orchestrator.state.task_registry import Task
 from hyperloom.inference_optimizer.session.paths import make_session_dir
 from hyperloom.inference_optimizer.session.session_paths import reports_dir
 from hyperloom.inference_optimizer.protocol.intent import Intent, IntentType
+from ._trace_analyze_task import run_dispatched_trace_analyze
 
 
 def _heartbeat() -> Intent:
@@ -172,6 +173,7 @@ async def test_handle_request_emits_start_and_end(session_dir, monkeypatch, tmp_
             },
         )
         await c._handle_intent("orchestration", intent)
+        await run_dispatched_trace_analyze(c)
 
         ta_events = [e for e in c.shared_state.lifecycle if e["step"] == "trace_analyze"]
         assert len(ta_events) == 2, f"expected START + END, got {ta_events}"
@@ -231,6 +233,7 @@ async def test_handle_request_end_surfaces_tracelens_report_paths(
             },
         )
         await c._handle_intent("orchestration", intent)
+        await run_dispatched_trace_analyze(c)
 
         end = [e for e in c.shared_state.lifecycle if e["step"] == "trace_analyze" and e["status"] == "END"][-1]
         for key, val in report_fields.items():
@@ -263,6 +266,7 @@ async def test_handle_request_failed_handler_emits_error(session_dir, monkeypatc
             },
         )
         await c._handle_intent("orchestration", intent)
+        await run_dispatched_trace_analyze(c)
 
         ta_events = [e for e in c.shared_state.lifecycle if e["step"] == "trace_analyze"]
         assert [e["status"] for e in ta_events] == ["START", "ERROR"]

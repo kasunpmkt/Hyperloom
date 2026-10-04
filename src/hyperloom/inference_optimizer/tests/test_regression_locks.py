@@ -25,6 +25,7 @@ from hyperloom.orchestrator.loop.coordinator import Coordinator
 from hyperloom.orchestrator.state.shared_state import SharedState
 from hyperloom.orchestrator.state.task_registry import Task
 from hyperloom.inference_optimizer.session.paths import make_session_dir
+from ._trace_analyze_task import run_dispatched_trace_analyze
 
 
 def _heartbeat() -> Intent:
@@ -142,6 +143,7 @@ async def test_trace_analyze_caches_result_to_shared_state(session_dir, monkeypa
             },
         )
         await c._handle_intent("orchestration", intent)
+        await run_dispatched_trace_analyze(c)
         await c._handle_intent("orchestration", intent)
 
         assert call_count["n"] == 1, "second identical request must hit the cache"
@@ -162,6 +164,7 @@ async def test_trace_analyze_caches_result_to_shared_state(session_dir, monkeypa
                 },
             ),
         )
+        await run_dispatched_trace_analyze(c)
         assert call_count["n"] == 2
 
         assert "last_trace_analyze=" in c.shared_state.to_prompt_summary()

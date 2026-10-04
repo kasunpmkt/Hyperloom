@@ -295,6 +295,9 @@ def _register_executors(
     # kernel_agent: the KERNEL_AGENT phase's whole pipeline, run under the task's lanes.
     coordinator.sub.register_executor("kernel_agent", lambda ctx: coordinator._run_kernel_agent(ctx))
 
+    # trace_analyze: a TraceLens analysis an agent requested, run off the tick by the request router.
+    coordinator.sub.register_executor("trace_analyze", lambda ctx: coordinator._run_trace_analyze_task(ctx))
+
     if log.isEnabledFor(logging.DEBUG):
         for required_kind in ("roofline", "profile"):
             if required_kind not in coordinator.sub.executor_registry:

@@ -49,6 +49,7 @@ from hyperloom.orchestrator.bus.resource_lock import (
 from hyperloom.orchestrator.loop.dispatcher import DispatcherCollaborator
 from hyperloom.inference_optimizer.session.session_paths import target_baseline_json
 from hyperloom.orchestrator.bus.storage import SqliteConnection
+from ._trace_analyze_task import register_trace_analyze_executor, wait_for_dispatched_trace_analyze
 
 
 async def _immediately(payload: dict) -> dict:
@@ -834,7 +835,9 @@ async def test_coordinator_response_routes_back_to_requester(session_dir):
             c.shared_state.last_profile_trace = "/tmp/trace.json.gz"
             c.shared_state.kernel_enabled = True
             c.shared_state.save(session_dir)
+            register_trace_analyze_executor(c)
             await c.tick(1)
+            await wait_for_dispatched_trace_analyze(c)
             kernel_inbox = await c.bus.tail(to_agent="kernel_agent", topic="request")
             assert kernel_inbox, "no request mirrored to kernel"
             responses = await c.bus.tail(topic="response", to_agent="orchestration")
