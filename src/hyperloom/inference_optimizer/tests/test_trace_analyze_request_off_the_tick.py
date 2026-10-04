@@ -19,6 +19,8 @@ from ._trace_analyze_task import register_trace_analyze_executor, wait_for_dispa
 
 # Long enough that a blocked call would fail it, short enough to keep the suite fast.
 _PROMPT_SEC = 5.0
+# Far above any real pid on Linux, so the liveness probe proves it dead.
+_DEAD_PID = 2_147_483_646
 
 
 class _SlowAnalysis:
@@ -109,3 +111,33 @@ async def test_a_repeat_request_for_a_trace_in_analysis_joins_that_run(coord: Co
         await wait_for_dispatched_trace_analyze(coord)
 
     assert analysis.calls == 1
+
+
+@pytest.mark.asyncio
+async def test_an_analysis_whose_holder_died_is_reclaimed(
+    coord: Coordinator, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A run killed mid-analysis must not leave a running row that holds every later phase transition."""
+    from hyperloom.orchestrator.bus.resource_lock import SqliteLeaseBackend
+
+    candidates = tmp_path / "kernel_candidates.json"
+    candidates.write_text("{}", encoding="utf-8")
+    analysis = _SlowAnalysis(candidates)
+
+    with patch.dict(krh.KERNEL_REQUEST_HANDLERS, {"trace_analyze": analysis}):
+        await coord._handle_intent("orchestration", _request("/t/trace.json.gz"))
+        await coord._pump_dispatcher_once()
+        await asyncio.wait_for(analysis.started.wait(), _PROMPT_SEC)
+        [task] = await coord.tasks.running()
+        lanes = coord.db.raw.execute("SELECT lane FROM leases WHERE task_id=?", (task.task_id,)).fetchall()
+        assert [row["lane"] for row in lanes] == ["analysis_lane"]
+
+        # The holder dies with the analysis still running, as on a hard crash before a resume.
+        coord.db.raw.execute("UPDATE leases SET pid=? WHERE task_id=?", (_DEAD_PID, task.task_id))
+        coord.db.raw.commit()
+        monkeypatch.setattr(SqliteLeaseBackend, "_pid_alive", staticmethod(lambda pid: pid != _DEAD_PID))
+        assert await coord.tasks.reclaim_dead_running() == [task.task_id]
+        assert not await coord.tasks.running()
+
+        analysis.release.set()
+        await wait_for_dispatched_trace_analyze(coord)

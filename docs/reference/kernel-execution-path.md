@@ -44,6 +44,10 @@ request is answered from it at once (`source: "shared_state_cache"`). Otherwise:
    for a trace that is already being analysed gets the task that is running it.
 2. The dispatcher pump starts the task and does not join it, as for `kernel_agent`,
    so the reactor turns, the critic and the rest of the tick go on while TraceLens runs.
+   The task holds `analysis_lane` (capacity 1, no conflict with the serving lanes), so
+   analyses run one at a time, and a run killed mid-analysis leaves a lease the
+   dead-holder pass reclaims on resume rather than a `running` row that would hold
+   every later phase transition.
 3. When the analysis lands, a second `trace_analyze_done` answers the same request
    (`in_reply_to`) with the result. A success is cached in `last_trace_analyze`; a
    failure goes to `last_action_failures`.

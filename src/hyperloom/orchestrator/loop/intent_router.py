@@ -1183,6 +1183,7 @@ class IntentRouter:
                 kind="trace_analyze",
                 params={**payload, "request_msg_id": request_msg_id, "requested_by": source},
                 idempotency_key=f"trace_analyze-{request_msg_id}",
+                requires_lanes=["analysis_lane"],
                 dispatch_class="coordinator",
             )
         await self._respond_to_kernel_request(

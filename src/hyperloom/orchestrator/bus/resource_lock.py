@@ -37,6 +37,9 @@ KNOWN_LANES = (
     # build_lane serializes off-loop compile tasks; capacity-1 with no serving-lane conflict (the compile step needs
     # no GPU/server).
     "build_lane",
+    # analysis_lane carries a requested TraceLens analysis; no serving-lane conflict (it reads a trace already on
+    # disk), and the lease is what lets a crashed holder's row be reclaimed.
+    "analysis_lane",
 )
 
 # Lane → lanes that must *also* be free or co-acquired.
@@ -51,6 +54,7 @@ LANE_CONFLICTS: dict[str, frozenset[str]] = {
     "gpu_research_lane": frozenset({"benchmark_lane", "profile_lane", "server_lifecycle"}),
     # build_lane is a serialization/observability primitive only; no conflicts.
     "build_lane": frozenset(),
+    "analysis_lane": frozenset(),
 }
 
 
