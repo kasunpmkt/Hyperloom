@@ -91,12 +91,14 @@ offers and Hyperloom lacks:
 - [ ] HL-32 Inline TraceLens analysis freezes the coordinator and dominates PRELUDE's cost
 - [ ] HL-33 (GEAK, upstream) An interrupted GEAK run is flushed as a final `no_gain`
 - [ ] HL-34 Reap the KERNEL delegation's leftover servers and check free VRAM before every server boot
+- [ ] HL-35 Start FRAMEWORK while PRELUDE's TraceLens analysis runs
+- [ ] HL-36 Measure TraceLens's LLM pass against the no-LLM route
 
 ### Execution order (as arranged in project 4)
 HL-B0 → HL-03 → HL-21 → HL-22 → HL-23 → HL-02 → HL-20 → HL-01 → HL-04 → HL-06 → HL-05 → HL-14 → HL-11 → HL-09 →
 HL-12 → HL-15 → HL-16 → HL-10 → HL-13 → HL-07 → HL-17 → HL-18 → HL-08 → HL-19.
 HL-24 and HL-25 (bugs), HL-26 (after HL-24 and HL-25), HL-27, HL-28, HL-29 (after HL-27), HL-30 and HL-31 (bugs),
-HL-32, HL-33 (upstream GEAK), HL-34 (bug), HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
+HL-32, HL-33 (upstream GEAK), HL-34 (bug), HL-35, HL-36, HL-17, HL-18 and HL-08 have no dependency on the main chain and can run in parallel
 whenever there is capacity. HL-07 only proceeds if HL-05 showed a gain with a public
 draft.
 
@@ -1476,6 +1478,57 @@ gpt-oss-120b, 3 Oct, session `gpt-oss-120b/20261003T031805Z-c30ce6cd`:
 - [ ] A test with the GPU held shows a server boot fails as `gpu_busy` naming the pid, and GEAK's re-validation is not
       recorded as `failed` for that reason.
 - [ ] `docs/backlog/geak-backlog.md` GK-01/GK-02 point at this issue.
+
+---
+
+## [HL-35] Start FRAMEWORK while PRELUDE's TraceLens analysis runs
+<!-- labels: type:feature, domain:inference, area:search, priority:P2 -->
+
+### Problem / use case
+PRELUDE's initial roofline is joined by the dispatcher pump, so FRAMEWORK cannot start until its TraceLens analysis returns, although that analysis needs no GPU.
+- **The cause.** The baseline's writeback enqueues the roofline task (`phases/prelude.py` `_maybe_enqueue_prelude_initial_analysis_after_baseline`). The same `_pump_dispatcher_once()` call that ran the baseline then joins it (`loop/dispatcher.py`; only `_NOT_JOINED_KINDS` are left running). `PRELUDE → FRAMEWORK_AGENT` is only evaluated after that call returns, even though `exit_normal_prelude` was already true when the baseline landed.
+- **What it cost on 3 Oct** (gpt-oss-120b, session `gpt-oss-120b/20261003T153643Z-d289448a`): the tick did not advance from 15:37 to 17:10. Of that, 16:50–17:10 was the CPU-only TraceLens pass, with the GPU idle. FRAMEWORK's first benchmark started at 17:12.
+
+The request-path half of this (#57) is fixed separately; this is the PRELUDE half.
+
+### Proposed solution
+Split the analysis out of the roofline task:
+- The profile ends the GPU part.
+- The analysis runs as its own unjoined `trace_analyze` task (the kind #57 adds), and its result is recorded when it lands.
+- PRELUDE exits once the baseline and the profile are in.
+
+Constraints found while scoping #57:
+- **Barrier:** the PRELUDE→FRAMEWORK barrier (`phases/machine.py`, `cancel_inflight_actions`) stops every running action, so the analysis must be exempt from it.
+- **Re-profile ordering:** the compute-bound re-profile (`actions/executors/roofline.py`) runs after the analysis today and uses the GPU again.
+- **Roofline evidence:** specialist dispatch packs roofline evidence once, at dispatch (`specialists/dispatch.py`). FRAMEWORK specialists dispatched before the analysis lands would get none, so either they wait for it or they read it lazily.
+- **Watermark:** the watermark roofline stays closed while `auto_roofline_pending_task_id` is set.
+
+### Acceptance criteria
+- [ ] FRAMEWORK's first benchmark starts while PRELUDE's TraceLens analysis is still running.
+- [ ] Roofline evidence still reaches FRAMEWORK's specialists, and the KERNEL consumers (hot kernels, `kernel_roofline`) are unchanged.
+- [ ] On gpt-oss-120b, the time from baseline to the first FRAMEWORK benchmark drops by about the analysis time (about 20 min on 3 Oct).
+
+---
+
+## [HL-36] Measure TraceLens's LLM pass against the no-LLM route, and make the cheaper one PRELUDE's default if it is not worse
+<!-- labels: type:feature, domain:inference, area:search, priority:P2 -->
+
+### Problem / use case
+TraceLens's LLM pass is most of PRELUDE's model usage, and it is not clear that it changes what the run does.
+- **Cost.** It is about 80% of PRELUDE's weighted tokens: 3.8 M of 4.8 M on 1 Oct, 3.9 M of 4.7 M on 2 Oct (gpt-oss-120b).
+- **Time.** On 3 Oct (session `gpt-oss-120b/20261003T153643Z-d289448a`), the deterministic part (trace split, `perf_report`) took about 6 min (16:50–16:56) and the LLM pass about 13 min (16:56–17:09).
+- **Outputs.** The LLM-only outputs (`category_findings/`, `system_findings/`, `priority_data.json`) are read only by `breakdown/session_package.py`. `analysis.md` and the hot kernels are also produced by the existing no-LLM route (`analysis_route=bypass`, `HYPERLOOM_TRACE_ANALYSIS_ROUTE`, `agents/kernel/tools/bypass_trace_analysis.py`).
+- **Result on 3 Oct.** The LLM analysis yielded no hot kernels: `record_trace_analyze: envelope carried no hot kernels; recovered 0`.
+
+### Proposed solution
+Measure before changing the default:
+1. Run an A/B on gpt-oss-120b and Qwen3-8B from a fresh KB each, `agent` against `bypass`.
+2. Compare PRELUDE weighted tokens, PRELUDE wall-clock, what FRAMEWORK specialists and KERNEL consume (roofline evidence, hot kernels), and the final validated gain against the noise band.
+3. If `bypass` is not worse, make it the default for PRELUDE's initial roofline, keep `agent` available, and record the evidence. If it is worse, cap the LLM pass instead (a smaller model or fewer turns) and measure again.
+
+### Acceptance criteria
+- [ ] An A/B record per workload under `experiments/`, with tokens, PRELUDE time and validated gain for both routes.
+- [ ] PRELUDE token use on gpt-oss-120b drops measurably against the 2 Oct figure, with the validated gain inside the noise band of the `agent` run (carried over from #57's second criterion).
 
 ---
 
