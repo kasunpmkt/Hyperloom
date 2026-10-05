@@ -1346,6 +1346,58 @@ async def test_explore_executor_defaults_to_warm_decision_matching_hot_baseline(
     assert {w["name"] for w in out["winners"]} == {"warm_keep"}
 
 
+@pytest.mark.asyncio
+async def test_a_warm_decision_records_the_server_its_warmup_started(
+    sub_agent_runner,
+    tmp_path,
+    monkeypatch,
+):
+    """The decision round reuses the warmup's server and starts none, so its launch evidence must point at the log
+    that server wrote. Otherwise a kept variant carries no observed identity and is handed on as unverified."""
+    sub, tr, _ = sub_agent_runner
+    base = tmp_path / "base.yaml"
+    _write_baseline_yaml(base)
+    output_dir = tmp_path / "explore-warm-log"
+    warm_logs: list[Path] = []
+
+    def _fake_run(cmd, *args, **kwargs):
+        slot = Path(cmd[cmd.index("--output-dir") + 1])
+        workspace = _fake_workspace(slot, tput=920.0)
+        if "warmup_round" in slot.parts:
+            log = workspace / "server.log"
+            log.write_text(
+                "INFO server_args=ServerArgs(model_path='/model', tp_size=1, mem_fraction_static=0.8)\n",
+                encoding="utf-8",
+            )
+            warm_logs.append(log)
+        return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="ok", stderr="")
+
+    task = await tr.create(
+        kind="explore",
+        params={
+            "config_path": str(base),
+            "output_dir": str(output_dir),
+            "base_tput": 800.0,
+            "grid": [{"name": "warm_keep", "extra_args": "--warm-flag", "extra_envs": {}, "provenance": "llm_direct"}],
+            "baseline_runtime_sec": 10.0,
+            "baseline_warm_runtime_sec": 5.0,
+        },
+        idempotency_key="ex-warm-log",
+    )
+    sub.register_executor("explore", ExploreExecutor(session_dir=tmp_path))
+    with patch(
+        "hyperloom.orchestrator.actions.executors._grid_runner.run_with_session_kill",
+        side_effect=_fake_run,
+    ):
+        res = await sub.run_task(task)
+
+    (winner,) = res.result["winners"]
+    assert len(warm_logs) == 1
+    assert winner["launch_evidence"]["actual_server_log_path"] == str(warm_logs[0])
+    assert winner["launch_evidence"]["warm_reuse"]["reused_ready_server"] is True
+    assert winner["launch_evidence"]["observed_server_identity"]["tp_size"] == 1
+
+
 def _run_eval_of(cmd: list[str]) -> str:
     """Read RUN_EVAL out of the materialized YAML a Magpie call was handed."""
     cfg_idx = cmd.index("--benchmark-config")

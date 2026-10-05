@@ -888,13 +888,18 @@ async def run_grid(
     base_unset_envs: list[str] | None = None,
     warmup_before_measure: bool | None = None,
     server_already_ready: bool = False,
+    ready_server_log: str | None = None,
     serving_lease: Any = None,
     session_deadline_sec: float | None = None,
     variant_expected_sec: float | None = None,
     deadline_stop: StoppedByTheRun = STOPPED_BY_THE_RUN[SESSION_TIME_EXHAUSTED_CLASS],
     lifecycle_boot_only: bool = False,
 ) -> list[VariantResult]:
-    """Execute variants; ``deadline_stop`` names the owner of the supplied deadline."""
+    """Execute variants; ``deadline_stop`` names the owner of the supplied deadline.
+
+    ``ready_server_log`` is the log of the server a ``server_already_ready`` caller hands over. The measured round
+    starts no server of its own, so without it the round has no log to read the served configuration from.
+    """
     silence_timeout_sec, benchmark_timeout_sec = resolve_benchmark_timeouts()
     if not magpie_python:
         # Backend-aware: bypass uses a plain python3, not Magpie's venv.
@@ -2031,6 +2036,7 @@ async def run_grid(
         grid=grid,
         output_root=output_root,
         caller_reused_ready_server=server_already_ready,
+        ready_server_log=ready_server_log,
     )
     return results
 
@@ -2096,6 +2102,7 @@ def _attach_grid_launch_evidence(
     grid: list[GridVariant],
     output_root: Path,
     caller_reused_ready_server: bool,
+    ready_server_log: str | None = None,
 ) -> None:
     """Persist declared and observed launch evidence for each grid result."""
     for idx, result in enumerate(results):
@@ -2113,6 +2120,8 @@ def _attach_grid_launch_evidence(
         workspace = Path(result.workspace) if result.workspace else None
         primary_log = Path(result.server_log_path) if result.server_log_path else slot / "server.log"
         actual_log = _measurement_server_log_path(primary_log, workspace, slot=slot)
+        if not actual_log and caller_reused_ready_server and ready_server_log:
+            actual_log = _existing_log_path(Path(ready_server_log))
         result.server_log_path = actual_log
         evidence = build_launch_evidence(
             config_path=config_path,

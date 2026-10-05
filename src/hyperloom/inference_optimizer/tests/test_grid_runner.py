@@ -709,6 +709,56 @@ async def test_run_grid_reused_ready_server_records_warmup_log_evidence(tmp_path
 
 
 @pytest.mark.asyncio
+async def test_a_ready_server_log_from_the_caller_backs_the_measured_round(tmp_path, monkeypatch):
+    """Explore's warmup round runs its own grid beside the measured slot, not inside it, so only the caller knows
+    where the reused server logged. Without that log the measured round recorded no observed identity, and a kept
+    configuration went to GEAK as an unverified reference with no throughput."""
+    base = tmp_path / "base.yaml"
+    _write_baseline_yaml_mtime(base)
+    output_root = tmp_path / "v01_variant"
+    warm_log = output_root / "warmup_round" / "variant_00_variant" / "benchmark_sglang_1" / "server.log"
+    warm_log.parent.mkdir(parents=True)
+    warm_log.write_text(
+        "INFO server_args=ServerArgs(model_path='/model', tp_size=1, chunked_prefill_size=2048)\n",
+        encoding="utf-8",
+    )
+
+    def fake_run(cmd, *args, **kwargs):
+        _fake_workspace(Path(cmd[cmd.index("--output-dir") + 1]))
+        return subprocess.CompletedProcess(cmd, 0, "ok", "")
+
+    async def measure(root: Path, **ready):
+        with patch(
+            "hyperloom.orchestrator.actions.executors._grid_runner.run_with_session_kill",
+            side_effect=fake_run,
+        ):
+            return (
+                await run_grid(
+                    base_yaml_path=base,
+                    base_extra_args="",
+                    grid=[GridVariant("variant")],
+                    output_root=root,
+                    server_already_ready=True,
+                    warmup_before_measure=False,
+                    **ready,
+                )
+            )[0]
+
+    told = await measure(output_root, ready_server_log=str(warm_log))
+    assert told.server_log_path == str(warm_log)
+    assert told.launch_evidence["actual_server_log_path"] == str(warm_log)
+    assert told.launch_evidence["observed_server_identity"] == {
+        "chunked_prefill_size": 2048,
+        "model_path": "/model",
+        "tp_size": 1,
+    }
+
+    untold = await measure(tmp_path / "v02_variant")
+    assert untold.launch_evidence["actual_server_log_path"] == ""
+    assert untold.launch_evidence["observed_server_identity"] == {}
+
+
+@pytest.mark.asyncio
 async def test_run_grid_failure_reused_ready_server_uses_same_warmup_fallback(tmp_path, monkeypatch):
     """Failure paths use the same narrowly scoped ready-server log fallback."""
     base = tmp_path / "base.yaml"
