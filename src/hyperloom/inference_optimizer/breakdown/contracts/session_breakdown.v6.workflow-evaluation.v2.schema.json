@@ -36,7 +36,7 @@
               "const": "hyperloom.workflow_evaluation.v2"
             },
             "contract_digest": {
-              "const": "7fdb5f9b8e7142a051afd8c3a5ac578963918ffac994e33380deab8fc143327d"
+              "const": "20edecd9a53aaa0f9fb1f15d8e4a503a8656f3c1735c1cf746695e2b1cd7793e"
             },
             "run_flags": {
               "type": "object",
@@ -136,7 +136,8 @@
                 "profile",
                 "replay_warm_recipe",
                 "roofline",
-                "targeted_build"
+                "targeted_build",
+                "trace_analyze"
               ]
             },
             "coordinator_reserved_actions": {
@@ -420,6 +421,35 @@
                     },
                     "open": {
                       "type": "boolean"
+                    },
+                    "reactor_turns": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "run",
+                          "skipped",
+                          "reasons"
+                        ],
+                        "properties": {
+                          "run": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "skipped": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "reasons": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "integer",
+                              "minimum": 0
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "additionalProperties": false

@@ -82,6 +82,8 @@ INTERNAL_ONLY_ACTION_NAMES: frozenset[str] = frozenset(
         "targeted_build",
         # The KERNEL_AGENT phase's whole pipeline, enqueued once at phase entry.
         "kernel_agent",
+        # A TraceLens analysis an agent requested: agents request it, the Coordinator runs it as a task.
+        "trace_analyze",
     }
 )
 

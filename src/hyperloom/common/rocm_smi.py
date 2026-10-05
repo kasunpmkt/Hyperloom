@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Advanced Micro Devices, Inc.
 # SPDX-License-Identifier: MIT
 
-"""Shared rocm-smi VRAM reader."""
+"""Shared rocm-smi readers: per-GPU VRAM, and the processes holding it."""
 
 from __future__ import annotations
 
@@ -20,13 +20,21 @@ class GpuVram(NamedTuple):
     total_mib: float
 
 
-def gpu_vram_usage() -> list[GpuVram] | None:
-    """Return per-GPU VRAM usage via rocm-smi, or None when it cannot be read."""
+class GpuHolder(NamedTuple):
+    """A process holding GPU memory."""
+
+    pid: int
+    name: str
+    vram_mib: float
+
+
+def _rocm_smi_json(*args: str) -> dict[str, Any] | None:
+    """Run ``rocm-smi <args> --json`` and return its object, or None when it cannot be read."""
     if not shutil.which("rocm-smi"):
         return None
     try:
         proc = subprocess.run(
-            ["rocm-smi", "--showmeminfo", "vram", "--json"],
+            ["rocm-smi", *args, "--json"],
             capture_output=True,
             text=True,
             timeout=_TIMEOUT_SEC,
@@ -39,7 +47,32 @@ def gpu_vram_usage() -> list[GpuVram] | None:
         data = json.loads(proc.stdout)
     except (json.JSONDecodeError, ValueError):
         return None
-    if not isinstance(data, dict):
+    return data if isinstance(data, dict) else None
+
+
+def gpu_holders() -> list[GpuHolder] | None:
+    """Return the processes holding GPU memory via rocm-smi, or None when it cannot be read."""
+    data = _rocm_smi_json("--showpids")
+    if data is None:
+        return None
+    holders: list[GpuHolder] = []
+    # Shape: {"system": {"PID<pid>": "name, #gpus, vram_bytes, sdma, cu_occupancy"}}.
+    for fields in data.values():
+        if not isinstance(fields, dict):
+            continue
+        for key, val in fields.items():
+            parts = [part.strip() for part in str(val).split(",")]
+            try:
+                holders.append(GpuHolder(int(key.removeprefix("PID")), parts[0], float(parts[2]) / 1024**2))
+            except (IndexError, ValueError):
+                continue
+    return holders
+
+
+def gpu_vram_usage() -> list[GpuVram] | None:
+    """Return per-GPU VRAM usage via rocm-smi, or None when it cannot be read."""
+    data = _rocm_smi_json("--showmeminfo", "vram")
+    if data is None:
         return None
 
     result: list[GpuVram] = []
@@ -68,4 +101,4 @@ def gpu_vram_usage() -> list[GpuVram] | None:
     return result or None
 
 
-__all__ = ["GpuVram", "gpu_vram_usage"]
+__all__ = ["GpuHolder", "GpuVram", "gpu_holders", "gpu_vram_usage"]

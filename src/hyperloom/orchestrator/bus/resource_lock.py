@@ -37,6 +37,9 @@ KNOWN_LANES = (
     # build_lane serializes off-loop compile tasks; capacity-1 with no serving-lane conflict (the compile step needs
     # no GPU/server).
     "build_lane",
+    # analysis_lane carries a requested TraceLens analysis; no serving-lane conflict (it reads a trace already on
+    # disk), and the lease is what lets a crashed holder's row be reclaimed.
+    "analysis_lane",
 )
 
 # Lane → lanes that must *also* be free or co-acquired.
@@ -51,6 +54,7 @@ LANE_CONFLICTS: dict[str, frozenset[str]] = {
     "gpu_research_lane": frozenset({"benchmark_lane", "profile_lane", "server_lifecycle"}),
     # build_lane is a serialization/observability primitive only; no conflicts.
     "build_lane": frozenset(),
+    "analysis_lane": frozenset(),
 }
 
 
@@ -677,6 +681,12 @@ class SqliteLeaseBackend:
         )
         return {str(r["holder_id"]) for r in rows}
 
+    async def task_lease_expiry_unix(self, task_id: str) -> float | None:
+        """Return when the earliest lane row ``task_id`` holds expires, or ``None`` when it holds none."""
+        row = await self.db.fetchone("SELECT MIN(expires_at) AS expires_at FROM leases WHERE task_id = ?", (task_id,))
+        expires = str(row["expires_at"] or "") if row else ""
+        return datetime.fromisoformat(expires).timestamp() if expires else None
+
     async def lane_holders(self) -> dict[str, int]:
         """Return ``{lane: holder_count}`` for every retained ownership row."""
         rows = await self.db.fetchall("SELECT lane, COUNT(*) AS n FROM leases GROUP BY lane")
@@ -774,6 +784,10 @@ class ResourceLockManager:
             set[str]: Round ids holding :data:`BRINGUP_ROUND_LANE` then.
         """
         return await self.backend.bringup_round_holders(now_unix)
+
+    async def task_lease_expiry_unix(self, task_id: str) -> float | None:
+        """Return when the earliest lane row ``task_id`` holds expires, via the backend."""
+        return await self.backend.task_lease_expiry_unix(task_id)
 
     async def lane_holders(self) -> dict[str, int]:
         """Return ``{lane: live_holder_count}`` via the backend."""

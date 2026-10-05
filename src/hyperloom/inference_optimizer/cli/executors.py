@@ -80,14 +80,13 @@ def _build_specialist_executor(
         RuntimeError: If subprocess dispatch selects Codex but no Codex runtime
             is installed.
     """
-    import shutil
-
     from hyperloom.orchestrator.specialists.mcp_config import write_specialist_mcp_config
     from hyperloom.orchestrator.specialists.runner import SpecialistRunner
     from hyperloom.orchestrator.specialists.domains import DEFAULT_SPECIALIST_MAX_TURNS
     from hyperloom.common.llm_config import AGENT_BACKEND_CODEX, preferred_agent_backend
     from hyperloom.orchestrator.specialists.subprocess_ import (
         SpecialistSubprocessConfig,
+        resolve_claude_executable,
         resolve_codex_executable,
     )
 
@@ -117,15 +116,21 @@ def _build_specialist_executor(
             )
         agent_bin = codex_bin
     else:
-        claude_bin = shutil.which("claude") or ""
+        claude_bin = resolve_claude_executable()
+        if dispatch_mode != "inprocess" and not claude_bin:
+            raise RuntimeError(
+                "specialists run on the claude CLI, but none was found on PATH, at GEAK_CLAUDE_BIN, or in "
+                "~/.local/bin or /usr/local/bin. Install it (the kernel-agent installer does), or pass "
+                "--specialist-dispatch-mode inprocess to run specialists in-process, where they cannot read or "
+                "write outside the working directory and source patches fail."
+            )
         agent_bin = claude_bin
-    use_subprocess = dispatch_mode != "inprocess" and bool(agent_bin)
-    if dispatch_mode == "subprocess" and not agent_bin:
-        log.warning(
-            "specialist_dispatch_mode=subprocess requested but `%s` "
-            "binary not found on PATH; falling back to in-process backend",
-            agent_backend,
-        )
+    use_subprocess = dispatch_mode != "inprocess"
+    log.info(
+        "specialists: %s via %s",
+        "subprocess" if use_subprocess else "in-process",
+        agent_bin if use_subprocess else f"{agent_backend} Agent SDK",
+    )
 
     if use_subprocess:
         # Operator --specialist-mcp-config wins; else auto-generate one from the
@@ -289,6 +294,9 @@ def _register_executors(
 
     # kernel_agent: the KERNEL_AGENT phase's whole pipeline, run under the task's lanes.
     coordinator.sub.register_executor("kernel_agent", lambda ctx: coordinator._run_kernel_agent(ctx))
+
+    # trace_analyze: a TraceLens analysis an agent requested, run off the tick by the request router.
+    coordinator.sub.register_executor("trace_analyze", lambda ctx: coordinator._run_trace_analyze_task(ctx))
 
     if log.isEnabledFor(logging.DEBUG):
         for required_kind in ("roofline", "profile"):

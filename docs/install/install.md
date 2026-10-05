@@ -345,12 +345,12 @@ paste API keys into chat.
 
 ```bash
 cat > .env <<'EOF'
-ANTHROPIC_API_KEY=<PLEASE_FILL_IN>
+ANTHROPIC_API_KEY='<PLEASE_FILL_IN>'
 ANTHROPIC_BASE_URL=https://api.anthropic.com
 CLAUDE_MODEL=claude-opus-5
 # Writable artifact root for runtime files, dependency checkouts, logs,
 # optimizer runs, and generated env files. Set an absolute path you own.
-USER_DATA_PATH=<PLEASE_FILL_IN>
+USER_DATA_PATH='<PLEASE_FILL_IN>'
 HYPERLOOM_RUN_MODE=baremetal
 EOF
 ```
@@ -364,13 +364,13 @@ one: point the base URL at the gateway and use the key the gateway issues.
 
 ```bash
 cat > .env <<'EOF'
-ANTHROPIC_API_KEY=<PLEASE_FILL_IN>
+ANTHROPIC_API_KEY='<PLEASE_FILL_IN>'
 ANTHROPIC_BASE_URL=https://<your-gateway-host>/api/v1/llm-proxy
 # Pin an orchestration model id your gateway actually serves. Preflight
 # validates it against the gateway's /models catalog and does not silently
 # substitute a different model.
-CLAUDE_MODEL=<PLEASE_FILL_IN>
-USER_DATA_PATH=<PLEASE_FILL_IN>
+CLAUDE_MODEL='<PLEASE_FILL_IN>'
+USER_DATA_PATH='<PLEASE_FILL_IN>'
 HYPERLOOM_RUN_MODE=baremetal
 EOF
 ```
@@ -443,7 +443,7 @@ so `.env`, logs, and session artifacts stay valid:
 ```bash
 export HYPERLOOM_IMAGE=docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0
 export REPO_ROOT="$(pwd -P)"
-docker run -d \
+docker run -d --init \
   --name "${HYPERLOOM_CONTAINER_NAME:-hyperloom-local}" \
   --shm-size "${HYPERLOOM_SHM_SIZE:-64g}" \
   --entrypoint tail \

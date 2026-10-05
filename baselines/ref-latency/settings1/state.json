@@ -1,0 +1,2350 @@
+{
+  "active_inferencex_path": "",
+  "agent_last_active": {
+    "critic": 1790801158.3614898,
+    "orchestration": 1790801143.969442
+  },
+  "agentx_corpus_shape": {},
+  "agentx_epoch": 0,
+  "apply_fail_reauthor_attempts": {},
+  "apply_fail_retry_pending": [],
+  "attempts": [
+    {
+      "adopted": false,
+      "after_tput": 578.9020546372174,
+      "before_tput": 597.9272915105446,
+      "candidate_id": "",
+      "cycle": 0,
+      "error_class": "",
+      "fingerprint": "30fa49ca8ad74677",
+      "gain_pct": null,
+      "lever_kind": "config",
+      "outcome": "REVERT",
+      "provenance": "llm_direct",
+      "round_id": "explore-001",
+      "specialist_task_id": "",
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "variant_name": "aiter_master"
+    },
+    {
+      "adopted": false,
+      "after_tput": 576.8203657383674,
+      "before_tput": 597.9272915105446,
+      "candidate_id": "",
+      "cycle": 0,
+      "error_class": "",
+      "fingerprint": "e9702fc94f22c54e",
+      "gain_pct": null,
+      "lever_kind": "config",
+      "outcome": "REVERT",
+      "provenance": "llm_direct",
+      "round_id": "explore-001",
+      "specialist_task_id": "",
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "variant_name": "aiter_mha_unified"
+    },
+    {
+      "adopted": false,
+      "after_tput": null,
+      "before_tput": 597.9272915105446,
+      "candidate_id": "",
+      "cycle": 0,
+      "error_class": "magpie_nonzero_invalid_measurement",
+      "fingerprint": "f398df02739fa33e",
+      "gain_pct": null,
+      "lever_kind": "config",
+      "outcome": "FAILED",
+      "provenance": "llm_direct",
+      "round_id": "explore-001",
+      "specialist_task_id": "",
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "variant_name": "full_cudagraph_small_bs"
+    },
+    {
+      "adopted": false,
+      "after_tput": null,
+      "before_tput": 597.9272915105446,
+      "candidate_id": "",
+      "cycle": 0,
+      "error_class": "magpie_nonzero_invalid_measurement",
+      "fingerprint": "f07fe2b32d1bdc90",
+      "gain_pct": null,
+      "lever_kind": "config",
+      "outcome": "FAILED",
+      "provenance": "llm_direct",
+      "round_id": "explore-001",
+      "specialist_task_id": "",
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "variant_name": "aiter_plus_full_cudagraph"
+    }
+  ],
+  "authored_framework_levers": [],
+  "auto_roofline_pending_task_id": "",
+  "baseline_accuracy": 0.9052312357846853,
+  "baseline_arg_error_streak": 0,
+  "baseline_attempts": [
+    {
+      "decision": "promoted",
+      "error_class": null,
+      "error_excerpt": null,
+      "extras": {
+        "accuracy": 0.9052312357846853,
+        "baseline_tput": 597.9272915105446,
+        "enablement_accuracy_floor": 0.0,
+        "enablement_succeeded": false,
+        "fingerprint": {
+          "benchmark_script": null,
+          "config_path": null,
+          "disable_run_eval": null,
+          "extra_envs": [],
+          "extra_server_args": null,
+          "gpu_type": null,
+          "model_path": null,
+          "result_dir": null
+        },
+        "is_revalidation": false,
+        "materialized_config": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/baseline_config.with_envs.yaml"
+      },
+      "failure_id": null,
+      "key_metric": 597.9272915105446,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/measure_round/benchmark_vllm_20260930_184839/inferencex_result.json",
+      "reported_success": true,
+      "status": "succeeded",
+      "stderr_log_path": null,
+      "stderr_tail": null,
+      "task_id": "0a4753ec7b9740a09e6e93a415f6fc0f",
+      "ts": "2026-09-30T18:49:44.704023+00:00",
+      "variant_name": null,
+      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/measure_round/benchmark_vllm_20260930_184839"
+    }
+  ],
+  "baseline_benchmark_script": "",
+  "baseline_config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/baseline_config.with_envs.yaml",
+  "baseline_double_run": true,
+  "baseline_eager_fallback": false,
+  "baseline_failure_streak": 0,
+  "baseline_measure_round_dropped": false,
+  "baseline_perf": {},
+  "baseline_post_ready_runtime_sec": 1804.2255459842681,
+  "baseline_roofline_ceiling": {
+    "achieved_tok_per_sec": 597.9272915105446,
+    "ceiling_arm": "baseline",
+    "comm_pct": null,
+    "compute_pct": null,
+    "e2e_mean_ms": null,
+    "framework": "vllm",
+    "gap_to_roofline_pct": 54.68,
+    "idle_pct": null,
+    "kernel_roofline_path": "",
+    "perfmodel_breakdown": {
+      "bound_kind": "memory",
+      "decode_cmp_tok_per_s": 44133.69605958722,
+      "decode_mem_tok_per_s": 1319.425816475433,
+      "decode_tok_per_s": 1319.425816475433,
+      "hbm_bw_gbps": 5300.0,
+      "ops": [
+        {
+          "ai": 3.992202729044834,
+          "bound": "memory",
+          "bytes_moved": 1210318848.0,
+          "flops": 4831838208.0,
+          "name": "q_proj",
+          "pct_time": 0.07532669501028329,
+          "time_s": 0.00022836204679245285
+        },
+        {
+          "ai": 3.9805636540330416,
+          "bound": "memory",
+          "bytes_moved": 303464448.0,
+          "flops": 1207959552.0,
+          "name": "k_proj",
+          "pct_time": 0.018886737126116347,
+          "time_s": 5.7257443018867926e-05
+        },
+        {
+          "ai": 3.9805636540330416,
+          "bound": "memory",
+          "bytes_moved": 303464448.0,
+          "flops": 1207959552.0,
+          "name": "v_proj",
+          "pct_time": 0.018886737126116347,
+          "time_s": 5.7257443018867926e-05
+        },
+        {
+          "ai": 3.992202729044834,
+          "bound": "memory",
+          "bytes_moved": 1210318848.0,
+          "flops": 4831838208.0,
+          "name": "o_proj",
+          "pct_time": 0.07532669501028329,
+          "time_s": 0.00022836204679245285
+        },
+        {
+          "ai": 3.9947984395318596,
+          "bound": "memory",
+          "bytes_moved": 3628597248.0,
+          "flops": 14495514624.0,
+          "name": "gate_proj",
+          "pct_time": 0.22583324936806176,
+          "time_s": 0.0006846409901886792
+        },
+        {
+          "ai": 3.9947984395318596,
+          "bound": "memory",
+          "bytes_moved": 3628597248.0,
+          "flops": 14495514624.0,
+          "name": "up_proj",
+          "pct_time": 0.22583324936806176,
+          "time_s": 0.0006846409901886792
+        },
+        {
+          "ai": 3.9947984395318596,
+          "bound": "memory",
+          "bytes_moved": 3628597248.0,
+          "flops": 14495514624.0,
+          "name": "down_proj",
+          "pct_time": 0.22583324936806176,
+          "time_s": 0.0006846409901886792
+        },
+        {
+          "ai": 3.9959924616197653,
+          "bound": "memory",
+          "bytes_moved": 1245907968.0,
+          "flops": 4978638848.0,
+          "name": "lm_head",
+          "pct_time": 0.07754165744960602,
+          "time_s": 0.00023507697509433963
+        },
+        {
+          "ai": 3.9896103896103896,
+          "bound": "memory",
+          "bytes_moved": 908328960.0,
+          "flops": 3623878656.0,
+          "name": "sdpa",
+          "pct_time": 0.05653173017340947,
+          "time_s": 0.00017138282264150942
+        }
+      ],
+      "peak_achievable_tflops": 708.0,
+      "prefill_tok_per_s": 45860.31488253922
+    },
+    "roofline_bound_kind": "memory",
+    "roofline_ceiling_exceeded": false,
+    "roofline_cmp_ceiling_tok_per_sec": 44133.69605958722,
+    "roofline_ideal_ms": null,
+    "roofline_mem_ceiling_tok_per_sec": 1319.425816475433,
+    "roofline_provenance": {
+      "compute_peak_convention": "achievable",
+      "compute_peak_source": "TraceLens arch JSON (max-achievable sustained)",
+      "compute_peak_tflops": 708.0,
+      "dtype_source": "config_torch_dtype",
+      "effective_concurrency": 4,
+      "formula": "perfmodel",
+      "quantization": "none",
+      "runtime_activation_dtype_bytes": 2.0,
+      "runtime_framework": "vllm",
+      "runtime_isl": 1024,
+      "runtime_osl": 1024,
+      "runtime_precision": "bf16",
+      "runtime_tp": 1,
+      "runtime_weight_dtype": "config_torch_dtype",
+      "runtime_weight_dtype_bytes": 2.0
+    },
+    "snapshot_id": null,
+    "theoretical_peak_tok_per_sec": 1319.425816475433,
+    "throughput_unit": "tok/s",
+    "top_bottleneck": null,
+    "top_kernel": null,
+    "ts": "2026-09-30T18:49:44.683402+00:00",
+    "within_roofline_pct": 45.32,
+    "within_roofline_pct_uncapped": 45.32
+  },
+  "baseline_runtime_sec": 1861.32,
+  "baseline_total_failures": 0,
+  "baseline_tput": 597.9272915105446,
+  "baseline_warm_runtime_sec": 65.78,
+  "baseline_workload_extra": {},
+  "benchmark_backend": "",
+  "benchmark_mode": "synthetic",
+  "bottleneck_shift": {},
+  "budget_extensions": [],
+  "bypass_scripts_dir": "",
+  "claw_session_id": "",
+  "close_sequence_done": true,
+  "closing_grace_sec": null,
+  "closing_phase": false,
+  "closing_report_task_id": "ea3f1b8a9126484b8fb9c45df046fbeb",
+  "closing_started_unix": 0.0,
+  "compute_partition": {},
+  "conc": 4,
+  "conc_sweep_concs": [
+    256,
+    128,
+    64,
+    32,
+    16,
+    8,
+    4,
+    2
+  ],
+  "conc_sweep_enabled": false,
+  "conc_sweep_total_budget_sec": 9000,
+  "consecutive_config_only_rounds": 0,
+  "crash_count": 0,
+  "crash_timestamps": [],
+  "cumulative_gain_validated": 0.0,
+  "cumulative_gain_validated_stack_len": 0,
+  "cumulative_gain_validated_ts": "",
+  "current_action": "explore-round-2 trimmed to 1 variant (--async-scheduling, ~15min) to fit inside the 29min left after two time_budget denials",
+  "current_best": {
+    "action": "baseline",
+    "cold_tput": 598.539416977978,
+    "duration_seconds": 34.25165616418235,
+    "e2e_norm_intvty_p50": null,
+    "e2e_norm_intvty_p90": null,
+    "e2el_mean_ms": 6849.2613680893555,
+    "hot_tput": 597.9272915105446,
+    "input_throughput": null,
+    "measurement": {
+      "benchmark_workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/measure_round/benchmark_vllm_20260930_184839",
+      "declared_launch_identity": "sha256:1168c05fb668c4d5fdd60caa90ebafb92e7d38ec312a670de4e53d7e01744d9c",
+      "identity_verification_status": "verified_observed",
+      "launch_evidence": {
+        "actual_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/warmup_round/benchmark_vllm_20260930_181741/server.log",
+        "framework": "vllm",
+        "materialized_config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/baseline_config.with_envs.yaml",
+        "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+        "observed_model_binding": {
+          "dp": "",
+          "model_digest": "sha256:b0fe8145a460c543a3301c3da32e60f58a82e6de2fe6b2a77513963f5fbc71c4",
+          "pp": "",
+          "served_model_digest": "",
+          "tokenizer_digest": "",
+          "tp": ""
+        },
+        "observed_server_identity": {
+          "gpu_memory_utilization": 0.95,
+          "max_model_len": 6144,
+          "model": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+          "trust_remote_code": true
+        },
+        "observed_server_launch_flags": "",
+        "recipe_digest": "sha256:faeebce1ce64ec8c48ef7e62bf10d2f016cbe09811effac5445c4abde62c5a21",
+        "requested_model_digest": "sha256:b0fe8145a460c543a3301c3da32e60f58a82e6de2fe6b2a77513963f5fbc71c4",
+        "requested_server_args": "",
+        "requested_server_env": {
+          "AITER_LOG_TUNED_CONFIG": "1",
+          "BENCH_TRUST_REMOTE_CODE": "1",
+          "CONC": "4",
+          "HF_HUB_TRUST_REMOTE_CODE": "1",
+          "ISL": "1024",
+          "MAGPIE_TRUST_REMOTE_CODE": "1",
+          "MAX_MODEL_LEN": "6144",
+          "NUM_PROMPTS": "20",
+          "NUM_WARMUPS": "4",
+          "OSL": "1024",
+          "PATH": "/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/bin:/opt/python/bin:/usr/local/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/lib/llvm/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_core/bin:/opt/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "RANDOM_RANGE_RATIO": "1",
+          "ROCR_VISIBLE_DEVICES": "0",
+          "RUN_EVAL": "true",
+          "TP": "1",
+          "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200"
+        },
+        "requested_server_flags": "",
+        "schema_version": 1,
+        "warm_reuse": {
+          "provenance": "warmup_round",
+          "reused_ready_server": true,
+          "source_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/warmup_round/benchmark_vllm_20260930_181741/server.log"
+        }
+      },
+      "launch_evidence_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/warmup_round/launch_evidence.json",
+      "launch_identity": "sha256:1168c05fb668c4d5fdd60caa90ebafb92e7d38ec312a670de4e53d7e01744d9c",
+      "observed_launch_identity": "sha256:c6c58036159606332f45cfb4bdf747c74dfaaed03911a9a1aec72b14376f21d3",
+      "observed_server_identity": {
+        "gpu_memory_utilization": 0.95,
+        "max_model_len": 6144,
+        "model": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+        "trust_remote_code": true
+      },
+      "resolved_server_config": {
+        "gpu_memory_utilization": 0.95,
+        "max_model_len": 6144,
+        "model": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+        "trust_remote_code": true
+      },
+      "resolved_server_launch_flags": "",
+      "schema_version": 2,
+      "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/warmup_round/benchmark_vllm_20260930_181741/server.log",
+      "tput": 597.9272915105446
+    },
+    "output_tput_per_gpu": 597.9272915105446,
+    "request_error_rate": null,
+    "total_throughput": 1195.8545830210892,
+    "tpot_mean_ms": 6.557353048593092,
+    "tpot_p90_ms": 6.596943329385175,
+    "tput": 597.9272915105446,
+    "ttft_mean_ms": 141.08919937862083,
+    "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/measure_round/benchmark_vllm_20260930_184839"
+  },
+  "current_best_measurement": {
+    "benchmark_workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/measure_round/benchmark_vllm_20260930_184839",
+    "declared_launch_identity": "sha256:1168c05fb668c4d5fdd60caa90ebafb92e7d38ec312a670de4e53d7e01744d9c",
+    "identity_verification_status": "verified_observed",
+    "launch_evidence": {
+      "actual_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/warmup_round/benchmark_vllm_20260930_181741/server.log",
+      "framework": "vllm",
+      "materialized_config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/baseline_config.with_envs.yaml",
+      "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+      "observed_model_binding": {
+        "dp": "",
+        "model_digest": "sha256:b0fe8145a460c543a3301c3da32e60f58a82e6de2fe6b2a77513963f5fbc71c4",
+        "pp": "",
+        "served_model_digest": "",
+        "tokenizer_digest": "",
+        "tp": ""
+      },
+      "observed_server_identity": {
+        "gpu_memory_utilization": 0.95,
+        "max_model_len": 6144,
+        "model": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+        "trust_remote_code": true
+      },
+      "observed_server_launch_flags": "",
+      "recipe_digest": "sha256:faeebce1ce64ec8c48ef7e62bf10d2f016cbe09811effac5445c4abde62c5a21",
+      "requested_model_digest": "sha256:b0fe8145a460c543a3301c3da32e60f58a82e6de2fe6b2a77513963f5fbc71c4",
+      "requested_server_args": "",
+      "requested_server_env": {
+        "AITER_LOG_TUNED_CONFIG": "1",
+        "BENCH_TRUST_REMOTE_CODE": "1",
+        "CONC": "4",
+        "HF_HUB_TRUST_REMOTE_CODE": "1",
+        "ISL": "1024",
+        "MAGPIE_TRUST_REMOTE_CODE": "1",
+        "MAX_MODEL_LEN": "6144",
+        "NUM_PROMPTS": "20",
+        "NUM_WARMUPS": "4",
+        "OSL": "1024",
+        "PATH": "/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/bin:/opt/python/bin:/usr/local/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/lib/llvm/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_core/bin:/opt/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "RANDOM_RANGE_RATIO": "1",
+        "ROCR_VISIBLE_DEVICES": "0",
+        "RUN_EVAL": "true",
+        "TP": "1",
+        "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200"
+      },
+      "requested_server_flags": "",
+      "schema_version": 1,
+      "warm_reuse": {
+        "provenance": "warmup_round",
+        "reused_ready_server": true,
+        "source_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/warmup_round/benchmark_vllm_20260930_181741/server.log"
+      }
+    },
+    "launch_evidence_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/warmup_round/launch_evidence.json",
+    "launch_identity": "sha256:1168c05fb668c4d5fdd60caa90ebafb92e7d38ec312a670de4e53d7e01744d9c",
+    "observed_launch_identity": "sha256:c6c58036159606332f45cfb4bdf747c74dfaaed03911a9a1aec72b14376f21d3",
+    "observed_server_identity": {
+      "gpu_memory_utilization": 0.95,
+      "max_model_len": 6144,
+      "model": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+      "trust_remote_code": true
+    },
+    "resolved_server_config": {
+      "gpu_memory_utilization": 0.95,
+      "max_model_len": 6144,
+      "model": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+      "trust_remote_code": true
+    },
+    "resolved_server_launch_flags": "",
+    "schema_version": 2,
+    "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/warmup_round/benchmark_vllm_20260930_181741/server.log",
+    "tput": 597.9272915105446
+  },
+  "cycle_directive_history": [],
+  "cycle_minutes": 1440.0,
+  "cycle_strategy_log": [],
+  "degraded_mode": false,
+  "elapsed_charged_sec": 9101.468583345413,
+  "enable_roofline": false,
+  "enablement": {
+    "accepted_config": {},
+    "accepted_config_path": "",
+    "accepted_config_source": "",
+    "accepted_stack_targets": {},
+    "accuracy_floor": 0.0,
+    "active_runtime": {},
+    "argv_repairs": [],
+    "attempt_runtimes": [],
+    "base_sha": "",
+    "base_sha_by_root": {},
+    "baseline_eval_evidence": "",
+    "baseline_eval_kind": "",
+    "build_extensions_not_carried": [],
+    "build_manifest": [],
+    "build_novelty": [],
+    "candidate_refs": [],
+    "environment_closure": {},
+    "eval_contract_fingerprint": "",
+    "framework_root": "",
+    "human_review_logged": [],
+    "installed_versions_at_keep": {},
+    "kept_artifacts": [],
+    "kept_patches": [],
+    "kept_rounds": [],
+    "kept_stack_action": {},
+    "last_apply_feedback": [],
+    "last_build_failure": {},
+    "last_grounding_drop_reason": [],
+    "last_specialist_task_id": "",
+    "launch_argv_refused": false,
+    "launch_evidence": {},
+    "launch_log": "",
+    "launch_observation_path": "",
+    "levers_without_readers": [],
+    "localization_manifest": [],
+    "observed_accuracy": 0.0,
+    "observed_metric": "",
+    "observed_task": "",
+    "origin": "",
+    "patch_roots": {},
+    "patch_targets": {},
+    "patches_span_multiple_roots": false,
+    "pending": false,
+    "probe_config_path": "",
+    "revalidation_generation": 0,
+    "revalidation_task_id": "",
+    "roots": [],
+    "setup_commands": [],
+    "setup_executions": [],
+    "source_snapshots": [],
+    "succeeded": false,
+    "validation_pending": false
+  },
+  "enablement_mode": "all",
+  "ep": 1,
+  "eval_disabled": false,
+  "explore_attempts": [
+    {
+      "decision": "discarded",
+      "error_class": null,
+      "error_excerpt": null,
+      "extras": {
+        "best_gain_pct_vs_base": 0.0,
+        "best_variant_name": null,
+        "explore_grid_exhausted": false,
+        "losers_count": 4,
+        "output_throughput": null,
+        "round_id": "explore-001",
+        "skipped_dup_count": 0,
+        "winners_count": 0
+      },
+      "failure_id": null,
+      "key_metric": 0.0,
+      "key_metric_kind": "gain_pct",
+      "raw_result_path": null,
+      "reported_success": null,
+      "status": "succeeded",
+      "stderr_log_path": null,
+      "stderr_tail": null,
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "ts": "2026-09-30T20:37:28.855650+00:00",
+      "variant_name": null,
+      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909"
+    }
+  ],
+  "explore_search": {
+    "accepted": [],
+    "cursor": 1,
+    "domains_round_summary": [],
+    "last_round": {
+      "base_extra_args": "",
+      "base_tput": 597.9272915105446,
+      "killed_overtime": [],
+      "round_id": "explore-001",
+      "round_winners": [],
+      "skipped_dup": [],
+      "tested": [
+        "30fa49ca8ad74677",
+        "e9702fc94f22c54e",
+        "f398df02739fa33e",
+        "f07fe2b32d1bdc90"
+      ],
+      "ts": "2026-09-30T20:37:28.850070+00:00"
+    },
+    "name_index": {
+      "aiter_master": "30fa49ca8ad74677",
+      "aiter_mha_unified": "e9702fc94f22c54e",
+      "aiter_plus_full_cudagraph": "f07fe2b32d1bdc90",
+      "full_cudagraph_small_bs": "f398df02739fa33e"
+    },
+    "rejected": [
+      {
+        "cycle": 0,
+        "error_class": "",
+        "extra_envs": {
+          "VLLM_ROCM_USE_AITER": "1"
+        },
+        "extra_server_args": "",
+        "fingerprint": "30fa49ca8ad74677",
+        "gain_pct": null,
+        "name": "aiter_master",
+        "note": "llm_direct",
+        "provenance": "llm_direct",
+        "reason": "gain_below_threshold",
+        "round_id": "explore-001",
+        "server_log_path": null,
+        "tput": 578.9020546372174,
+        "ts": "2026-09-30T20:02:43.592962+00:00"
+      },
+      {
+        "cycle": 0,
+        "error_class": "",
+        "extra_envs": {
+          "VLLM_ROCM_USE_AITER": "1",
+          "VLLM_ROCM_USE_AITER_LINEAR": "1",
+          "VLLM_ROCM_USE_AITER_MHA": "1",
+          "VLLM_ROCM_USE_AITER_RMSNORM": "1"
+        },
+        "extra_server_args": "",
+        "fingerprint": "e9702fc94f22c54e",
+        "gain_pct": null,
+        "name": "aiter_mha_unified",
+        "note": "llm_direct",
+        "provenance": "llm_direct",
+        "reason": "gain_below_threshold",
+        "round_id": "explore-001",
+        "server_log_path": null,
+        "tput": 576.8203657383674,
+        "ts": "2026-09-30T20:35:50.003618+00:00"
+      },
+      {
+        "cycle": 0,
+        "error_excerpt": "ERROR - Benchmark failed: ['server_lifecycle server phase exited with 1. stderr tail: und/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log ]]\\n+ [[ -z 1221311 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log --pid 1221311 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): und/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log ]]\\n+ [[ -z 1221311 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log --pid 1221311 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n']\n",
+        "extra_envs": {},
+        "extra_server_args": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+        "fingerprint": "f398df02739fa33e",
+        "gain_pct": null,
+        "name": "full_cudagraph_small_bs",
+        "note": "llm_direct",
+        "provenance": "llm_direct",
+        "reason": "warmup_failed",
+        "round_id": "explore-001",
+        "stage": "warmup",
+        "tput": null,
+        "ts": "2026-09-30T20:36:38.549853+00:00",
+        "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550"
+      },
+      {
+        "cycle": 0,
+        "error_excerpt": "ROR - Benchmark failed: ['server_lifecycle server phase exited with 1. stderr tail: m-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config \\'{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}\\'\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log --pid 1222215 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): m-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config \\'{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}\\'\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log --pid 1222215 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n']\n",
+        "extra_envs": {
+          "VLLM_ROCM_USE_AITER": "1",
+          "VLLM_ROCM_USE_AITER_MHA": "1"
+        },
+        "extra_server_args": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+        "fingerprint": "f07fe2b32d1bdc90",
+        "gain_pct": null,
+        "name": "aiter_plus_full_cudagraph",
+        "note": "llm_direct",
+        "provenance": "llm_direct",
+        "reason": "warmup_failed",
+        "round_id": "explore-001",
+        "stage": "warmup",
+        "tput": null,
+        "ts": "2026-09-30T20:37:28.846736+00:00",
+        "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638"
+      }
+    ],
+    "schema_version": 1,
+    "tested": {
+      "30fa49ca8ad74677": {
+        "base_tput": 597.9272915105446,
+        "cycle": 0,
+        "decision_tput": 578.9020546372174,
+        "e2e_norm_intvty_p90": null,
+        "error_class": "",
+        "extra_envs": {
+          "VLLM_ROCM_USE_AITER": "1"
+        },
+        "extra_server_args": "",
+        "fingerprint": "30fa49ca8ad74677",
+        "framework": "vllm",
+        "gain_pct": null,
+        "gates": [
+          {
+            "gate": "keep_threshold",
+            "observed": -3.1818646085318743,
+            "passed": false,
+            "reason": "gain_below_threshold",
+            "threshold": 1.0
+          }
+        ],
+        "graded_objective": "output_throughput",
+        "input_throughput": null,
+        "launch_evidence": {
+          "actual_server_log_path": "",
+          "framework": "vllm",
+          "materialized_config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v00_aiter_master/variant_00_aiter_master/config.yaml",
+          "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+          "observed_model_binding": {},
+          "observed_server_identity": {},
+          "observed_server_launch_flags": "",
+          "recipe_digest": "sha256:187b79966e934867c3e377dc286a2b1e015536c5a44f38405a5109f48e7c56e7",
+          "requested_model_digest": "sha256:b0fe8145a460c543a3301c3da32e60f58a82e6de2fe6b2a77513963f5fbc71c4",
+          "requested_server_args": "",
+          "requested_server_env": {
+            "AITER_LOG_TUNED_CONFIG": "1",
+            "BENCH_TRUST_REMOTE_CODE": "1",
+            "CONC": "4",
+            "HF_HUB_TRUST_REMOTE_CODE": "1",
+            "ISL": "1024",
+            "MAGPIE_TRUST_REMOTE_CODE": "1",
+            "MAX_MODEL_LEN": "6144",
+            "NUM_PROMPTS": "20",
+            "NUM_WARMUPS": "4",
+            "OSL": "1024",
+            "PATH": "/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/bin:/opt/python/bin:/usr/local/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/lib/llvm/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_core/bin:/opt/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "PORT": "33547",
+            "PYTHONUNBUFFERED": "1",
+            "RANDOM_RANGE_RATIO": "1",
+            "ROCR_VISIBLE_DEVICES": "0",
+            "RUN_EVAL": "false",
+            "TP": "1",
+            "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200",
+            "VLLM_ROCM_USE_AITER": "1"
+          },
+          "requested_server_flags": "",
+          "schema_version": 1,
+          "warm_reuse": {
+            "provenance": "caller_ready_server",
+            "reused_ready_server": true,
+            "source_server_log_path": ""
+          }
+        },
+        "launch_evidence_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v00_aiter_master/variant_00_aiter_master/launch_evidence.json",
+        "measured_against": {
+          "accuracy": 0.9052312357846853,
+          "args_mode": "append",
+          "extra_envs": {},
+          "extra_server_args": "",
+          "remove_args": [],
+          "throughput": 597.9272915105446,
+          "unset_envs": []
+        },
+        "name": "aiter_master",
+        "note": "llm_direct",
+        "outcome": "REVERT",
+        "provenance": "llm_direct",
+        "round_id": "explore-001",
+        "scope": "",
+        "server_log_path": null,
+        "stage": "decision",
+        "status": "succeeded",
+        "total_throughput": 1157.8041092744347,
+        "tpot_p90_ms": 6.818389613454468,
+        "tput": 578.9020546372174,
+        "ts": "2026-09-30T20:02:43.592938+00:00",
+        "validation_basis": "",
+        "workload_signature": "718dfd7ac234",
+        "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v00_aiter_master/variant_00_aiter_master/benchmark_vllm_20260930_200136"
+      },
+      "e9702fc94f22c54e": {
+        "base_tput": 597.9272915105446,
+        "cycle": 0,
+        "decision_tput": 576.8203657383674,
+        "e2e_norm_intvty_p90": null,
+        "error_class": "",
+        "extra_envs": {
+          "VLLM_ROCM_USE_AITER": "1",
+          "VLLM_ROCM_USE_AITER_LINEAR": "1",
+          "VLLM_ROCM_USE_AITER_MHA": "1",
+          "VLLM_ROCM_USE_AITER_RMSNORM": "1"
+        },
+        "extra_server_args": "",
+        "fingerprint": "e9702fc94f22c54e",
+        "framework": "vllm",
+        "gain_pct": null,
+        "gates": [
+          {
+            "gate": "keep_threshold",
+            "observed": -3.5300154503492784,
+            "passed": false,
+            "reason": "gain_below_threshold",
+            "threshold": 1.0
+          }
+        ],
+        "graded_objective": "output_throughput",
+        "input_throughput": null,
+        "launch_evidence": {
+          "actual_server_log_path": "",
+          "framework": "vllm",
+          "materialized_config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v01_aiter_mha_unified/variant_00_aiter_mha_unified/config.yaml",
+          "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+          "observed_model_binding": {},
+          "observed_server_identity": {},
+          "observed_server_launch_flags": "",
+          "recipe_digest": "sha256:e719345cd66174a2efe0ee434c0399ca2ad2ce6c4677a4e76f55bcf9dac93882",
+          "requested_model_digest": "sha256:b0fe8145a460c543a3301c3da32e60f58a82e6de2fe6b2a77513963f5fbc71c4",
+          "requested_server_args": "",
+          "requested_server_env": {
+            "AITER_LOG_TUNED_CONFIG": "1",
+            "BENCH_TRUST_REMOTE_CODE": "1",
+            "CONC": "4",
+            "HF_HUB_TRUST_REMOTE_CODE": "1",
+            "ISL": "1024",
+            "MAGPIE_TRUST_REMOTE_CODE": "1",
+            "MAX_MODEL_LEN": "6144",
+            "NUM_PROMPTS": "20",
+            "NUM_WARMUPS": "4",
+            "OSL": "1024",
+            "PATH": "/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/bin:/opt/python/bin:/usr/local/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/lib/llvm/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_core/bin:/opt/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "PORT": "33547",
+            "PYTHONUNBUFFERED": "1",
+            "RANDOM_RANGE_RATIO": "1",
+            "ROCR_VISIBLE_DEVICES": "0",
+            "RUN_EVAL": "false",
+            "TP": "1",
+            "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200",
+            "VLLM_ROCM_USE_AITER": "1",
+            "VLLM_ROCM_USE_AITER_LINEAR": "1",
+            "VLLM_ROCM_USE_AITER_MHA": "1",
+            "VLLM_ROCM_USE_AITER_RMSNORM": "1"
+          },
+          "requested_server_flags": "",
+          "schema_version": 1,
+          "warm_reuse": {
+            "provenance": "caller_ready_server",
+            "reused_ready_server": true,
+            "source_server_log_path": ""
+          }
+        },
+        "launch_evidence_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v01_aiter_mha_unified/variant_00_aiter_mha_unified/launch_evidence.json",
+        "measured_against": {
+          "accuracy": 0.9052312357846853,
+          "args_mode": "append",
+          "extra_envs": {},
+          "extra_server_args": "",
+          "remove_args": [],
+          "throughput": 597.9272915105446,
+          "unset_envs": []
+        },
+        "name": "aiter_mha_unified",
+        "note": "llm_direct",
+        "outcome": "REVERT",
+        "provenance": "llm_direct",
+        "round_id": "explore-001",
+        "scope": "",
+        "server_log_path": null,
+        "stage": "decision",
+        "status": "succeeded",
+        "total_throughput": 1153.6407314767348,
+        "tpot_p90_ms": 6.84833322491912,
+        "tput": 576.8203657383674,
+        "ts": "2026-09-30T20:35:50.003590+00:00",
+        "validation_basis": "",
+        "workload_signature": "718dfd7ac234",
+        "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v01_aiter_mha_unified/variant_00_aiter_mha_unified/benchmark_vllm_20260930_203442"
+      },
+      "f07fe2b32d1bdc90": {
+        "base_tput": 597.9272915105446,
+        "cycle": 0,
+        "error_class": "magpie_nonzero_invalid_measurement",
+        "error_excerpt": "ROR - Benchmark failed: ['server_lifecycle server phase exited with 1. stderr tail: m-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config \\'{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}\\'\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log --pid 1222215 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): m-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config \\'{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}\\'\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log --pid 1222215 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n']\n",
+        "extra_envs": {
+          "VLLM_ROCM_USE_AITER": "1",
+          "VLLM_ROCM_USE_AITER_MHA": "1"
+        },
+        "extra_server_args": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+        "fingerprint": "f07fe2b32d1bdc90",
+        "framework": "vllm",
+        "gain_pct": null,
+        "launch_evidence": {
+          "actual_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log",
+          "framework": "vllm",
+          "materialized_config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/config.yaml",
+          "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+          "observed_model_binding": {},
+          "observed_server_identity": {},
+          "observed_server_launch_flags": "",
+          "recipe_digest": "sha256:5415d7226832d313ed302b54fc68e1c6998b1000a967773735cf6dbec4538d5e",
+          "requested_model_digest": "sha256:b0fe8145a460c543a3301c3da32e60f58a82e6de2fe6b2a77513963f5fbc71c4",
+          "requested_server_args": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "requested_server_env": {
+            "AITER_LOG_TUNED_CONFIG": "1",
+            "BENCH_TRUST_REMOTE_CODE": "1",
+            "CONC": "4",
+            "HF_HUB_TRUST_REMOTE_CODE": "1",
+            "ISL": "1024",
+            "MAGPIE_TRUST_REMOTE_CODE": "1",
+            "MAX_MODEL_LEN": "6144",
+            "NUM_PROMPTS": "20",
+            "NUM_WARMUPS": "4",
+            "OSL": "1024",
+            "PATH": "/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/bin:/opt/python/bin:/usr/local/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/lib/llvm/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_core/bin:/opt/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "PORT": "33547",
+            "PYTHONUNBUFFERED": "1",
+            "RANDOM_RANGE_RATIO": "1",
+            "ROCR_VISIBLE_DEVICES": "0",
+            "RUN_EVAL": "true",
+            "TP": "1",
+            "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200",
+            "VLLM_ROCM_USE_AITER": "1",
+            "VLLM_ROCM_USE_AITER_MHA": "1"
+          },
+          "requested_server_flags": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "schema_version": 1,
+          "warm_reuse": {
+            "provenance": "fresh_or_unobserved",
+            "reused_ready_server": false,
+            "source_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log"
+          }
+        },
+        "launch_evidence_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/launch_evidence.json",
+        "measured_against": {
+          "accuracy": 0.9052312357846853,
+          "args_mode": "append",
+          "extra_envs": {},
+          "extra_server_args": "",
+          "remove_args": [],
+          "throughput": 597.9272915105446,
+          "unset_envs": []
+        },
+        "name": "aiter_plus_full_cudagraph",
+        "note": "llm_direct",
+        "outcome": "FAILED",
+        "provenance": "llm_direct",
+        "raw_result_path": null,
+        "reason": "warmup_failed",
+        "round_id": "explore-001",
+        "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log",
+        "stage": "warmup",
+        "status": "failed",
+        "tput": null,
+        "ts": "2026-09-30T20:37:28.846313+00:00",
+        "workload_signature": "718dfd7ac234",
+        "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638"
+      },
+      "f398df02739fa33e": {
+        "base_tput": 597.9272915105446,
+        "cycle": 0,
+        "error_class": "magpie_nonzero_invalid_measurement",
+        "error_excerpt": "ERROR - Benchmark failed: ['server_lifecycle server phase exited with 1. stderr tail: und/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log ]]\\n+ [[ -z 1221311 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log --pid 1221311 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): und/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log ]]\\n+ [[ -z 1221311 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log --pid 1221311 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n']\n",
+        "extra_envs": {},
+        "extra_server_args": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+        "fingerprint": "f398df02739fa33e",
+        "framework": "vllm",
+        "gain_pct": null,
+        "launch_evidence": {
+          "actual_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log",
+          "framework": "vllm",
+          "materialized_config_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/config.yaml",
+          "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+          "observed_model_binding": {},
+          "observed_server_identity": {},
+          "observed_server_launch_flags": "",
+          "recipe_digest": "sha256:2da13bf41dec552520914c91e8763c799589e3041c7e0183646b48f5d9200a2a",
+          "requested_model_digest": "sha256:b0fe8145a460c543a3301c3da32e60f58a82e6de2fe6b2a77513963f5fbc71c4",
+          "requested_server_args": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "requested_server_env": {
+            "AITER_LOG_TUNED_CONFIG": "1",
+            "BENCH_TRUST_REMOTE_CODE": "1",
+            "CONC": "4",
+            "HF_HUB_TRUST_REMOTE_CODE": "1",
+            "ISL": "1024",
+            "MAGPIE_TRUST_REMOTE_CODE": "1",
+            "MAX_MODEL_LEN": "6144",
+            "NUM_PROMPTS": "20",
+            "NUM_WARMUPS": "4",
+            "OSL": "1024",
+            "PATH": "/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/bin:/opt/python/bin:/usr/local/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_devel/lib/llvm/bin:/opt/python/lib/python3.14/site-packages/_rocm_sdk_core/bin:/opt/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "PORT": "33547",
+            "PYTHONUNBUFFERED": "1",
+            "RANDOM_RANGE_RATIO": "1",
+            "ROCR_VISIBLE_DEVICES": "0",
+            "RUN_EVAL": "true",
+            "TP": "1",
+            "VLLM_EXECUTE_MODEL_TIMEOUT_SECONDS": "1200"
+          },
+          "requested_server_flags": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "schema_version": 1,
+          "warm_reuse": {
+            "provenance": "fresh_or_unobserved",
+            "reused_ready_server": false,
+            "source_server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log"
+          }
+        },
+        "launch_evidence_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/launch_evidence.json",
+        "measured_against": {
+          "accuracy": 0.9052312357846853,
+          "args_mode": "append",
+          "extra_envs": {},
+          "extra_server_args": "",
+          "remove_args": [],
+          "throughput": 597.9272915105446,
+          "unset_envs": []
+        },
+        "name": "full_cudagraph_small_bs",
+        "note": "llm_direct",
+        "outcome": "FAILED",
+        "provenance": "llm_direct",
+        "raw_result_path": null,
+        "reason": "warmup_failed",
+        "round_id": "explore-001",
+        "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log",
+        "stage": "warmup",
+        "status": "failed",
+        "tput": null,
+        "ts": "2026-09-30T20:36:38.549419+00:00",
+        "workload_signature": "718dfd7ac234",
+        "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550"
+      }
+    },
+    "winners_history": []
+  },
+  "failures": [
+    {
+      "error_class": "magpie_nonzero_invalid_measurement",
+      "error_excerpt": "ERROR - Benchmark failed: ['server_lifecycle server phase exited with 1. stderr tail: und/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log ]]\\n+ [[ -z 1221311 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log --pid 1221311 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): und/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log ]]\\n+ [[ -z 1221311 ]]\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log --pid 1221311 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n']\n",
+      "failure_id": "fail.90e5c8ab039e4ad0babdfc97d3d00909.f398df02739f",
+      "fingerprint": "f398df02739fa33e",
+      "outcome": "FAILED",
+      "raw_result_path": null,
+      "reason": "warmup_failed",
+      "round_id": "explore-001",
+      "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log",
+      "stage": "warmup",
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "variant": {
+        "extra_envs": {},
+        "extra_server_args": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+        "note": "llm_direct"
+      },
+      "variant_name": "full_cudagraph_small_bs",
+      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550"
+    },
+    {
+      "error_class": "magpie_nonzero_invalid_measurement",
+      "error_excerpt": "ROR - Benchmark failed: ['server_lifecycle server phase exited with 1. stderr tail: m-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config \\'{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}\\'\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log --pid 1222215 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n', 'inferencex_result.json not found - benchmark may have failed locally', 'stderr (last 500 chars): m-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config \\'{\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}\\'\\n+ wait_for_ready --endpoint http://0.0.0.0:33547/health --log /home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log --pid 1222215 --sleep-interval 5\\n+ set +x\\nProcess died before http://0.0.0.0:33547/health became ready.\\n']\n",
+      "failure_id": "fail.90e5c8ab039e4ad0babdfc97d3d00909.f07fe2b32d1b",
+      "fingerprint": "f07fe2b32d1bdc90",
+      "outcome": "FAILED",
+      "raw_result_path": null,
+      "reason": "warmup_failed",
+      "round_id": "explore-001",
+      "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log",
+      "stage": "warmup",
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "variant": {
+        "extra_envs": {
+          "VLLM_ROCM_USE_AITER": "1",
+          "VLLM_ROCM_USE_AITER_MHA": "1"
+        },
+        "extra_server_args": "--max-num-seqs 8 --cuda-graph-sizes 1 2 4 8 --compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+        "note": "llm_direct"
+      },
+      "variant_name": "aiter_plus_full_cudagraph",
+      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638"
+    }
+  ],
+  "framework": "vllm",
+  "framework_agent_authoring_enabled": true,
+  "framework_agent_batches": [],
+  "framework_agent_discover_failures": 0,
+  "framework_agent_empty_discoveries": 1,
+  "framework_agent_phase_done": false,
+  "framework_agent_phase_enabled": true,
+  "framework_agent_phase_progress": [],
+  "framework_agent_review_counts": {},
+  "framework_agent_specialist_candidate_map": {},
+  "framework_consecutive_empty_discoveries": 0,
+  "framework_local_explore_enabled": true,
+  "framework_repo_path": "",
+  "framework_version": "0.27.1.dev5+gf46a9dfe2.d20260827",
+  "fusion_infra_aborts": 0,
+  "fusion_withheld_retries": 0,
+  "gain_at_cycle_start": 0.0,
+  "gain_gated_action_count": 1,
+  "gain_per_stack_entry": [],
+  "gaps": [
+    {
+      "attempts": [],
+      "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16#throughput_below_target",
+      "domain_hint": "serving_specialist",
+      "first_seen_ts": "2026-09-30T18:49:44.682182+00:00",
+      "last_updated_ts": "2026-09-30T20:37:28.864921+00:00",
+      "layer": "framework",
+      "provenance": "",
+      "severity": "high",
+      "source": "baseline",
+      "symptom": "current_best is 30.0% short of the run objective target"
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.a289b78979b2661d",
+      "domain_hint": "tooling",
+      "first_seen_ts": "2026-09-30T19:31:04.058599+00:00",
+      "last_updated_ts": "2026-09-30T19:31:22.800469+00:00",
+      "layer": "research_hint",
+      "provenance": "this run (tool-permission denials)",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "This specialist dispatch had no read access to the installed vLLM/aiter trees: Bash grep, Read, and a delegated Explore subagent were all denied on /opt/python/lib/python3.14/site-packages/, despite Section 7 naming those trees as the primary evidence source. Candidate discovery degenerates to priors without it."
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.d38f97b2e2a1d6db",
+      "domain_hint": "tooling",
+      "first_seen_ts": "2026-09-30T19:31:04.058620+00:00",
+      "last_updated_ts": "2026-09-30T19:31:22.800487+00:00",
+      "layer": "research_hint",
+      "provenance": "Section 6 of dispatch",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "pr_monitor MCP is disabled for this session (Section 6), so no upstream PR surface was reachable and no PR-backed candidate could be produced."
+    },
+    {
+      "attempts": [],
+      "canonical_id": "gap.research_hint.f797db7bd5338f84",
+      "domain_hint": "infra",
+      "first_seen_ts": "2026-09-30T19:31:22.800496+00:00",
+      "last_updated_ts": "2026-09-30T19:31:22.800496+00:00",
+      "layer": "research_hint",
+      "provenance": "tool permission errors, this dispatch",
+      "severity": "medium",
+      "source": "research_scout",
+      "symptom": "This specialist sandbox denies WebSearch, WebFetch, and all Bash/Read access outside /home/hasith/AMD/Hyperloom, making upstream-PR-survey mandates unexecutable as dispatched."
+    },
+    {
+      "attempts": [
+        {
+          "action": "explore",
+          "error_class": "",
+          "failure_id": "fail.90e5c8ab039e4ad0babdfc97d3d00909.30fa49ca8ad7",
+          "fingerprint": "30fa49ca8ad74677",
+          "gain_pct": null,
+          "outcome": "REVERT",
+          "reason": "gain_below_threshold",
+          "stage": "decision",
+          "ts": "2026-09-30T20:37:28.864393+00:00",
+          "variant_name": "aiter_master",
+          "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v00_aiter_master/variant_00_aiter_master/benchmark_vllm_20260930_200136"
+        },
+        {
+          "action": "explore",
+          "error_class": "",
+          "failure_id": "fail.90e5c8ab039e4ad0babdfc97d3d00909.e9702fc94f22",
+          "fingerprint": "e9702fc94f22c54e",
+          "gain_pct": null,
+          "outcome": "REVERT",
+          "reason": "gain_below_threshold",
+          "stage": "decision",
+          "ts": "2026-09-30T20:37:28.864409+00:00",
+          "variant_name": "aiter_mha_unified",
+          "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v01_aiter_mha_unified/variant_00_aiter_mha_unified/benchmark_vllm_20260930_203442"
+        },
+        {
+          "action": "explore",
+          "error_class": "magpie_nonzero_invalid_measurement",
+          "failure_id": "fail.90e5c8ab039e4ad0babdfc97d3d00909.f398df02739f",
+          "fingerprint": "f398df02739fa33e",
+          "gain_pct": null,
+          "outcome": "FAILED",
+          "reason": "warmup_failed",
+          "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log",
+          "stage": "warmup",
+          "ts": "2026-09-30T20:37:28.864418+00:00",
+          "variant_name": "full_cudagraph_small_bs",
+          "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550"
+        },
+        {
+          "action": "explore",
+          "error_class": "magpie_nonzero_invalid_measurement",
+          "failure_id": "fail.90e5c8ab039e4ad0babdfc97d3d00909.f07fe2b32d1b",
+          "fingerprint": "f07fe2b32d1bdc90",
+          "gain_pct": null,
+          "outcome": "FAILED",
+          "reason": "warmup_failed",
+          "server_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log",
+          "stage": "warmup",
+          "ts": "2026-09-30T20:37:28.864426+00:00",
+          "variant_name": "aiter_plus_full_cudagraph",
+          "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638"
+        }
+      ],
+      "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+      "domain_hint": "serving_specialist",
+      "first_seen_ts": "2026-09-30T20:37:28.864370+00:00",
+      "last_updated_ts": "2026-09-30T20:37:28.864428+00:00",
+      "layer": "framework",
+      "provenance": "",
+      "severity": "medium",
+      "source": "attempts",
+      "symptom": "explore round outcomes"
+    },
+    {
+      "attempts": [
+        {
+          "action": "explore",
+          "error_class": "magpie_nonzero_invalid_measurement",
+          "outcome": "REVERT",
+          "ts": "2026-09-30T20:37:28.864643+00:00",
+          "variant_name": "full_cudagraph_small_bs"
+        }
+      ],
+      "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16#fail:explore:magpie_nonzero_invalid_measurement:full_cudagraph_small_bs",
+      "domain_hint": "serving_specialist",
+      "first_seen_ts": "2026-09-30T20:37:28.864999+00:00",
+      "last_updated_ts": "2026-09-30T20:37:28.864999+00:00",
+      "layer": "framework",
+      "provenance": "",
+      "severity": "medium",
+      "source": "attempts",
+      "symptom": "explore/full_cudagraph_small_bs fails: warmup_failed"
+    },
+    {
+      "attempts": [
+        {
+          "action": "explore",
+          "error_class": "magpie_nonzero_invalid_measurement",
+          "outcome": "REVERT",
+          "ts": "2026-09-30T20:37:28.864820+00:00",
+          "variant_name": "aiter_plus_full_cudagraph"
+        }
+      ],
+      "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16#fail:explore:magpie_nonzero_invalid_measurement:aiter_plus_full_cudagraph",
+      "domain_hint": "serving_specialist",
+      "first_seen_ts": "2026-09-30T20:37:28.865007+00:00",
+      "last_updated_ts": "2026-09-30T20:37:28.865007+00:00",
+      "layer": "framework",
+      "provenance": "",
+      "severity": "medium",
+      "source": "attempts",
+      "symptom": "explore/aiter_plus_full_cudagraph fails: warmup_failed"
+    }
+  ],
+  "geak_pending": {},
+  "geak_result": {},
+  "gemm_tuning_attempts": [],
+  "gpu_specialist_capacity": 1,
+  "gpu_trace_unsupported_reason": "",
+  "gpu_type": "mi300x",
+  "grading": {
+    "noise_pct": 5.0,
+    "objective": "output_throughput"
+  },
+  "intervention_mix": [
+    {
+      "action": "explore",
+      "change_type": "config_attempt",
+      "delta_pct": null,
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "ts": "2026-09-30T20:37:28.854406+00:00"
+    }
+  ],
+  "isl": 1024,
+  "kb_stage_dead_letter": [],
+  "kb_stage_outbox": [],
+  "kernel_enabled": false,
+  "kernel_idle_since_unix": 0.0,
+  "kernel_idle_ticks": 0,
+  "kernel_inline_step_seen_unix": 0.0,
+  "kernel_integrate_attempts": {},
+  "kernel_opt_task_attempts": {},
+  "kernel_optimizer": "geak",
+  "kernel_progress_fingerprint": "",
+  "kernel_rewrite_controller_result": {},
+  "last_action_failures": [
+    {
+      "action": "explore",
+      "error_class": "magpie_nonzero_invalid_measurement",
+      "error_excerpt": "warmup_failed",
+      "failure_id": "fail.90e5c8ab039e4ad0babdfc97d3d00909.f398df02739f",
+      "raw_result_path": null,
+      "reported_success": null,
+      "stderr_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550/server.log",
+      "stderr_tail": "warmup_failed",
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "ts": "2026-09-30T20:37:28.864643+00:00",
+      "variant_name": "full_cudagraph_small_bs",
+      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v02_full_cudagraph_small_bs/warmup_round/variant_00_full_cudagraph_small_bs/benchmark_vllm_20260930_203550"
+    },
+    {
+      "action": "explore",
+      "error_class": "magpie_nonzero_invalid_measurement",
+      "error_excerpt": "warmup_failed",
+      "failure_id": "fail.90e5c8ab039e4ad0babdfc97d3d00909.f07fe2b32d1b",
+      "raw_result_path": null,
+      "reported_success": null,
+      "stderr_log_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638/server.log",
+      "stderr_tail": "warmup_failed",
+      "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+      "ts": "2026-09-30T20:37:28.864820+00:00",
+      "variant_name": "aiter_plus_full_cudagraph",
+      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909/v03_aiter_plus_full_cudagraph/warmup_round/variant_00_aiter_plus_full_cudagraph/benchmark_vllm_20260930_203638"
+    }
+  ],
+  "last_baseline": {
+    "decision": "promoted",
+    "error_class": null,
+    "error_excerpt": null,
+    "extras": {
+      "accuracy": 0.9052312357846853,
+      "baseline_tput": 597.9272915105446,
+      "enablement_accuracy_floor": 0.0,
+      "enablement_succeeded": false,
+      "fingerprint": {
+        "benchmark_script": null,
+        "config_path": null,
+        "disable_run_eval": null,
+        "extra_envs": [],
+        "extra_server_args": null,
+        "gpu_type": null,
+        "model_path": null,
+        "result_dir": null
+      },
+      "is_revalidation": false,
+      "materialized_config": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/baseline_config.with_envs.yaml"
+    },
+    "failure_id": null,
+    "key_metric": 597.9272915105446,
+    "key_metric_kind": "output_throughput",
+    "raw_result_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/measure_round/benchmark_vllm_20260930_184839/inferencex_result.json",
+    "reported_success": true,
+    "status": "succeeded",
+    "stderr_log_path": null,
+    "stderr_tail": null,
+    "task_id": "0a4753ec7b9740a09e6e93a415f6fc0f",
+    "ts": "2026-09-30T18:49:44.704023+00:00",
+    "variant_name": null,
+    "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/baseline/0a4753ec7b9740a09e6e93a415f6fc0f/measure_round/benchmark_vllm_20260930_184839"
+  },
+  "last_conc_sweep": {
+    "budget_exhausted": false,
+    "skip_reason": "disabled",
+    "status": "skipped",
+    "summary": {},
+    "ts": "2026-09-30T20:44:51.554894+00:00",
+    "was_skipped": true,
+    "workspace": ""
+  },
+  "last_conc_sweep_watermark": {},
+  "last_consumed_escalate_hint": "skip_to_sweep",
+  "last_consumed_escalate_hint_ts": "2026-09-30T20:44:51.535207+00:00",
+  "last_cycle_bottleneck": "",
+  "last_discarded_escalate_hint": "",
+  "last_discarded_escalate_hint_ts": "",
+  "last_explore": {
+    "decision": "discarded",
+    "error_class": null,
+    "error_excerpt": null,
+    "extras": {
+      "best_gain_pct_vs_base": 0.0,
+      "best_variant_name": null,
+      "explore_grid_exhausted": false,
+      "losers_count": 4,
+      "output_throughput": null,
+      "round_id": "explore-001",
+      "skipped_dup_count": 0,
+      "winners_count": 0
+    },
+    "failure_id": null,
+    "key_metric": 0.0,
+    "key_metric_kind": "gain_pct",
+    "raw_result_path": null,
+    "reported_success": null,
+    "status": "succeeded",
+    "stderr_log_path": null,
+    "stderr_tail": null,
+    "task_id": "90e5c8ab039e4ad0babdfc97d3d00909",
+    "ts": "2026-09-30T20:37:28.855650+00:00",
+    "variant_name": null,
+    "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/explore/90e5c8ab039e4ad0babdfc97d3d00909"
+  },
+  "last_framework_rewrite_evidence": "",
+  "last_framework_rewrite_evidence_status": "no_candidates",
+  "last_fusion": {},
+  "last_fusion_integrate": {},
+  "last_gemm_tuning": {},
+  "last_kernel_opt": {},
+  "last_profile": {
+    "decision": "promoted",
+    "error_class": null,
+    "error_excerpt": null,
+    "extras": {
+      "measurement_status": "succeeded",
+      "output_throughput": 148.55365907310562,
+      "profile_args": "",
+      "trace_capture_reason": null,
+      "trace_capture_status": null,
+      "trace_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/profile/b91de962b8e04bcbaab92b291c969532/benchmark_vllm_20260930_185257/torch_trace"
+    },
+    "failure_id": null,
+    "key_metric": 148.55365907310562,
+    "key_metric_kind": "output_throughput",
+    "raw_result_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/profile/b91de962b8e04bcbaab92b291c969532/benchmark_vllm_20260930_185257/inferencex_result.json",
+    "reported_success": true,
+    "status": "succeeded",
+    "stderr_log_path": null,
+    "stderr_tail": null,
+    "task_id": "b91de962b8e04bcbaab92b291c969532",
+    "ts": "2026-09-30T19:28:26.215475+00:00",
+    "variant_name": null,
+    "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/profile/b91de962b8e04bcbaab92b291c969532/benchmark_vllm_20260930_185257"
+  },
+  "last_profile_args": "",
+  "last_profile_kernel_breakdown": "",
+  "last_profile_status": "succeeded",
+  "last_profile_trace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/profile/b91de962b8e04bcbaab92b291c969532/benchmark_vllm_20260930_185257/torch_trace",
+  "last_profile_workload": {
+    "args_mode": "append",
+    "benchmark_mode": "synthetic",
+    "conc": 4,
+    "extra_envs": {},
+    "framework": "vllm",
+    "isl": 1024,
+    "max_model_len": 6144,
+    "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+    "osl": 1024,
+    "precision": "bf16",
+    "remove_args": [],
+    "server_args": "",
+    "tp": 1,
+    "unset_envs": []
+  },
+  "last_profile_workload_action": "baseline",
+  "last_roofline": {},
+  "last_roofline_tput": 597.9272915105446,
+  "last_specialist": {
+    "confidence": 0.4,
+    "domain": "freeform_specialist",
+    "gap_canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+    "proposals_total": 2,
+    "reason": "",
+    "summary": "BLOCKED: this dispatch had no filesystem read permission outside /home/hasith/AMD/Hyperloom - Bash grep and Read on /opt/python/lib/python3.14/site-packages/vllm/ were both denied, so I could NOT verify any knob against the installed source as the mandate required. Proposals below are from vLLM 0.27-era knowledge only, NOT source-verified; treat confidence as low and have the Critic/Coordinator confirm flag spelling before dispatch. Please grant read access to the site-packag",
+    "task_id": "5bb3a0b0b8644d19b6f11d47873364aa",
+    "ts": "2026-09-30T19:32:04.569136+00:00"
+  },
+  "last_tick_exception": {},
+  "last_trace_analyze": {},
+  "leg_anchor_unix": 1790801158.5362399,
+  "leg_ended_ts": "",
+  "lifecycle": [
+    {
+      "artifacts": {},
+      "detail": "reason=prelude_done",
+      "label": "Optimize (config / source / upstream)",
+      "phase": "FRAMEWORK_AGENT",
+      "seq": 0,
+      "status": "ENTER",
+      "step": "FRAMEWORK_AGENT",
+      "ts": "2026-09-30T19:28:26.224772+00:00"
+    },
+    {
+      "artifacts": {},
+      "detail": "reason=no_kernel_skipped",
+      "label": "Concurrency sweep",
+      "phase": "SWEEP",
+      "seq": 1,
+      "status": "ENTER",
+      "step": "SWEEP",
+      "ts": "2026-09-30T20:44:51.539666+00:00"
+    },
+    {
+      "artifacts": {},
+      "detail": "reason=sweep_done",
+      "label": "Close (report)",
+      "phase": "CLOSE",
+      "seq": 2,
+      "status": "ENTER",
+      "step": "CLOSE",
+      "ts": "2026-09-30T20:45:22.071411+00:00"
+    },
+    {
+      "artifacts": {},
+      "detail": "close_phase_entry",
+      "label": "Report",
+      "phase": "CLOSE",
+      "seq": 3,
+      "status": "START",
+      "step": "report",
+      "ts": "2026-09-30T20:45:22.098130+00:00"
+    },
+    {
+      "artifacts": {
+        "json_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/reports/final.json",
+        "md_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/reports/final.md"
+      },
+      "detail": "close_phase_entry",
+      "label": "Report",
+      "phase": "CLOSE",
+      "seq": 4,
+      "status": "END",
+      "step": "report",
+      "ts": "2026-09-30T20:45:22.164762+00:00"
+    }
+  ],
+  "macro_cycle": 0,
+  "max_minutes": 180,
+  "max_model_len": 6144,
+  "model_arch": {},
+  "model_architectures": [
+    "Qwen3ForCausalLM"
+  ],
+  "model_class": "dense",
+  "model_info": {
+    "architectures": [
+      "Qwen3ForCausalLM"
+    ],
+    "attention_type": "GQA",
+    "head_dim": 128,
+    "hidden_size": 4096,
+    "intermediate_size": 12288,
+    "is_moe": false,
+    "max_position_embeddings": 40960,
+    "model_family": "qwen3",
+    "model_type": "qwen3",
+    "num_attention_heads": 32,
+    "num_hidden_layers": 36,
+    "num_key_value_heads": 8,
+    "torch_dtype": "bfloat16",
+    "vocab_size": 151936
+  },
+  "model_name": "Qwen3-8B",
+  "model_path": "/home/kasun/Hyperloom/.cache/hyperloom-models/Qwen3-8B",
+  "model_type": "qwen3",
+  "model_warnings": [],
+  "no_gain_cycle_streak": 1,
+  "nodes": 1,
+  "operator_extra_env": {},
+  "operator_server_args": "",
+  "optimization_stack": [],
+  "orchestration_memory": {},
+  "orchestration_memory_history": [],
+  "osl": 1024,
+  "params_no_promote_streak": 1,
+  "pending_bottleneck_switch": false,
+  "pending_escalate_hint": "",
+  "pending_integrate": {},
+  "pending_kernel_integrations": {},
+  "pending_stack_validation_apply_results": [],
+  "pending_stack_validation_result": {},
+  "pending_targeted_build": {},
+  "phase": "CLOSE",
+  "phase_budget_pct": {
+    "CLOSE": 0.02,
+    "FRAMEWORK_AGENT": 0.9607843137254901,
+    "KERNEL_AGENT": 0.0,
+    "PRELUDE": 0.03,
+    "SWEEP": 0.019215686274509806
+  },
+  "phase_elapsed_totals": {
+    "FRAMEWORK_AGENT": 4585.314532279968,
+    "PRELUDE": 4449.174103021622,
+    "SWEEP": 30.530155658721924
+  },
+  "phase_history": [
+    {
+      "cycle": 0,
+      "evidence": {
+        "predicate_inputs": {
+          "baseline": null,
+          "budget": null,
+          "current_phase": "",
+          "enablement_in_flight": false,
+          "global": {
+            "closing_phase": false,
+            "cycle_reloop_min_remaining_sec": 0.0,
+            "session_remaining_sec": null,
+            "stop_reason": "",
+            "sweep_closeout_status": "",
+            "target_reached_at": ""
+          },
+          "hint": null,
+          "macro_cycle": 0,
+          "now_unix": 1790792057.0465581,
+          "pending_work": null,
+          "phase_budget_pct": {
+            "CLOSE": 0.02,
+            "FRAMEWORK_AGENT": 0.9607843137254901,
+            "KERNEL_AGENT": 0.0,
+            "PRELUDE": 0.03,
+            "SWEEP": 0.019215686274509806
+          },
+          "plateau": null,
+          "run_flags": {
+            "enablement_enabled": true,
+            "framework_agent_enabled": true,
+            "kernel_enabled": false
+          },
+          "sweep_result": null
+        },
+        "trigger": "fresh_session"
+      },
+      "from_phase": "",
+      "reason": "phase_entered",
+      "to_phase": "PRELUDE",
+      "ts": "2026-09-30T18:14:17+00:00",
+      "ts_unix": 1790792057.0465949
+    },
+    {
+      "cycle": 0,
+      "evidence": {
+        "affordable_rounds": 50.71,
+        "baseline_tput": 597.9272915105446,
+        "fits_one_optimization_round": true,
+        "measured_round_sec": 122.9,
+        "predicate_inputs": {
+          "baseline": {
+            "double_run": true,
+            "failure_streak": 0,
+            "measure_round_dropped": false,
+            "phase_spent_sec": 4449.1735236644745,
+            "post_ready_runtime_sec": 1804.2255459842681,
+            "runtime_sec": 1861.32,
+            "session_usable_sec": 6230.847517490387,
+            "tput": 597.9272915105446,
+            "warm_replay_status": "skipped",
+            "warm_runtime_sec": 65.78
+          },
+          "budget": null,
+          "current_phase": "PRELUDE",
+          "enablement_in_flight": false,
+          "global": {
+            "closing_phase": false,
+            "cycle_reloop_min_remaining_sec": 0.0,
+            "session_remaining_sec": null,
+            "stop_reason": "",
+            "sweep_closeout_status": "",
+            "target_reached_at": ""
+          },
+          "hint": null,
+          "macro_cycle": 0,
+          "now_unix": 1790796506.2201185,
+          "pending_work": null,
+          "phase_budget_pct": {
+            "CLOSE": 0.02,
+            "FRAMEWORK_AGENT": 0.9607843137254901,
+            "KERNEL_AGENT": 0.0,
+            "PRELUDE": 0.03,
+            "SWEEP": 0.019215686274509806
+          },
+          "plateau": null,
+          "run_flags": {
+            "enablement_enabled": true,
+            "framework_agent_enabled": true,
+            "kernel_enabled": false
+          },
+          "sweep_result": null
+        },
+        "priced_by": "boot_plus_benchmark",
+        "session_usable_sec": 6230.8
+      },
+      "from_phase": "PRELUDE",
+      "reason": "prelude_done",
+      "to_phase": "FRAMEWORK_AGENT",
+      "ts": "2026-09-30T19:28:26+00:00",
+      "ts_unix": 1790796506.2206979
+    },
+    {
+      "cycle": 0,
+      "evidence": {
+        "auto_conc_sweep_skipped": "disabled",
+        "config_arm_plateaued": false,
+        "empty_streak": 1,
+        "empty_streak_threshold": 5,
+        "evidence": "skip_to_sweep",
+        "hint": "skip_to_sweep",
+        "keep_gain_threshold_pct": 0.5,
+        "lookback": 5,
+        "passed_through_reason": "optimize_no_more_leverage",
+        "predicate_inputs": {
+          "baseline": null,
+          "budget": {
+            "cap_sec": 10376.470588235294,
+            "cumulative_elapsed_sec": 4585.312204837799,
+            "entry_elapsed_sec": 4585.312204837799,
+            "remaining_sec": 1516.4819318920963
+          },
+          "current_phase": "FRAMEWORK_AGENT",
+          "enablement_in_flight": false,
+          "global": {
+            "closing_phase": false,
+            "cycle_reloop_min_remaining_sec": 0.0,
+            "session_remaining_sec": null,
+            "stop_reason": "",
+            "sweep_closeout_status": "",
+            "target_reached_at": ""
+          },
+          "hint": "skip_to_sweep",
+          "macro_cycle": 0,
+          "now_unix": 1790801091.5329027,
+          "pending_work": null,
+          "phase_budget_pct": {
+            "CLOSE": 0.02,
+            "FRAMEWORK_AGENT": 0.9607843137254901,
+            "KERNEL_AGENT": 0.0,
+            "PRELUDE": 0.03,
+            "SWEEP": 0.019215686274509806
+          },
+          "plateau": {
+            "attempt_count": 4,
+            "empty_streak": 1,
+            "empty_streak_threshold": 5,
+            "keep_gain_threshold_pct": 0.5,
+            "lookback": 5,
+            "recent_keep_gain_pct": 0,
+            "source_candidates_exhausted": false,
+            "source_consecutive_no_keep": 0,
+            "source_threshold": 5,
+            "specialist_round_count": 5
+          },
+          "run_flags": {
+            "enablement_enabled": true,
+            "framework_agent_enabled": true,
+            "kernel_enabled": false
+          },
+          "sweep_result": null
+        },
+        "recent_keep_gain_pct": 0,
+        "source_arm_plateaued": false,
+        "source_candidates_exhausted": false,
+        "source_consecutive_no_keep": 0,
+        "source_threshold": 5,
+        "switch_bottleneck": false
+      },
+      "from_phase": "FRAMEWORK_AGENT",
+      "reason": "no_kernel_skipped",
+      "to_phase": "SWEEP",
+      "ts": "2026-09-30T20:44:51+00:00",
+      "ts_unix": 1790801091.5352302
+    },
+    {
+      "cycle": 0,
+      "evidence": {
+        "close_steps": [
+          {
+            "status": "running",
+            "step": "sequencer_started",
+            "ts": "2026-09-30T20:45:22.079313+00:00"
+          },
+          {
+            "detail": "status=written backend=local",
+            "status": "done",
+            "step": "fact_finalize",
+            "ts": "2026-09-30T20:45:22.095517+00:00"
+          },
+          {
+            "status": "done",
+            "step": "report",
+            "task_id": "ea3f1b8a9126484b8fb9c45df046fbeb",
+            "ts": "2026-09-30T20:45:22.161503+00:00"
+          },
+          {
+            "status": "done",
+            "step": "session_breakdown",
+            "task_id": "6a0bdd6ec27240e381d4f2f4cc58224d",
+            "ts": "2026-09-30T20:45:22.208395+00:00"
+          },
+          {
+            "detail": "/workspace/hyperloom-session-packages/Qwen3-8B_20260930T181415Z_0d297652.zip",
+            "status": "done",
+            "step": "artifact_package",
+            "ts": "2026-09-30T20:45:22.300875+00:00"
+          },
+          {
+            "status": "skipped",
+            "step": "ndjson_drain",
+            "ts": "2026-09-30T20:45:22.304591+00:00"
+          },
+          {
+            "status": "done",
+            "step": "done",
+            "ts": "2026-09-30T20:45:22.309649+00:00"
+          }
+        ],
+        "cycle_gain_delta": 0.0,
+        "cycle_gained": false,
+        "macro_cycle": 0,
+        "min_gain_pct": 1.0,
+        "min_remaining_sec_effective": 5400.0,
+        "no_gain_cycle_streak_effective": 1,
+        "predicate_inputs": {
+          "baseline": null,
+          "budget": {
+            "cap_sec": 207.5294117647059,
+            "cumulative_elapsed_sec": 30.528465270996094,
+            "entry_elapsed_sec": 30.528465270996094,
+            "remaining_sec": 834.5824236440659
+          },
+          "current_phase": "SWEEP",
+          "enablement_in_flight": false,
+          "global": {
+            "closing_phase": false,
+            "cycle_reloop_min_remaining_sec": 0.0,
+            "session_remaining_sec": null,
+            "stop_reason": "",
+            "sweep_closeout_status": "skipped",
+            "target_reached_at": ""
+          },
+          "hint": null,
+          "macro_cycle": 0,
+          "now_unix": 1790801122.0636954,
+          "pending_work": null,
+          "phase_budget_pct": {
+            "CLOSE": 0.02,
+            "FRAMEWORK_AGENT": 0.9607843137254901,
+            "KERNEL_AGENT": 0.0,
+            "PRELUDE": 0.03,
+            "SWEEP": 0.019215686274509806
+          },
+          "plateau": null,
+          "run_flags": {
+            "enablement_enabled": true,
+            "framework_agent_enabled": true,
+            "kernel_enabled": false
+          },
+          "sweep_result": {
+            "budget_exhausted": false,
+            "reloop": {
+              "current_gain_pct": 0.0,
+              "gain_at_cycle_start_pct": 0.0,
+              "max_cycles": 1000,
+              "min_gain_pct": 1.0,
+              "min_remaining_sec": 5400.0,
+              "no_gain_cycles": 3,
+              "prior_no_gain_cycle_streak": 0,
+              "saturated_directions": {},
+              "session_remaining_sec": 1735.0039610862732
+            },
+            "skip_reason": "disabled",
+            "status": "skipped",
+            "successful_pairs": 0,
+            "summary_present": false,
+            "was_skipped": true
+          }
+        },
+        "reloop_blocked": "insufficient_remaining",
+        "session_remaining_seconds": 1735.0,
+        "sweep_skip_budget_exhausted": false,
+        "sweep_skip_reason": "disabled",
+        "sweep_status": "skipped",
+        "sweep_was_skipped": true
+      },
+      "from_phase": "SWEEP",
+      "reason": "sweep_done",
+      "to_phase": "CLOSE",
+      "ts": "2026-09-30T20:45:22+00:00",
+      "ts_unix": 1790801122.0653858
+    }
+  ],
+  "phase_started_ts": "2026-09-30T20:45:22+00:00",
+  "phase_started_unix": 1790801122.0653858,
+  "plateau_overrides": {},
+  "policy_denial_history": [
+    {
+      "action_name": "explore",
+      "hint": "task e271c7789f59423bb135d3f5e8eb1d1d is still 'queued'; wait for the delegated_result event instead of re-emitting the same key.",
+      "intent_payload_keys": [
+        "action_name",
+        "params"
+      ],
+      "intent_type": "delegate",
+      "rule": "duplicate_idempotency_key_running",
+      "streak": 1,
+      "tick": 5,
+      "ts": "2026-09-30T20:40:42.295722+00:00"
+    },
+    {
+      "action_name": "explore",
+      "hint": "the wall-clock budget cannot fit this action; delegate `report` to close the session, or pick an action that fits the time left",
+      "intent_payload_keys": [
+        "action_name",
+        "params"
+      ],
+      "intent_type": "delegate",
+      "rule": "time_budget",
+      "streak": 1,
+      "tick": 6,
+      "ts": "2026-09-30T20:41:59.537269+00:00"
+    },
+    {
+      "action_name": "explore",
+      "hint": "the wall-clock budget cannot fit this action; delegate `report` to close the session, or pick an action that fits the time left",
+      "intent_payload_keys": [
+        "action_name",
+        "params"
+      ],
+      "intent_type": "delegate",
+      "rule": "time_budget",
+      "streak": 2,
+      "tick": 7,
+      "ts": "2026-09-30T20:42:50.999670+00:00"
+    },
+    {
+      "action_name": "explore",
+      "hint": "the wall-clock budget cannot fit this action; delegate `report` to close the session, or pick an action that fits the time left",
+      "intent_payload_keys": [
+        "action_name",
+        "idempotency_key",
+        "params"
+      ],
+      "intent_type": "delegate",
+      "rule": "time_budget",
+      "streak": 3,
+      "tick": 8,
+      "ts": "2026-09-30T20:43:45.842578+00:00"
+    }
+  ],
+  "policy_denial_streak": {
+    "explore:duplicate_idempotency_key_running": 1,
+    "explore:time_budget": 3
+  },
+  "precision": "bf16",
+  "profile_attempts": [
+    {
+      "decision": "promoted",
+      "error_class": null,
+      "error_excerpt": null,
+      "extras": {
+        "measurement_status": "succeeded",
+        "output_throughput": 148.55365907310562,
+        "profile_args": "",
+        "trace_capture_reason": null,
+        "trace_capture_status": null,
+        "trace_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/profile/b91de962b8e04bcbaab92b291c969532/benchmark_vllm_20260930_185257/torch_trace"
+      },
+      "failure_id": null,
+      "key_metric": 148.55365907310562,
+      "key_metric_kind": "output_throughput",
+      "raw_result_path": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/profile/b91de962b8e04bcbaab92b291c969532/benchmark_vllm_20260930_185257/inferencex_result.json",
+      "reported_success": true,
+      "status": "succeeded",
+      "stderr_log_path": null,
+      "stderr_tail": null,
+      "task_id": "b91de962b8e04bcbaab92b291c969532",
+      "ts": "2026-09-30T19:28:26.215475+00:00",
+      "variant_name": null,
+      "workspace": "/home/hasith/AMD/hyperloom-data/Qwen3-8B/20260930T181415Z-d203e034/runs/profile/b91de962b8e04bcbaab92b291c969532/benchmark_vllm_20260930_185257"
+    }
+  ],
+  "profile_osl": 0,
+  "pruned_families": [],
+  "recipe_finalize_attempts": 1,
+  "recipe_finalize_outcome": {
+    "attempt": 1,
+    "backend": "local",
+    "reason": "",
+    "result_type": "written",
+    "source": "close",
+    "status": "written",
+    "updated_at": "2026-09-30T20:45:22.092378+00:00"
+  },
+  "recipe_finalize_status": "written",
+  "recipe_kb_session_id": "20260930T181415Z-d203e034",
+  "recipe_sediment_enabled": true,
+  "reference_envs": {},
+  "reference_launch_controls": {},
+  "reference_model": "",
+  "reference_server_args": "",
+  "reference_source": "",
+  "rejected_kernel_ids": [],
+  "rejected_kernel_patches": [],
+  "research_lane_capacity": 2,
+  "research_scout_enabled": true,
+  "research_scout_interval": 3,
+  "research_scout_last_round": 0,
+  "research_scout_runs": 1,
+  "research_scout_seen_pr_ids": [
+    "this run (tool-permission denials)",
+    "Section 6 of dispatch",
+    "tool permission errors, this dispatch"
+  ],
+  "resume_pending_revalidation": false,
+  "resumed_ts": "",
+  "roofline_attempts": [],
+  "roofline_failure_streak": 0,
+  "roofline_snapshots": [],
+  "rounds_since_last_keep": {
+    "communication": 5,
+    "compiler": 5,
+    "framework": 5,
+    "kernel_agent": 5,
+    "pr_intelligence": 5,
+    "research_scout": 5,
+    "static_recon": 5,
+    "systems": 5
+  },
+  "rounds_since_last_specialist": {
+    "communication": 5,
+    "compiler": 5,
+    "framework": 5,
+    "freeform_specialist": 0,
+    "kernel_agent": 5,
+    "pr_intelligence": 2,
+    "research_scout": 4,
+    "static_recon": 3,
+    "systems": 5
+  },
+  "sandbox_user_id": "",
+  "saturated_directions": {},
+  "schema_version": 6,
+  "session_id": "Qwen3-8B_20260930T181415Z_0d297652",
+  "specialist_patch_verdicts": {},
+  "specialist_reauthor_attempts": {},
+  "specialist_rounds": [
+    {
+      "completed_at": "2026-09-30T18:51:29.237682+00:00",
+      "confidence": 0.0,
+      "cycle": 0,
+      "domain": "research_scout_specialist",
+      "gap_canonical_id": "gap.research_scout.round0",
+      "new_findings": [],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "backend_unexpected:NoIntentEmitted('claude reply contained no parseable emit_intent tool_use blocks (raw_text_len=0, tool_blocks=0)')",
+      "residual_questions": [],
+      "round_id": "32848334fac143a3a898ed7a681e6fd0",
+      "source": "specialist:32848334fac143a3a898ed7a681e6fd0",
+      "source_phase": "PRELUDE",
+      "summary": "backend_unexpected:NoIntentEmitted('claude reply contained no parseable emit_intent tool_use blocks (raw_text_len=0, tool_blocks=0)')",
+      "tags": [
+        "research_scout"
+      ],
+      "task_id": "32848334fac143a3a898ed7a681e6fd0"
+    },
+    {
+      "completed_at": "2026-09-30T18:52:40.210924+00:00",
+      "confidence": 0.0,
+      "cycle": 0,
+      "domain": "static_recon_specialist",
+      "gap_canonical_id": "gap.static_recon.prelude",
+      "new_findings": [],
+      "proposal_set": [],
+      "proposals_total": 0,
+      "reason": "backend_unexpected:NoIntentEmitted('claude reply contained no parseable emit_intent tool_use blocks (raw_text_len=1191, tool_blocks=0)')",
+      "residual_questions": [],
+      "round_id": "d5eabc6d55fd4ac0aadcc069ef8b03d2",
+      "scope": "domain",
+      "source": "specialist:d5eabc6d55fd4ac0aadcc069ef8b03d2",
+      "source_phase": "PRELUDE",
+      "summary": "backend_unexpected:NoIntentEmitted('claude reply contained no parseable emit_intent tool_use blocks (raw_text_len=1191, tool_blocks=0)')",
+      "tags": [
+        "static_recon"
+      ],
+      "task_id": "d5eabc6d55fd4ac0aadcc069ef8b03d2"
+    },
+    {
+      "candidate_discovery": true,
+      "completed_at": "2026-09-30T19:31:04.055600+00:00",
+      "confidence": 0.4,
+      "cycle": 0,
+      "domain": "candidate_discovery_specialist",
+      "gap_canonical_id": "gap.framework.candidate_discovery.vllm",
+      "new_findings": [
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "tooling",
+            "dispatch",
+            "candidate_discovery"
+          ],
+          "expected_impact": "blocks all already_present / not_applicable verdicts; every future discovery round is priors-only until fixed",
+          "source": "this run (tool-permission denials)",
+          "what": "This specialist dispatch had no read access to the installed vLLM/aiter trees: Bash grep, Read, and a delegated Explore subagent were all denied on /opt/python/lib/python3.14/site-packages/, despite Section 7 naming those trees as the primary evidence source. Candidate discovery degenerates to priors without it."
+        },
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "tooling",
+            "pr_intelligence"
+          ],
+          "expected_impact": "upstream-landing lever is entirely offline this cycle",
+          "source": "Section 6 of dispatch",
+          "what": "pr_monitor MCP is disabled for this session (Section 6), so no upstream PR surface was reachable and no PR-backed candidate could be produced."
+        }
+      ],
+      "proposal_set": [
+        {
+          "args_mode": "append",
+          "atomic": true,
+          "extra_args": "",
+          "extra_envs": {
+            "VLLM_ROCM_USE_AITER": "1",
+            "VLLM_ROCM_USE_AITER_LINEAR": "1",
+            "VLLM_ROCM_USE_AITER_MHA": "1",
+            "VLLM_ROCM_USE_AITER_RMSNORM": "1"
+          },
+          "extra_envs_note": "coupled: the sub-flags are gated by the master VLLM_ROCM_USE_AITER switch and are no-ops without it",
+          "kb_evidence": [],
+          "name": "aiter-dense-kernels",
+          "pr_evidence": [],
+          "reason": "aiter 0.1.20.post1 is installed in this image but vLLM's AITER master switch is off by default on most ROCm builds. At bf16 dense TP1 the hot path is GEMM + RMSNorm + attention, exactly what the aiter fused kernels replace. This is the single largest dense-path prior on MI300X and is a pure env flip, so a REVERT costs one bench. Sub-flags are listed explicitly rather than relying on the master switch cascading, and marked atomic because splitting them tests nothing.",
+          "scope": "domain",
+          "source_evidence": []
+        },
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_args": "-O.cudagraph_mode=FULL_AND_PIECEWISE",
+          "extra_envs": {},
+          "kb_evidence": [],
+          "name": "full-decode-graph-capture",
+          "pr_evidence": [],
+          "reason": "At concurrency 4 with OSL 1024 the server runs ~1024 single-token decode steps per request with a batch of 4 - per-step Python/launch overhead is a large fraction of step time and throughput is nowhere near compute bound. FULL_AND_PIECEWISE captures the decode path as one full graph while keeping piecewise capture for prefill/irregular shapes, so it targets exactly that overhead without the shape-coverage fragility of FULL-only. Low risk: falls back to piecewise if capture fails.",
+          "scope": "domain",
+          "source_evidence": []
+        }
+      ],
+      "proposals_total": 2,
+      "reason": "",
+      "residual_questions": [
+        "Can the dispatcher add /opt/python/lib/python3.14/site-packages/ (read-only) and the specialist run dir (write) to this agent's allowed paths? Without it, candidate_discovery cannot verify already_present and should probably not be dispatched.",
+        "Is VLLM_ROCM_USE_AITER already set in the baseline server env? If the baseline already exports it, proposal 1 is a no-op and should be dropped before it burns a bench slot.",
+        "Can pr_monitor be re-enabled, or an offline PR snapshot supplied, so a future round can return actual upstream candidates rather than config priors?"
+      ],
+      "round_id": "493e7e66602e4f2c9a3af8b6855e861a",
+      "source": "specialist:493e7e66602e4f2c9a3af8b6855e861a",
+      "source_phase": "FRAMEWORK_AGENT",
+      "summary": "Discovery was severely degraded this round: pr_monitor is disabled (Section 6) and the sandbox denied ALL reads outside /home/hasith/AMD/Hyperloom - Bash grep, Read, and a delegated Explore agent were each blocked on /opt/python/lib/python3.14/site-packages/vllm/. So I could not verify installed env-flag defaults, the aiter integration surface, or whether any upstream candidate is already_present. No candidate can honestly be judged already_present/not_applicable without that",
+      "tags": [
+        "pr_intelligence"
+      ],
+      "task_id": "493e7e66602e4f2c9a3af8b6855e861a",
+      "task_kind": "candidate_discovery"
+    },
+    {
+      "completed_at": "2026-09-30T19:31:22.797549+00:00",
+      "confidence": 0.25,
+      "cycle": 0,
+      "domain": "freeform_specialist",
+      "gap_canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+      "new_findings": [
+        {
+          "accuracy_risk": "none",
+          "domain_tags": [
+            "infra",
+            "dispatch"
+          ],
+          "expected_impact": "none directly; blocks research-scout dispatches",
+          "source": "tool permission errors, this dispatch",
+          "what": "This specialist sandbox denies WebSearch, WebFetch, and all Bash/Read access outside /home/hasith/AMD/Hyperloom, making upstream-PR-survey mandates unexecutable as dispatched."
+        }
+      ],
+      "notes": [
+        "domain='freeform_specialist' is outside the domain catalogue; using generic prompt template"
+      ],
+      "proposal_set": [
+        {
+          "args_mode": "append",
+          "atomic": false,
+          "extra_args": "--async-scheduling",
+          "extra_envs": {},
+          "kb_evidence": [],
+          "name": "async-scheduling-host-overhead",
+          "pr_evidence": [],
+          "reason": "At conc=4 / TPOT 6.56ms the decode step is host-overhead dominated. v1 async scheduling overlaps the CPU scheduler+sampler bookkeeping of step N+1 with the GPU forward of step N, which is exactly the per-token host cost this workload is paying. Unverified whether the flag exists/defaults on in this build \u2014 Coordinator should fail fast if the arg is rejected.",
+          "scope": "freeform",
+          "source_evidence": []
+        },
+        {
+          "args_mode": "append",
+          "atomic": true,
+          "extra_args": "--compilation-config {\"cudagraph_mode\":\"FULL_AND_PIECEWISE\"}",
+          "extra_envs": {
+            "VLLM_ROCM_USE_AITER": "1"
+          },
+          "kb_evidence": [],
+          "name": "full-cudagraph-decode",
+          "pr_evidence": [],
+          "reason": "Small-batch decode on gfx942 benefits most from full-graph capture covering attention, which historically required the AITER attention backend to be active for the ROCm full-graph path to be capture-safe. Coupled deliberately: the graph mode and the AITER backend selection must be benched together. If AITER is already the default in this build this reduces to a pure cudagraph-coverage change.",
+          "scope": "freeform",
+          "source_evidence": []
+        }
+      ],
+      "proposals_total": 2,
+      "reason": "",
+      "residual_questions": [
+        "Grant WebSearch/WebFetch and read access to /opt/python/lib/python3.14/site-packages/vllm and /app/vllm before re-dispatching a research scout \u2014 otherwise the PR-survey deliverable cannot be produced.",
+        "Does this build already default to VLLM_ROCM_USE_AITER=1 and full cudagraph on ROCm? Needs a source read to answer."
+      ],
+      "round_id": "a669fe11f2c3493dac4813a1fca259e4",
+      "scope": "freeform",
+      "source": "specialist:a669fe11f2c3493dac4813a1fca259e4",
+      "source_phase": "FRAMEWORK_AGENT",
+      "summary": "BLOCKED: the mandated deliverable (upstream PR survey verified against installed source) was not achievable in this dispatch \u2014 WebSearch/WebFetch were denied by permission gate, and all reads of /opt/python/.../vllm, /app/vllm were blocked outside the Hyperloom working dir, so I could neither fetch PR pages nor verify what the installed tree contains. Emitting two knowledge-based, low-risk host-overhead knobs instead; both are unverified against this build and should be treat",
+      "tags": [
+        "freeform_specialist"
+      ],
+      "task_id": "a669fe11f2c3493dac4813a1fca259e4"
+    },
+    {
+      "completed_at": "2026-09-30T19:32:04.568733+00:00",
+      "confidence": 0.4,
+      "cycle": 0,
+      "domain": "freeform_specialist",
+      "gap_canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+      "new_findings": [],
+      "notes": [
+        "domain='freeform_specialist' is outside the domain catalogue; using generic prompt template"
+      ],
+      "proposal_set": [
+        {
+          "atomic": false,
+          "extra_args": "--async-scheduling",
+          "extra_envs": {},
+          "kb_evidence": [],
+          "name": "async-scheduling-decode",
+          "pr_evidence": [],
+          "reason": "V1 async scheduling overlaps the scheduler/host step with GPU execution, removing a per-step host sync+launch bubble. At concurrency 4 with TPOT 6.56ms the step is launch-latency-bound, so hiding host work is the highest-leverage knob in this regime. UNVERIFIED flag spelling (could be --async-scheduling on EngineArgs in 0.27); reject if argparse errors.",
+          "scope": "freeform",
+          "source_evidence": []
+        },
+        {
+          "atomic": true,
+          "extra_args": "--compilation-config {\"cudagraph_mode\":\"FULL_DECODE_ONLY\",\"cudagraph_capture_sizes\":[1,2,4,8]}",
+          "extra_envs": {},
+          "kb_evidence": [],
+          "name": "full-decode-only-cudagraph-small-sizes",
+          "pr_evidence": [],
+          "reason": "Decode-only full graphs capture the whole decode step (attention included) into one graph replay, eliminating per-layer launch overhead that dominates at batch<=4; restricting capture sizes to 1-8 keeps capture cheap and guarantees the live batch sizes are covered rather than padded up. Distinct from the FULL_AND_PIECEWISE variant already queued. UNVERIFIED field names against installed CompilationConfig.",
+          "scope": "freeform",
+          "source_evidence": []
+        }
+      ],
+      "proposals_total": 2,
+      "reason": "",
+      "residual_questions": [
+        "Specialist subprocesses need read permission for /opt/python/lib/python3.14/site-packages/ (vllm, aiter) - currently every Read/grep there is denied, which makes any source-verification mandate impossible.",
+        "Unanswered from the mandate: full VLLM_ROCM_USE_AITER_* sub-switch list (MHA / PAGED_ATTN / RMSNORM / LINEAR / MLA), legal cudagraph_mode values in 0.27.1.dev5, and available MI300X attention backends."
+      ],
+      "round_id": "5bb3a0b0b8644d19b6f11d47873364aa",
+      "scope": "freeform",
+      "source": "specialist:5bb3a0b0b8644d19b6f11d47873364aa",
+      "source_phase": "FRAMEWORK_AGENT",
+      "summary": "BLOCKED: this dispatch had no filesystem read permission outside /home/hasith/AMD/Hyperloom - Bash grep and Read on /opt/python/lib/python3.14/site-packages/vllm/ were both denied, so I could NOT verify any knob against the installed source as the mandate required. Proposals below are from vLLM 0.27-era knowledge only, NOT source-verified; treat confidence as low and have the Critic/Coordinator confirm flag spelling before dispatch. Please grant read access to the site-packag",
+      "tags": [
+        "freeform_specialist"
+      ],
+      "task_id": "5bb3a0b0b8644d19b6f11d47873364aa"
+    }
+  ],
+  "stack_fingerprint_meta": {
+    "aiter": "0.1.20.post1",
+    "image_digest": "docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0",
+    "rocm": "10.0.0",
+    "torch": "2.12.0+rocm10.0.0",
+    "vllm": "0.27.1.dev5+gf46a9dfe2.d20260827.rocm100"
+  },
+  "start_ts": "2026-09-30T18:14:16.621471+00:00",
+  "static_recon_enabled": true,
+  "static_recon_runs": 1,
+  "stop_reason": "sweep_done",
+  "stop_ts": "2026-09-30T20:45:22.082009+00:00",
+  "target_advisory_enabled": true,
+  "target_gap_pct": 30.0,
+  "target_reached_at": "",
+  "target_summary": "Qwen3-8B bf16, 1x MI300X, TP=1, CONC=4, ISL/OSL=1024/1024. Baseline 597.9 tok/s/GPU, TPOT 6.56ms -> decode-dominated small-batch regime; levers are AITER kernel routing and per-step host launch overhead, not compute saturation. Target +30%.",
+  "teardown_timings_sec": {
+    "artifact_package": 0.096,
+    "close_backends": 0.0,
+    "coordinator_stop": 0.003,
+    "final_json": 0.001,
+    "langfuse": 0.003,
+    "reap_orphaned_servers": 0.003,
+    "session_lock": 0.0,
+    "total": 0.106
+  },
+  "tick": 10,
+  "tp": 1,
+  "validated_recipe_generation": 0,
+  "warm_history_injected": true,
+  "warm_kernel_kb_attempted": false,
+  "warm_kernel_kb_plan": [],
+  "warm_replay_attempted": true,
+  "warm_replay_enabled": true,
+  "warm_replay_min_confidence": 0.7,
+  "warm_replay_min_reproduce_pct": 0.8,
+  "warm_replay_outcome": {
+    "config_donor_tier": "self",
+    "config_source": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+    "reason": "confidence_below_threshold (0.00 < 0.70)",
+    "status": "skipped",
+    "warm_recipe_conf": 0.0,
+    "warm_recipe_tier": "seed_only"
+  },
+  "warm_replay_pending": {},
+  "warm_start_context": {
+    "do_not_repeat": [],
+    "lessons": [],
+    "match": {
+      "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+      "confidence": 0.0,
+      "source": "local-json",
+      "tier": "seed_only"
+    },
+    "pitfalls": [],
+    "proven_prior": [],
+    "status": "seed_only"
+  },
+  "warm_start_lessons": [],
+  "warm_start_pitfalls": [],
+  "warm_start_recipe": {
+    "confidence": 0.0,
+    "hw": "mi300x",
+    "recipe": {
+      "aiter_version": "0.1.20.post1",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "authority": "EXPERIENTIAL",
+      "best_config": {},
+      "best_throughput": 0.0,
+      "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+      "conc": 4,
+      "confidence": 0.85,
+      "created_at": "2026-09-30T18:14:16.629374+00:00",
+      "ep": 1,
+      "evidence_refs": [],
+      "framework_name": "vllm",
+      "framework_version": "0.27.1.dev5+gf46a9dfe2.d20260827",
+      "hardware": "mi300x",
+      "image_digest": "docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0",
+      "isl": 1024,
+      "kernel_optimizations": [],
+      "last_profiled": "",
+      "lessons": [],
+      "max_model_len": 6144,
+      "model": "Qwen3-8B",
+      "model_type": "qwen3",
+      "osl": 1024,
+      "pitfalls": [],
+      "precision": "bf16",
+      "provenance": {
+        "details": {
+          "sid": "20260930T181415Z-d203e034"
+        },
+        "generated_at": "2026-09-30T18:14:16.629051+00:00",
+        "generator": "t0_anchor",
+        "source": "hyperloom-inference-optimizer"
+      },
+      "remaining_gaps": [],
+      "rocm_version": "10.0.0",
+      "sessions": [],
+      "stack_fingerprint": {
+        "aiter_commit": "0.1.20.post1",
+        "rocm_version": "10.0.0",
+        "vllm_version": "0.27.1.dev5+gf46a9dfe2.d20260827.rocm100"
+      },
+      "tp": 1,
+      "updated_at": "2026-09-30T18:14:16.629374+00:00",
+      "version": 1,
+      "what_failed": [],
+      "what_worked": []
+    },
+    "tier": "seed_only",
+    "workload": "Qwen3-8B"
+  },
+  "warm_start_ts": "2026-09-30T18:14:16+00:00",
+  "working_recipe_generation": 0
+}

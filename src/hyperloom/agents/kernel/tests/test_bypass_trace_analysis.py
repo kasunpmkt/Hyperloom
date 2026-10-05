@@ -125,6 +125,25 @@ def test_real_trace_end_to_end(tmp_path, capsys, monkeypatch):
     assert len(kr["kernels"]) == len(result["hot_kernels"])
 
 
+def test_a_trace_over_the_gpu_event_cap_reports_the_retained_prefix(tmp_path, capsys, monkeypatch):
+    """A capped trace is analysed from the events the reader kept, not reported as having no kernels."""
+    monkeypatch.setattr(bta._reader, "_MAX_BUFFERED_GPU_EVENTS", 1)
+    trace = tmp_path / "t.trace.json"
+    trace.write_bytes(json.dumps({"traceEvents": _TRACE_EVENTS}).encode("utf-8"))
+
+    rc, result, _ = _run(_base_argv(tmp_path, str(trace)), capsys)
+
+    assert rc == 0
+    # Only the first kernel fits under the cap; the GEMM after it is dropped.
+    assert [k["kernel_category"] for k in result["hot_kernels"]] == ["SDPA"]
+    assert result["timeline"]["total_time_ms"] > 0
+    assert not result["analysis_degraded"]
+    codes = {w["code"] for w in result["trace_health_warnings"]}
+    assert "bypass_trace_aggregation_truncated" in codes
+    report = Path(result["trace_report_path"]).read_text(encoding="utf-8")
+    assert "No GPU kernels found" not in report
+
+
 def test_gzip_trace_end_to_end(tmp_path, capsys, monkeypatch):
     trace = tmp_path / "t.trace.json.gz"
     with gzip.open(trace, "wb") as f:
@@ -135,7 +154,6 @@ def test_gzip_trace_end_to_end(tmp_path, capsys, monkeypatch):
 
 
 def test_multi_rank_provenance_and_warning(tmp_path, capsys, monkeypatch):
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     trace_dir = tmp_path / "torch_trace"
     trace_dir.mkdir()
     for rank in (0, 1):
@@ -154,7 +172,6 @@ def test_multi_rank_provenance_and_warning(tmp_path, capsys, monkeypatch):
 def test_high_gpu_idle_gate_suppresses_hot_kernels(tmp_path, capsys, monkeypatch):
     # When the GPU is idle beyond the threshold, bypass suppresses every candidate list and surfaces a
     # high_gpu_idle_pct warning.
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     monkeypatch.delenv("HYPERLOOM_TRACELENS_IDLE_PCT_THRESHOLD", raising=False)
     trace = tmp_path / "idle.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _HIGH_IDLE_TRACE_EVENTS}).encode("utf-8"))
@@ -176,7 +193,6 @@ def test_high_gpu_idle_gate_suppresses_hot_kernels(tmp_path, capsys, monkeypatch
 
 def test_high_idle_gate_respects_threshold_env(tmp_path, capsys, monkeypatch):
     # A high threshold disables the gate.
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     monkeypatch.setenv("HYPERLOOM_TRACELENS_IDLE_PCT_THRESHOLD", "99.999")
     trace = tmp_path / "idle.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _HIGH_IDLE_TRACE_EVENTS}).encode("utf-8"))
@@ -266,7 +282,6 @@ def test_bypass_diffusion_report_shape_without_steps():
 
 def test_xdit_emits_diffusion_roofline(tmp_path, capsys, monkeypatch):
     # The xDiT/scriptable path emits a workload-level diffusion_roofline.json that consumes --num-denoise-steps.
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     trace = tmp_path / "t.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _TRACE_EVENTS}).encode("utf-8"))
     argv = [
@@ -326,7 +341,6 @@ def test_bypass_cli_accepts_forwarded_diffusion_flags():
 
 
 def test_non_xdit_omits_diffusion_roofline(tmp_path, capsys, monkeypatch):
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     trace = tmp_path / "t.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _TRACE_EVENTS}).encode("utf-8"))
     rc, result, _ = _run(_base_argv(tmp_path, str(trace)), capsys)  # vllm route
@@ -338,29 +352,78 @@ def test_non_xdit_omits_diffusion_roofline(tmp_path, capsys, monkeypatch):
 # ── steady-state mode coverage ───────────────────────────────────────────────
 
 
-def test_should_enable_steady_recognizes_tracelens_modes():
-    # bypass must window TraceLens splitter chunk types, not silently full-trace.
-    for m in ("mixed", "decode_only", "prefilldecode"):
-        assert bta._should_enable_steady(steady_state_mode=m, framework="vllm", env_steady=False) is True
+# Full span ~99.9% idle (warm-up and wind-down kernels far apart); each ProfilerStep is 90% busy.
+_IDLE_SPAN_BUSY_STEP_EVENTS = [
+    {"cat": "kernel", "ph": "X", "name": "warmup_kernel", "ts": 0, "dur": 10, "args": {"correlation": 1}},
+    *(
+        event
+        for i in range(4)
+        for event in (
+            {
+                "cat": "gpu_user_annotation",
+                "ph": "X",
+                "name": f"ProfilerStep#{i}",
+                "ts": 1_000_000 + i * 100,
+                "dur": 100,
+            },
+            {
+                "cat": "kernel",
+                "ph": "X",
+                "name": "Cijk_Alik_Bljk_HHS",
+                "ts": 1_000_000 + i * 100 + 5,
+                "dur": 90,
+                "args": {"correlation": 10 + i},
+            },
+        )
+    ),
+    {"cat": "kernel", "ph": "X", "name": "winddown_kernel", "ts": 3_000_000, "dur": 10, "args": {"correlation": 2}},
+]
 
 
-def test_should_enable_steady_off_values_stay_full_trace():
-    for m in ("", "0", "false", "off", "none"):
-        assert bta._should_enable_steady(steady_state_mode=m, framework="vllm", env_steady=False) is False
+def test_steady_window_keeps_hot_kernels_the_full_span_would_gate(tmp_path, capsys, monkeypatch):
+    monkeypatch.delenv("HYPERLOOM_TRACELENS_IDLE_PCT_THRESHOLD", raising=False)
+    trace = tmp_path / "dense.trace.json"
+    trace.write_bytes(json.dumps({"traceEvents": _IDLE_SPAN_BUSY_STEP_EVENTS}).encode("utf-8"))
+
+    _, full, _ = _run(_base_argv(tmp_path / "full", str(trace), extra=["--steady-state-mode", "off"]), capsys)
+    assert full["aggregation_scope"] == "full_trace"
+    assert full["timeline"]["idle_pct"] > 80.0
+    assert full["hot_kernels"] == []
+
+    _, result, _ = _run(_base_argv(tmp_path / "default", str(trace)), capsys)
+    assert result["aggregation_scope"] == "steady_state"
+    assert result["steady_window"]["step_name"] == "ProfilerStep"
+    assert result["timeline"]["idle_pct"] < 80.0
+    assert "high_gpu_idle_pct" not in {w["code"] for w in result["trace_health_warnings"]}
+    assert [k["device_kernel_name"] for k in result["hot_kernels"]] == ["Cijk_Alik_Bljk_HHS"]
+    kr = json.loads(Path(result["artifact_paths"]["kernel_roofline"]).read_text())
+    assert len(kr["kernels"]) == 1
 
 
-def test_should_enable_steady_legacy_and_xdit_and_env():
-    for m in ("1", "true", "on", "auto", "annotation", "steady"):
-        assert bta._should_enable_steady(steady_state_mode=m, framework="vllm", env_steady=False) is True
-    assert bta._should_enable_steady(steady_state_mode="", framework="xdit", env_steady=False) is True
-    assert bta._should_enable_steady(steady_state_mode="", framework="vllm", env_steady=True) is True
+@pytest.mark.parametrize("mode", ["", "mixed", "decode_only", "prefilldecode", "auto", "annotation"])
+def test_every_mode_but_full_trace_windows_to_the_steady_state(tmp_path, capsys, mode):
+    trace = tmp_path / "s.trace.json"
+    trace.write_bytes(json.dumps({"traceEvents": _STEADY_EVENTS}).encode("utf-8"))
+    _, result, _ = _run(_base_argv(tmp_path, str(trace), extra=["--steady-state-mode", mode]), capsys)
+    assert result["aggregation_scope"] == "steady_state"
+    assert result["run_meta"]["preflight"]["steady_state_requested"] is True
+
+
+@pytest.mark.parametrize("mode", ["off", "none", "0", "false", "no", " OFF "])
+def test_full_trace_modes_analyze_the_whole_trace(tmp_path, capsys, mode):
+    trace = tmp_path / "s.trace.json"
+    trace.write_bytes(json.dumps({"traceEvents": _STEADY_EVENTS}).encode("utf-8"))
+    _, result, _ = _run(_base_argv(tmp_path, str(trace), extra=["--steady-state-mode", mode]), capsys)
+    assert result["aggregation_scope"] == "full_trace"
+    assert result["estimated"] is False
+    assert {k["device_kernel_name"] for k in result["hot_kernels"]} == {"warmup_gemm", "paged_attention_v1"}
+    assert "bypass_steady_fallback_full_trace" not in {w["code"] for w in result["trace_health_warnings"]}
 
 
 # ── boundary inputs end-to-end ───────────────────────────────────────────────
 
 
 def test_non_kineto_json_yields_valid_artifacts_and_warns(tmp_path, capsys, monkeypatch):
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     # Valid JSON that is not a Kineto trace: still emit the full artifact set plus a no-GPU-kernels warning instead of
     # crashing.
     trace = tmp_path / "notrace.json"
@@ -374,7 +437,6 @@ def test_non_kineto_json_yields_valid_artifacts_and_warns(tmp_path, capsys, monk
 
 
 def test_empty_trace_events_end_to_end(tmp_path, capsys, monkeypatch):
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     trace = tmp_path / "empty.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": []}).encode("utf-8"))
     rc, result, _ = _run(_base_argv(tmp_path, str(trace)), capsys)
@@ -502,12 +564,10 @@ def test_quality_warning_bad_env_falls_back_to_default(monkeypatch):
     assert "bypass_high_unclassified_share" not in _codes(warnings)
 
 
-def test_steady_state_mode_flag_enables_windowing(tmp_path, capsys, monkeypatch):
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
+def test_steady_window_is_the_default(tmp_path, capsys, monkeypatch):
     trace = tmp_path / "s.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _STEADY_EVENTS}).encode("utf-8"))
-    argv = _base_argv(tmp_path, str(trace), extra=["--steady-state-mode", "annotation"])
-    _, result, _ = _run(argv, capsys)
+    _, result, _ = _run(_base_argv(tmp_path, str(trace)), capsys)
     assert result["aggregation_scope"] == "steady_state"
     assert result["steady_window"] and result["steady_window"]["step_name"] == "ProfilerStep"
     # only the in-window kernel is ranked.
@@ -518,7 +578,6 @@ def test_steady_state_mode_flag_enables_windowing(tmp_path, capsys, monkeypatch)
 def test_xdit_steady_anchored_is_not_estimated(tmp_path, capsys, monkeypatch):
     # When the repeating ProfilerStep window is found, per-step shares are trace-anchored, so the result is NOT
     # estimated.
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     trace = tmp_path / "x.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _STEADY_EVENTS}).encode("utf-8"))
     argv = [
@@ -552,7 +611,6 @@ def test_xdit_steady_anchored_is_not_estimated(tmp_path, capsys, monkeypatch):
 
 def test_xdit_full_trace_fallback_is_estimated(tmp_path, capsys, monkeypatch):
     # No per-step annotations -> falls back to full_trace, so the result is estimated and flags bypass_xdit_estimated.
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     trace = tmp_path / "x.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _TRACE_EVENTS}).encode("utf-8"))
     argv = [
@@ -639,26 +697,16 @@ _STEADY_EVENTS = [
 ]
 
 
-def test_text_gen_steady_fallback_is_estimated(tmp_path, capsys, monkeypatch):
-    # When steady-state windowing is requested but no repeating window is found, the full-trace shares are an estimate
-    # -> estimated=True.
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
+def test_text_gen_without_a_repeating_step_falls_back_to_the_full_trace(tmp_path, capsys, monkeypatch):
+    # No repeating window: the full-trace shares are an estimate, and the fallback is reported.
     trace = tmp_path / "ng.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _TRACE_EVENTS}).encode("utf-8"))  # no ProfilerStep
-    argv = _base_argv(tmp_path, str(trace), extra=["--steady-state-mode", "auto"])
-    _, result, _ = _run(argv, capsys)
-    assert result["aggregation_scope"] == "full_trace"
-    assert result["estimated"] is True
-
-
-def test_text_gen_default_full_trace_not_estimated(tmp_path, capsys, monkeypatch):
-    # Default text-gen: full-trace is the norm, so it is NOT flagged estimated.
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
-    trace = tmp_path / "d.trace.json"
-    trace.write_bytes(json.dumps({"traceEvents": _TRACE_EVENTS}).encode("utf-8"))
     _, result, _ = _run(_base_argv(tmp_path, str(trace)), capsys)
     assert result["aggregation_scope"] == "full_trace"
-    assert result["estimated"] is False
+    assert result["estimated"] is True
+    assert result["run_meta"]["selection"]["fell_back_to_full_trace"] is True
+    assert "bypass_steady_fallback_full_trace" in {w["code"] for w in result["trace_health_warnings"]}
+    assert {k["kernel_category"] for k in result["hot_kernels"]} == {"SDPA", "GEMM"}
 
 
 _FUSION_EVENTS = [
@@ -940,7 +988,6 @@ def test_reader_no_graph_mode_when_no_graph_launches(tmp_path):
 def test_graph_under_recorded_skips_idle_gate_keeps_candidates(tmp_path, capsys, monkeypatch):
     # Under-recorded graph trace: idle% is ~99% but the idle gate must NOT clear candidates; instead a
     # bypass_graph_under_recorded warning is surfaced.
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     monkeypatch.delenv("HYPERLOOM_TRACELENS_IDLE_PCT_THRESHOLD", raising=False)
     trace = tmp_path / "g.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _graph_under_recorded_events()}).encode("utf-8"))
@@ -1026,7 +1073,6 @@ def test_graph_fully_recorded_low_busy_not_under_recorded(tmp_path):
 
 
 def test_fully_recorded_idle_graph_still_suppressed_by_idle_gate(tmp_path, capsys, monkeypatch):
-    monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
     monkeypatch.delenv("HYPERLOOM_TRACELENS_IDLE_PCT_THRESHOLD", raising=False)
     trace = tmp_path / "idle.trace.json"
     trace.write_bytes(json.dumps({"traceEvents": _graph_fully_recorded_idle_events()}).encode("utf-8"))

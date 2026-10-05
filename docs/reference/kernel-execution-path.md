@@ -26,10 +26,31 @@ before any agent backend runs:
 4. Looks up the handler in `KERNEL_REQUEST_HANDLERS`; auto-rejects with
    `unknown_kernel_kind` (and a `valid_kinds` list) when none is found.
 5. Runs the handler inline: `result = await handler(payload, session_dir=...)`.
+   `trace_analyze` is the exception: a TraceLens analysis takes about 20 minutes, so
+   instead of blocking the tick it is queued as a Coordinator-internal `trace_analyze`
+   task that the dispatcher starts without waiting for it (see below).
 6. Posts a `response{source: "programmatic_handler"}` directly to the bus.
 7. Appends any failure to `last_action_failures`.
 
 The requester reads the response from its inbox on its next turn.
+
+### `trace_analyze` runs off the tick
+
+When `last_trace_analyze` already holds an analysis of the same `trace_input`, the
+request is answered from it at once (`source: "shared_state_cache"`). Otherwise:
+
+1. The request is answered straight away with `trace_analyze_done`,
+   `status: "queued"`, `source: "dispatched_task"` and the `task_id`. A repeat request
+   for a trace that is already being analysed gets the task that is running it.
+2. The dispatcher pump starts the task and does not join it, as for `kernel_agent`,
+   so the reactor turns, the critic and the rest of the tick go on while TraceLens runs.
+   The task holds `analysis_lane` (capacity 1, no conflict with the serving lanes), so
+   analyses run one at a time, and a run killed mid-analysis leaves a lease the
+   dead-holder pass reclaims on resume rather than a `running` row that would hold
+   every later phase transition.
+3. When the analysis lands, a second `trace_analyze_done` answers the same request
+   (`in_reply_to`) with the result. A success is cached in `last_trace_analyze`; a
+   failure goes to `last_action_failures`.
 
 No PolicyGate path runs for the RESPONSE because it's written directly through
 `bus.append_and_seq`, not emitted by an LLM.

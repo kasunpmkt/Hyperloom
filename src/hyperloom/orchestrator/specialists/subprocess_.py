@@ -124,6 +124,37 @@ def resolve_codex_executable(explicit: str = "") -> str:
     return str(bundled) if bundled.exists() else ""
 
 
+#: Where the kernel-agent installer leaves the Claude CLI when it is not on ``$PATH``; it records the one it found as
+#: ``GEAK_CLAUDE_BIN``. A container's PATH often lacks ``~/.local/bin``.
+_CLAUDE_INSTALL_PATHS: tuple[str, ...] = ("~/.local/bin/claude", "/usr/local/bin/claude")
+
+
+def resolve_claude_executable(explicit: str = "") -> str:
+    """Resolve the Claude CLI a specialist subprocess should spawn.
+
+    Order: an explicit path, then ``claude`` on ``$PATH``, then the CLI the installer recorded in ``GEAK_CLAUDE_BIN``,
+    then the installer's own locations.
+
+    Args:
+        explicit: Operator-configured path; returned as-is when non-empty.
+
+    Returns:
+        The resolved executable path, or ``""`` when no Claude CLI exists -- the caller reports that instead of
+        spawning a name that cannot run.
+    """
+    pinned = (explicit or "").strip()
+    if pinned:
+        return pinned
+    on_path = shutil.which("claude")
+    if on_path:
+        return on_path
+    for candidate in (os.environ.get("GEAK_CLAUDE_BIN", ""), *_CLAUDE_INSTALL_PATHS):
+        path = os.path.expanduser(candidate.strip()) if candidate.strip() else ""
+        if path and os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return ""
+
+
 _SPECIALIST_ENV_ALLOWLIST: frozenset[str] = frozenset(
     {
         "ANTHROPIC_BASE_URL",

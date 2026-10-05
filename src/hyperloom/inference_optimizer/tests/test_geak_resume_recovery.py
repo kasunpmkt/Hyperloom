@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 import pytest
@@ -43,11 +44,13 @@ class _TaskRegistry:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("provisional", [None, True])
 async def test_geak_kernel_phase_recovers_existing_ok_result_on_resume(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    provisional: bool | None,
 ) -> None:
-    """A result written before a coordinator crash must be recovered on resume."""
+    """A result written before a coordinator crash must be recovered on resume, and re-measured before it counts."""
     geak_dir = tmp_path / "geak"
     geak_dir.mkdir()
     result = {
@@ -61,6 +64,7 @@ async def test_geak_kernel_phase_recovers_existing_ok_result_on_resume(
         "bench_script": str(geak_dir / "final" / "bench_e2e.sh"),
         "accepted_config": {"flags": "--max-num-batched-tokens 16384", "env": "E=1"},
         "accepted_kernels": ["fused_moe_kernel_gptq_awq"],
+        "provisional": provisional,
     }
     (geak_dir / "result.json").write_text(json.dumps(result), encoding="utf-8")
 
@@ -387,3 +391,126 @@ async def test_geak_handoff_keeps_a_hip_pin_against_the_recipe_autofill(
     assert handoff["gpu_ids"] == "4,5"
     # tp comes from the same recipe as gpu_ids, so the two cannot disagree.
     assert handoff["tp"] == 2
+
+
+_DEAD_PID = 424242
+
+
+async def _resumed_in_kernel_with_a_dead_kernel_agent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """The #43 session: crashed mid GEAK delegation, resumed with the delegation's row still ``running``."""
+    from hyperloom.orchestrator.bus import resource_lock
+    from hyperloom.orchestrator.bus.resource_lock import SqliteLeaseBackend
+    from hyperloom.orchestrator.roles.agent_role import default_role_registry
+    from hyperloom.orchestrator.roles.mock_backend import MockBackend, MockTurn, ScriptedPlan
+
+    monkeypatch.setenv("KERNEL_OPT_BACKEND_ORDER", "geak")
+    monkeypatch.setattr(resource_lock, "local_owner_scope", lambda: "test-node")
+    monkeypatch.setattr(SqliteLeaseBackend, "_pid_alive", staticmethod(lambda pid: pid != _DEAD_PID))
+    session = tmp_path / "session"
+    session.mkdir()
+    # The orchestration agent asked for SWEEP on every tick of the delegation; the in-flight task held it back.
+    SharedState(
+        phase="KERNEL_AGENT",
+        kernel_enabled=True,
+        kernel_optimizer="geak",
+        baseline_tput=1462.1,
+        current_best={"action": "explore", "tput": 1502.3},
+        pending_escalate_hint=ESCALATE_HINT_SKIP_TO_SWEEP,
+    ).save(session)
+    idle = ScriptedPlan(turns=[MockTurn(intents=[])])
+    coord = Coordinator(
+        session_dir=session,
+        backends={"orchestration": MockBackend(idle), "critic": MockBackend(idle)},
+        role_registry=default_role_registry(),
+        recipe_kb=None,
+        knowledge_plane=None,
+    )
+    dead = await coord.tasks.create(
+        kind="kernel_agent", params={"from_phase": "FRAMEWORK_AGENT"}, idempotency_key="kernel_agent_c0"
+    )
+    await coord.tasks.transition(dead.task_id, "running")
+    await coord.locks.acquire_many(
+        ["benchmark_lane"], holder_id=dead.task_id, task_id=dead.task_id, action="kernel_agent", ttl_sec=-1
+    )
+    await coord.tasks.db.execute("UPDATE leases SET owner_scope='test-node', pid=?", (_DEAD_PID,))
+    return coord, dead
+
+
+@pytest.mark.asyncio
+async def test_a_resume_mid_delegation_dispatches_a_fresh_kernel_agent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The recovery lives in the kernel_agent executor, so the resume must dispatch one, not adopt the dead row."""
+    coord, dead = await _resumed_in_kernel_with_a_dead_kernel_agent(tmp_path, monkeypatch)
+
+    await coord._replay_resume_if_needed()
+
+    assert (await coord.tasks.get(dead.task_id)).state == "failed"
+    fresh = [t for t in await coord.tasks.queued() if t.kind == "kernel_agent"]
+    assert len(fresh) == 1
+    assert fresh[0].task_id != dead.task_id
+
+
+@pytest.mark.asyncio
+async def test_a_stale_skip_to_sweep_hint_waits_for_the_recovered_delegation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The hint the agent left pending must not end KERNEL before the fresh delegation has settled."""
+    coord, _dead = await _resumed_in_kernel_with_a_dead_kernel_agent(tmp_path, monkeypatch)
+
+    await coord._replay_resume_if_needed()
+    await coord.reconciler.run(time.time())
+    await coord._advance_phase_if_needed()
+
+    assert coord.shared_state.phase == "KERNEL_AGENT"
+    assert coord.shared_state.pending_escalate_hint == ESCALATE_HINT_SKIP_TO_SWEEP
+
+
+@pytest.mark.asyncio
+async def test_cancelling_the_kernel_phase_stops_the_geak_runner(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A stopped run must not leave the runner (and through it run_e2e) running behind a cancelled await."""
+    import asyncio
+
+    pid_file = tmp_path / "runner.pid"
+    runner = tmp_path / "geak_runner.py"
+    runner.write_text(
+        f"import os, time\nopen({str(pid_file)!r}, 'w').write(str(os.getpid()))\ntime.sleep(30)\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "hyperloom.orchestrator.actions.executors._kernel_agent_tool._kernel_agent_tool_path",
+        lambda _name: runner,
+    )
+    coord = Coordinator.__new__(Coordinator)
+    coord.session_dir = tmp_path
+    coord._run_deadline = None
+    coord.shared_state = SharedState(baseline_tput=100.0, model_path="/models/m", gpu_type="mi300x")
+    coord.phase_kernel._record_geak_kernel_journey = lambda _result: None
+
+    phase = asyncio.create_task(coord._run_geak_kernel_phase(from_phase="FRAMEWORK_AGENT"))
+    deadline = time.monotonic() + 20
+    while not (pid_file.is_file() and pid_file.read_text()) and time.monotonic() < deadline:
+        await asyncio.sleep(0.1)
+    runner_pid = int(pid_file.read_text())
+
+    phase.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await phase
+
+    deadline = time.monotonic() + 10
+    while _alive(runner_pid) and time.monotonic() < deadline:
+        await asyncio.sleep(0.1)
+    assert not _alive(runner_pid)
+
+
+def _alive(pid: int) -> bool:
+    """Whether ``pid`` is a live process; a zombie nobody reaped yet counts as gone."""
+    try:
+        return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0] != "Z"
+    except FileNotFoundError:
+        return False

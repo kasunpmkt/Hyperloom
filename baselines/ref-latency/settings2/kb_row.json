@@ -1,0 +1,81 @@
+{
+  "aiter_version": "0.1.20.post1",
+  "architectures": [
+    "Qwen3ForCausalLM"
+  ],
+  "authority": "EXPERIENTIAL",
+  "best_config": {},
+  "best_throughput": 0.0,
+  "canonical_id": "inference:qwen3-8b:mi300x:vllm:qwen3:qwen3forcausallm:0.27.1.dev5+gf46a9dfe2.d20260827:bf16",
+  "conc": 4,
+  "confidence": 0.85,
+  "created_at": "2026-09-30T23:18:23.466107+00:00",
+  "ep": 1,
+  "evidence_refs": [],
+  "framework_name": "vllm",
+  "framework_version": "0.27.1.dev5+gf46a9dfe2.d20260827",
+  "hardware": "mi300x",
+  "image_digest": "docker.io/rocm/vllm:rocm10.0.0_ubuntu24.04_py3.14_pytorch_2.12.0_vllm_0.27.0",
+  "isl": 1024,
+  "kernel_optimizations": [],
+  "last_profiled": "",
+  "lessons": [],
+  "max_model_len": 6144,
+  "model": "Qwen3-8B",
+  "model_class": "dense",
+  "model_name": "Qwen3-8B",
+  "model_type": "qwen3",
+  "osl": 1024,
+  "pitfalls": [],
+  "precision": "bf16",
+  "provenance": {
+    "details": {
+      "evidence": [
+        "log:session-20260930T231822Z-81612309"
+      ],
+      "phase": "close_finalize"
+    },
+    "generated_at": "2026-10-01T02:15:03.043763+00:00",
+    "generator": "coordinator",
+    "source": "hyperloom-inference-optimizer"
+  },
+  "remaining_gaps": [],
+  "rocm_version": "10.0.0",
+  "sessions": [
+    {
+      "actions_taken": [],
+      "date": "2026-10-01T02:15:03.043127+00:00",
+      "gain_pct": 0.0,
+      "session_id": "20260930T231822Z-81612309",
+      "stack_len": 0,
+      "throughput_after": 601.3821946548721,
+      "throughput_before": 601.3821946548721
+    }
+  ],
+  "stack_fingerprint": {
+    "aiter_commit": "0.1.20.post1",
+    "rocm_version": "10.0.0",
+    "vllm_version": "0.27.1.dev5+gf46a9dfe2.d20260827.rocm100"
+  },
+  "tp": 1,
+  "updated_at": "2026-10-01T02:15:03.043880+00:00",
+  "version": 2,
+  "what_failed": [
+    {
+      "gain_pct": null,
+      "name": "aiter_on",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "async_sched",
+      "reason": "reverted"
+    },
+    {
+      "gain_pct": null,
+      "name": "full_decode_cudagraph",
+      "reason": "reverted"
+    }
+  ],
+  "what_worked": []
+}

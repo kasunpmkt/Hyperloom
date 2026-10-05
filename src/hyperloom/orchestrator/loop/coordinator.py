@@ -54,6 +54,7 @@ from ..bus.resource_lock import (
     SqliteLeaseBackend,
 )
 from ..state.shared_state import SharedState, effective_closing_grace_sec, timed_teardown_step
+from .reactor_gate import GateInputs, ReactorGate
 from .signals import SignalDrain
 from .intent_router import IntentRouter
 from .sub_agent_runner import SubAgentRunner
@@ -319,6 +320,7 @@ class Coordinator(metaclass=_CoordinatorMeta):
         # Stable tick order from the live role_registry.
         _CANONICAL_ORDER = ("orchestration", "critic")
         self._tick_roles: tuple[str, ...] = tuple(r for r in _CANONICAL_ORDER if r in self.role_registry)
+        self._reactor_gate = ReactorGate()
 
         # Inline fast-action execution: run cheap lane-light action in-turn. Default ON.
         self._inline_fast_actions_enabled: bool = env_flag("INFERENCE_OPTIMIZER_INLINE_FAST_ACTIONS", default=True)
@@ -357,6 +359,7 @@ class Coordinator(metaclass=_CoordinatorMeta):
         "_handle_single_verdict": "router",
         "_handle_delegate": "router",
         "_handle_request": "router",
+        "_run_trace_analyze_task": "router",
         "_handle_extend_lease": "router",
         "_deliver_specialist_inbox": "router",
         "_handle_prune_branch": "router",
@@ -377,6 +380,7 @@ class Coordinator(metaclass=_CoordinatorMeta):
         "_kernel_enabled": "phase_machine",
         "_optimize_enabled": "phase_machine",
         "_advance_phase_if_needed": "phase_machine",
+        "_phase_owner_task": "phase_machine",
         "_on_phase_entered": "phase_machine",
         "_reseed_orch_prompt_for_phase": "phase_machine",
         "_record_phase_entry_evidence": "phase_machine",
@@ -540,7 +544,6 @@ class Coordinator(metaclass=_CoordinatorMeta):
         "_discarded_escalate_hint_advisory_block": "conversation",
         "_workload_canonical_id": "proposals",
         "_read_local_recipe_row": "proposals",
-        "_extract_kept_best_config": "proposals",
         "_kb_best_config_overrides_for_keep": "proposals",
         "_kb_amend_recipe": "proposals",
         "_inject_explore_runtime_params": "proposals",
@@ -1455,9 +1458,64 @@ class Coordinator(metaclass=_CoordinatorMeta):
 
     # Reactor
     async def _reactor_pass(self, agent_name: str) -> None:
-        """Run one reactor turn for ``agent_name`` and route its intents, scoped as that agent on the trajectory."""
+        """Run one reactor turn for ``agent_name`` and route its intents, scoped as that agent on the trajectory.
+
+        The reactor gate sits the turn out while the phase is owned by an in-flight task and nothing the role could
+        act on has changed; every tick is counted on the phase event either way.
+        """
+        from hyperloom.inference_optimizer.breakdown.recorder import phase_event
+
+        state = self.shared_state
+        now = time.time()
+        run, reason = self._reactor_gate.decide(
+            agent_name, await self._reactor_gate_inputs(agent_name, now=now), now=now
+        )
+        phase_event.record_reactor_turn(
+            phase=str(state.phase or ""),
+            macro_cycle=int(state.macro_cycle or 0),
+            role=agent_name,
+            ran=run,
+            reason=reason,
+        )
+        if not run:
+            return
         with trajectory_scope(component=agent_name, agent=agent_name):
             await self._reactor_turn(agent_name)
+
+    async def _reactor_gate_inputs(self, agent_name: str, *, now: float) -> GateInputs:
+        """Read what the reactor gate decides ``agent_name``'s turn on."""
+        state = self.shared_state
+        owner = await self._phase_owner_task()
+        owner_task_id = str(owner.task_id) if owner is not None else ""
+        lease_left: float | None = None
+        mail = False
+        if owner_task_id:
+            expiry = await self.locks.task_lease_expiry_unix(owner_task_id)
+            lease_left = expiry - now if expiry is not None else None
+            mail = await self._has_reactor_mail(agent_name)
+        return GateInputs(
+            phase=str(state.phase or ""),
+            macro_cycle=int(state.macro_cycle or 0),
+            owner_task_id=owner_task_id,
+            closing=bool(state.closing_phase),
+            mail=mail,
+            owner_lease_left_sec=lease_left,
+            phase_budget_left_sec=_phase_state.phase_budget_remaining_seconds(
+                state, budget_pct=self._phase_budget_pct, now_unix=now
+            ),
+        )
+
+    async def _has_reactor_mail(self, agent_name: str) -> bool:
+        """Whether ``agent_name``'s inbox holds anything beyond the other reactor role's routine observations.
+
+        Every turn broadcasts an observation and both roles subscribe to them, so counting those would have each role
+        wake the other on every tick.
+        """
+        if agent_name == "critic" and any(not p.decided for p in self.state.pending_proposals.values()):
+            return True
+        cursor = await self.cursors.load(agent_name)
+        unread = await self.bus.replay_for(agent_name, after_seq=cursor.last_processed_seq)
+        return any(not (m.topic == "observation" and m.from_agent in self._tick_roles) for m in unread)
 
     async def _reactor_turn(self, agent_name: str) -> None:
         """Body of :meth:`_reactor_pass`."""

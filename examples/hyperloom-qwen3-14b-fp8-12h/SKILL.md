@@ -69,7 +69,7 @@ In Docker mode, start a long-running container on `HYPERLOOM_DOCKER_TARGET_HOST`
 
 ```bash
 export REPO_ROOT="$(pwd -P)"
-docker run -d \
+docker run -d --init \
   --name "${HYPERLOOM_CONTAINER_NAME:-hyperloom-local}" \
   --shm-size "${HYPERLOOM_SHM_SIZE:-64g}" \
   --entrypoint tail \
@@ -317,7 +317,7 @@ mounts for `USER_DATA_PATH` and any model directory outside the workspace:
 export HYPERLOOM_RUN_MODE=docker
 export REPO_ROOT="$(pwd -P)"
 export HYPERLOOM_IMAGE="${HYPERLOOM_IMAGE:-docker.io/rocm/atom-dev:v0.1.7-rc0}"
-docker run -d \
+docker run -d --init \
   --name "${HYPERLOOM_CONTAINER_NAME:-hyperloom-local}" \
   --shm-size "${HYPERLOOM_SHM_SIZE:-64g}" \
   --entrypoint tail \

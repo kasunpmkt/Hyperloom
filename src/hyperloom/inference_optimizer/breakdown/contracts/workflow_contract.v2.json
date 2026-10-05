@@ -161,7 +161,8 @@
     "profile",
     "replay_warm_recipe",
     "roofline",
-    "targeted_build"
+    "targeted_build",
+    "trace_analyze"
   ],
   "coordinator_reserved_actions": {
     "ENABLEMENT": [

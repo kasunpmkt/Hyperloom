@@ -62,6 +62,41 @@ def test_extract_workload_summary_full(tmp_path):
     assert out["top_bottleneck"] == "MoE_fused"
 
 
+def test_extract_workload_summary_reads_the_shared_renderer_report(tmp_path, monkeypatch):
+    """The bypass route's analysis.md, written by the shared renderer, yields the same summary fields."""
+    from pathlib import Path
+
+    import hyperloom.agents.kernel.tools as tools
+
+    # The kernel tools import their siblings by bare name, as they run as scripts.
+    monkeypatch.syspath_prepend(str(Path(tools.__file__).parent))
+    from _analysis_md import render_report
+
+    md = tmp_path / "analysis.md"
+    md.write_text(
+        render_report(
+            route="bypass",
+            model_name="gpt-oss-120b",
+            provenance_detail="",
+            exec_summary={
+                "total_gpu_time_ms": 69791.37,
+                "gpu_busy_pct": 5.60,
+                "gpu_idle_pct": 94.40,
+                "gpu_memcpy_ms": 1.38,
+                "top_bottleneck_category": "MoE",
+                "attribution_pct": 23.58,
+            },
+            system_signals={"idle_pct": 94.40, "exposed_comm_pct": None, "exposed_memcpy_pct": 0.0},
+            idle_threshold=80.0,
+            hot_kernels=[],
+            p_items=[],
+        ),
+        encoding="utf-8",
+    )
+    out = rs.extract_workload_summary(md)
+    assert out == {"compute_pct": 5.6, "idle_pct": 94.4, "comm_pct": None, "top_bottleneck": "MoE"}
+
+
 # ---- extract_top_kernel ----
 
 

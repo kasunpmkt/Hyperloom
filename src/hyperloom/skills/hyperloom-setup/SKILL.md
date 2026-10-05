@@ -98,7 +98,7 @@ value.
    options — `Use default (<value>)` and `Custom` — and only ask a plain-text
    follow-up for the exact value when the user picks `Custom`.
 
-   - Write `ANTHROPIC_API_KEY=<PLEASE_FILL_IN>` unless already set to a non-placeholder value.
+   - Write `ANTHROPIC_API_KEY='<PLEASE_FILL_IN>'` (quoted, so the file still sources) unless already set to a non-placeholder value.
    - Ask `ANTHROPIC_BASE_URL` with exactly these option labels in this order:
      `Use default (https://api.anthropic.com)` /
      `Use AMD gateway (https://llm-api.amd.com/anthropic)` / `Custom`.

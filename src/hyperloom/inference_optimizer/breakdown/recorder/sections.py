@@ -107,6 +107,7 @@ PHASE_EVENT_SECTIONS: tuple[str, ...] = (
     "phase_marker",
     "phase_proposal",
     "phase_denial",
+    "phase_reactor",
 )
 
 STACK_EVENT_SECTIONS: tuple[str, ...] = (

@@ -160,10 +160,16 @@ class MachinePhase(CoordinatorCollaborator):
             sorted(str(task.task_id) for task in tasks if str(getattr(task, "kind", "") or "").strip() in kinds)
         )
 
-    async def _kernel_agent_in_flight(self) -> bool:
-        """Whether the ``kernel_agent`` task is queued or running."""
+    async def _phase_owner_task(self) -> Any:
+        """The queued or running task that owns the current phase until it returns, if any.
+
+        KERNEL is the one owned phase: its ``kernel_agent`` task carries the whole phase, so only a budget exit can end
+        the phase under it, and the reactor has nothing to act on until it settles.
+        """
+        if str(self.shared_state.phase or "").upper() != _phase_state.PHASE_KERNEL_AGENT:
+            return None
         tasks = list(await self.tasks.queued()) + list(await self.tasks.running())
-        return any(task.kind == "kernel_agent" for task in tasks)
+        return next((task for task in tasks if task.kind == "kernel_agent"), None)
 
     async def _track_kernel_idle_streak(self) -> None:
         """Advance or reset the KERNEL idle-streak counters for this tick."""
@@ -200,7 +206,6 @@ class MachinePhase(CoordinatorCollaborator):
         optimize_enabled = self._optimize_enabled()
         # Only asked inside the phase: the query renews the open round's lease.
         in_enablement = str(state.phase or "").upper() == _phase_state.PHASE_ENABLEMENT
-        in_kernel = str(state.phase or "").upper() == _phase_state.PHASE_KERNEL_AGENT
         enablement_in_flight = in_enablement and await self._enablement_in_flight()
         next_phase = _phase_state.compute_next_phase(
             state,
@@ -209,7 +214,7 @@ class MachinePhase(CoordinatorCollaborator):
             optimize_enabled=optimize_enabled,
             enablement_enabled=self._enablement_admitted(),
             enablement_in_flight=enablement_in_flight,
-            kernel_work_in_flight=in_kernel and await self._kernel_agent_in_flight(),
+            kernel_work_in_flight=await self._phase_owner_task() is not None,
         )
         if str(state.phase or "").upper() == _phase_state.PHASE_FRAMEWORK_AGENT:
             await self._maybe_enqueue_explore_research_scout()
