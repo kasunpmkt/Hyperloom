@@ -2020,7 +2020,7 @@ def test_smoke_test_codex_model_leaves_custom_ids_alone(monkeypatch, capsys):
     assert "gpt-5.6-sol" in out
 
 
-def test_openai_only_deploy_walks_the_codex_ladder_before_deriving_claude(monkeypatch, capsys):
+async def test_openai_only_deploy_walks_the_codex_ladder_before_deriving_claude(monkeypatch, capsys):
     """OpenAI-only: CODEX_MODEL also drives orchestration, so its ladder must run first."""
     monkeypatch.setenv("OPENAI_BASE_URL", "https://gw.example/v1")
     monkeypatch.setenv("OPENAI_API_KEY", "openai-key")
@@ -2038,13 +2038,13 @@ def test_openai_only_deploy_walks_the_codex_ladder_before_deriving_claude(monkey
 
     assert cli._claude_model_should_follow_codex() is True
     args = _make_args(codex_model="gpt-5.6-sol", critic_mock=True)
-    cli._resolve_models_for_run(args, None)
+    await cli._resolve_models_for_run(args, None)
 
     assert args.codex_model == "gpt-5.5"
     assert args.claude_model == "gpt-5.5"
 
 
-def test_openai_only_ladder_runs_even_with_a_mock_critic(monkeypatch, capsys):
+async def test_openai_only_ladder_runs_even_with_a_mock_critic(monkeypatch, capsys):
     """The ladder cannot be gated on the critic here: codex_model drives orchestration."""
     monkeypatch.setenv("OPENAI_BASE_URL", "https://gw.example/v1")
     monkeypatch.setenv("OPENAI_API_KEY", "openai-key")
@@ -2060,7 +2060,7 @@ def test_openai_only_ladder_runs_even_with_a_mock_critic(monkeypatch, capsys):
     monkeypatch.setattr(cli, "_probe_llm_catalog", lambda **kw: {"gpt-5.4"})
 
     args = _make_args(codex_model="gpt-5.6-sol", critic_mock=True)
-    cli._resolve_models_for_run(args, None)
+    await cli._resolve_models_for_run(args, None)
 
     assert args.codex_model == "gpt-5.4"
     assert args.claude_model == "gpt-5.4"
@@ -2080,64 +2080,67 @@ def _record_critic_probes(monkeypatch, *, fail: bool = False) -> list[tuple[str,
     """Stub both review transports and return the ``(protocol, model)`` each probe sent."""
     sent: list[tuple[str, str]] = []
 
-    def _anthropic(**kw):
+    async def _anthropic(**kw):
         sent.append(("anthropic", kw["model"]))
         if fail:
             raise RuntimeError("AuthenticationError")
 
-    def _chat(client, **kw):
+    async def _chat(client, **kw):
         sent.append(("openai", kw["model"]))
         if fail:
             raise RuntimeError("AuthenticationError")
 
-    monkeypatch.setattr(cli.llm_config, "anthropic_completion", _anthropic)
-    monkeypatch.setattr(cli.llm_config, "chat_completion", _chat)
-    monkeypatch.setattr(cli.llm_config, "get_openai_client", lambda **kw: object())
-    monkeypatch.setattr("time.sleep", lambda s: None)
+    async def _no_sleep(delay):
+        return None
+
+    monkeypatch.setattr(cli.llm_config, "aanthropic_completion", _anthropic)
+    monkeypatch.setattr(cli.llm_config, "achat_completion", _chat)
+    monkeypatch.setattr(cli.llm_config, "get_async_openai_client", lambda **kw: object())
+    monkeypatch.setattr(cli.asyncio, "sleep", _no_sleep)
     return sent
 
 
-def test_critic_reviews_with_the_orchestration_model_by_default(monkeypatch, capsys):
+async def test_critic_reviews_with_the_orchestration_model_by_default(monkeypatch, capsys):
     """A launch that sets CODEX_MODEL still reviews with the Claude-side model orchestration runs on."""
     sent = _record_critic_probes(monkeypatch)
     monkeypatch.setattr(cli, "orchestration_runs_on_codex", lambda **kw: False)
     args = _make_args(claude_model="glm-5-3", codex_model="gpt-5.4", critic_mock=False, critic_protocol="auto")
 
-    cli._probe_critic_review_model(args, codex_follows_claude=False)
+    await cli._probe_critic_review_model(args, codex_follows_claude=False)
 
     assert sent == [("anthropic", "glm-5-3")]
     assert "critic model 'glm-5-3' answered" in capsys.readouterr().out
 
 
-def test_critic_follows_an_orchestration_that_runs_on_codex(monkeypatch):
+async def test_critic_follows_an_orchestration_that_runs_on_codex(monkeypatch):
     sent = _record_critic_probes(monkeypatch)
     monkeypatch.setattr(cli, "orchestration_runs_on_codex", lambda **kw: True)
     args = _make_args(claude_model="gpt-5.5", codex_model="gpt-5.5", critic_mock=False, critic_protocol="auto")
 
-    cli._probe_critic_review_model(args, codex_follows_claude=False)
+    await cli._probe_critic_review_model(args, codex_follows_claude=False)
 
     assert sent == [("openai", "gpt-5.5")]
 
 
-def test_an_explicit_critic_protocol_reviews_with_that_sides_model(monkeypatch):
+async def test_an_explicit_critic_protocol_reviews_with_that_sides_model(monkeypatch):
     sent = _record_critic_probes(monkeypatch)
     monkeypatch.setattr(cli, "orchestration_runs_on_codex", lambda **kw: False)
     monkeypatch.setenv("OPENAI_BASE_URL", "https://gw.example/v1")
     monkeypatch.setenv("OPENAI_API_KEY", "openai-key")
     args = _make_args(claude_model="glm-5-3", codex_model="gpt-5.6-sol", critic_mock=False, critic_protocol="openai")
 
-    cli._probe_critic_review_model(args, codex_follows_claude=False)
+    await cli._probe_critic_review_model(args, codex_follows_claude=False)
 
     assert sent == [("openai", "gpt-5.6-sol")]
 
 
-def test_a_critic_model_that_cannot_answer_stops_the_launch_without_a_fallback(monkeypatch, capsys):
+async def test_a_critic_model_that_cannot_answer_stops_the_launch_without_a_fallback(monkeypatch, capsys):
     sent = _record_critic_probes(monkeypatch, fail=True)
     monkeypatch.setattr(cli, "orchestration_runs_on_codex", lambda **kw: False)
     args = _make_args(claude_model="glm-5-3", codex_model="gpt-5.4", critic_mock=False, critic_protocol="auto")
 
     with pytest.raises(SystemExit) as exc_info:
-        cli._probe_critic_review_model(args, codex_follows_claude=False)
+        await cli._probe_critic_review_model(args, codex_follows_claude=False)
 
     assert exc_info.value.code == 2
     # Transient errors get the catalog retries, but every attempt asks the one configured model.
@@ -2150,13 +2153,36 @@ def test_a_critic_model_that_cannot_answer_stops_the_launch_without_a_fallback(m
     assert "Refusing to start" in err
 
 
-def test_a_mock_critic_sends_no_probe(monkeypatch):
+async def test_a_mock_critic_sends_no_probe(monkeypatch):
     sent = _record_critic_probes(monkeypatch)
     args = _make_args(critic_mock=True, critic_protocol="auto")
 
-    cli._probe_critic_review_model(args, codex_follows_claude=False)
+    await cli._probe_critic_review_model(args, codex_follows_claude=False)
 
     assert sent == []
+
+
+async def test_an_oauth_only_critic_probe_answers_inside_the_running_event_loop(monkeypatch, capsys):
+    """The probe runs inside ``_run_optimize``'s loop, where the one-shot client's sync ``messages`` refuses."""
+    from hyperloom.common import claude_oneshot
+
+    for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL", "DEEPSEEK_API_KEY"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "sk-ant-oat01-test")
+    asked: list[str] = []
+
+    async def _amessages(self, *, model, messages, system=None, max_tokens=None):
+        asked.append(model)
+        return object()
+
+    monkeypatch.setattr(claude_oneshot.ClaudeOneShotClient, "amessages", _amessages)
+    monkeypatch.setattr(cli, "orchestration_runs_on_codex", lambda **kw: False)
+    args = _make_args(claude_model="claude-opus-5", critic_mock=False, critic_protocol="auto")
+
+    await cli._probe_critic_review_model(args, codex_follows_claude=False)
+
+    assert asked == ["claude-opus-5"]
+    assert "critic model 'claude-opus-5' answered over the anthropic protocol" in capsys.readouterr().out
 
 
 def test_parser_anthropic_only_empty_codex_model_uses_claude_model(monkeypatch):
