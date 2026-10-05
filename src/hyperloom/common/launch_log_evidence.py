@@ -369,6 +369,23 @@ def _vllm_record_payload(text: str) -> str:
     return ""
 
 
+#: An angle-bracket object repr, e.g. vLLM 0.27's ``<DynamicShapesType.BACKED: 'backed'>`` inside
+#: ``compilation_config``. Unlike ``CompilationConfig(...)`` it is not Python syntax, so it fails the parse of the
+#: whole record instead of only its own key.
+_ANGLE_REPR_RE = re.compile(r"<[^<>\n]*>")
+
+
+def _without_angle_reprs(record: str) -> str:
+    """Swap each ``<...>`` repr outside a string literal for a bare name.
+
+    A bare name parses but is not a literal, so the key holding it is skipped the same way a ``CompilationConfig(...)``
+    value is. ``None`` would parse too, but would record a value the server never had.
+    """
+    return _ANGLE_REPR_RE.sub(
+        lambda m: m.group(0) if _is_inside_string_literal(record, m.start()) else "__unparsed__", record
+    )
+
+
 def observed_vllm_server_identity_from_log(path: str) -> dict[str, Any]:
     """Parse vLLM's ``non-default args: {...}`` record into an identity.
 
@@ -404,7 +421,7 @@ def observed_vllm_server_identity_from_log(path: str) -> dict[str, Any]:
         return {}
     values: dict[str, Any] = {}
     try:
-        node = ast.parse(content, mode="eval").body
+        node = ast.parse(_without_angle_reprs(content), mode="eval").body
         if not isinstance(node, ast.Dict):
             return {}
         for key_node, value_node in zip(node.keys, node.values):

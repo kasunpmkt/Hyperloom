@@ -353,6 +353,44 @@ def test_a_non_literal_value_skips_its_key_rather_than_the_whole_record(tmp_path
     assert identity["model"] == "/models/m", "the literal keys must survive the non-literal one"
 
 
+def test_an_angle_bracket_enum_repr_does_not_hide_the_record(tmp_path: Path) -> None:
+    """vLLM 0.27 prints ``<DynamicShapesType.BACKED: 'backed'>`` inside ``compilation_config``. That is not Python
+    syntax, so it used to fail the parse of the whole record: every vLLM measurement on that version came back with no
+    observed identity, and its reference throughput was withheld from GEAK as unverified."""
+    from hyperloom.common.launch_log_evidence import observed_vllm_server_identity_from_log
+
+    log = tmp_path / "server.log"
+    log.write_text(
+        "(APIServer pid=7) INFO 09-30 22:39:49 [api_utils.py:273] non-default args: "
+        "{'model': '/models/m', 'max_model_len': 6144, 'max_num_batched_tokens': 2048, "
+        "'compilation_config': {'mode': None, 'dynamic_shapes_config': "
+        "{'type': <DynamicShapesType.BACKED: 'backed'>}, 'max_cudagraph_capture_size': 2048}}\n",
+        encoding="utf-8",
+    )
+
+    assert observed_vllm_server_identity_from_log(str(log)) == {
+        "max_model_len": 6144,
+        "max_num_batched_tokens": 2048,
+        "model": "/models/m",
+    }
+
+
+def test_a_repr_skips_only_its_own_key_and_quoted_brackets_are_kept(tmp_path: Path) -> None:
+    from hyperloom.common.launch_log_evidence import observed_vllm_server_identity_from_log
+
+    log = tmp_path / "server.log"
+    log.write_text(
+        "(APIServer pid=7) INFO non-default args: "
+        "{'model': '/models/<run>/m', 'kv_cache_dtype': <CacheDType.FP8: 'fp8'>, 'max_model_len': 4096}\n",
+        encoding="utf-8",
+    )
+    identity = observed_vllm_server_identity_from_log(str(log))
+
+    assert identity["model"] == "/models/<run>/m", "brackets inside a string are data, not a repr"
+    assert "kv_cache_dtype" not in identity, "a repr is skipped, never recorded as a value the server did not have"
+    assert identity["max_model_len"] == 4096
+
+
 def test_the_vllm_binding_carries_the_width_and_digests_the_model(tmp_path: Path) -> None:
     import hashlib
 
