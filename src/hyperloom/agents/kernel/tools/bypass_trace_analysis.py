@@ -126,7 +126,7 @@ def _emit_quality_warnings(analyze: dict[str, Any], warnings: list[dict[str, Any
                 "code": "bypass_steady_fallback_full_trace",
                 "severity": "info",
                 "message": (
-                    "steady-state windowing requested but no repeating window found; "
+                    "no repeating step window found for steady-state windowing; "
                     "fell back to full-trace share aggregation."
                 ),
             }
@@ -370,9 +370,9 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--steady-state-mode",
         default="",
-        help="Steady-state windowing mode. Any non-off value enables windowing, "
-        "including the TraceLens splitter chunk types the coordinator forwards "
-        "(mixed / decode_only / prefilldecode); off values: '', 0, false, off, none.",
+        help="Steady-state windowing is the default for every framework; the TraceLens splitter chunk types "
+        "the coordinator forwards (mixed / decode_only / prefilldecode) window too. "
+        "0, false, off, no or none analyze the full trace instead.",
     )
     p.add_argument("--roofline-output-name", default="kernel_roofline.json")
     # Denoise-step count for scriptable/diffusion workloads; 0 = infer.
@@ -391,14 +391,8 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     return p
 
 
-#: ``--steady-state-mode`` values that mean "do NOT window" (analyze the full trace).
-_STEADY_OFF_VALUES = frozenset({"", "0", "false", "off", "no", "none"})
-
-
-def _should_enable_steady(*, steady_state_mode: str, framework: str, env_steady: bool) -> bool:
-    """Whether to run steady-state windowing for this trace analysis."""
-    mode = (steady_state_mode or "").strip().lower()
-    return bool(env_steady) or (framework or "").lower() == "xdit" or mode not in _STEADY_OFF_VALUES
+#: ``--steady-state-mode`` values that ask for the full trace instead of the steady-state window.
+_FULL_TRACE_MODES = frozenset({"0", "false", "off", "no", "none"})
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -447,13 +441,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     framework_l = (args.framework or "").lower()
-    # Steady-state windowing: opt-in via --steady-state-mode / env, always on for xDiT.
-    env_steady = os.environ.get("HYPERLOOM_BYPASS_STEADY_STATE", "").strip().lower() in {"1", "true", "yes", "on"}
-    enable_steady = _should_enable_steady(
-        steady_state_mode=args.steady_state_mode or "",
-        framework=args.framework or "",
-        env_steady=env_steady,
-    )
+    enable_steady = (args.steady_state_mode or "").strip().lower() not in _FULL_TRACE_MODES
 
     # --- analyze the trace (independent streaming reader) ---
     analyze: dict[str, Any]
@@ -561,8 +549,7 @@ def main(argv: list[str] | None = None) -> int:
     scope = analyze.get("aggregation_scope", AGGREGATION_SCOPE_FULL)
     steady_window = analyze.get("steady_window")
 
-    # ``estimated`` marks shares not anchored to a real per-step window (steady windowing requested but fell back to
-    # the full trace).
+    # ``estimated`` marks shares not anchored to a real per-step window (no repeating step, so the full trace).
     estimated = enable_steady and scope != AGGREGATION_SCOPE_STEADY
     if framework_l == "xdit" and estimated:
         trace_health_warnings.append(
@@ -576,7 +563,7 @@ def main(argv: list[str] | None = None) -> int:
                 ),
             }
         )
-    elif framework_l == "xdit":
+    elif framework_l == "xdit" and scope == AGGREGATION_SCOPE_STEADY:
         trace_health_warnings.append(
             {
                 "code": "bypass_xdit_steady_anchored",

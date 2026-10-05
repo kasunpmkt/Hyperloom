@@ -158,11 +158,9 @@ class TestTheTwoRoutesAgree:
 
     def test_the_bypass_route_emits_the_sidecar_for_custom(self, tmp_path, capsys, monkeypatch):
         """Trace-derived on that route too, so a name check would wrongly skip it."""
-        monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
         path = self._bypass_sidecar_for(tmp_path, capsys, "custom")
         assert path and Path(path).is_file()
         assert "totals" in json.loads(Path(path).read_text(encoding="utf-8"))
 
     def test_the_bypass_route_omits_the_sidecar_for_a_serving_framework(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.delenv("HYPERLOOM_BYPASS_STEADY_STATE", raising=False)
         assert self._bypass_sidecar_for(tmp_path, capsys, "sglang") is None
