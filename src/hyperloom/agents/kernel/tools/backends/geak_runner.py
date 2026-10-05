@@ -108,6 +108,17 @@ def _resolve_runner() -> str:
     )
 
 
+def _tail(path: Path, limit: int = 4000) -> str:
+    """The last ``limit`` characters of a log file, read from its end so a long run's log is never loaded whole."""
+    try:
+        with open(path, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            f.seek(max(0, f.tell() - limit * 4))
+            return f.read().decode("utf-8", errors="replace")[-limit:]
+    except OSError:
+        return ""
+
+
 def call_geak(
     handoff: dict,
     output_dir: Path,
@@ -141,55 +152,57 @@ def call_geak(
     inner_timeout = max(60, timeout_s - flush_grace)
     env["GEAK_E2E_TIMEOUT_S"] = str(inner_timeout)  # run_e2e's anyio budget
 
+    stdout_log = output_dir / "run_e2e.stdout.log"
+    stderr_log = output_dir / "run_e2e.stderr.log"
     started = time.time()
-    # start_new_session=True -> run_e2e + its vllm/node children share a process group we can signal as a unit
-    # (prevents leaked-server orphans).
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        env=env,
-        start_new_session=True,
-    )
+    # Files, not pipes: when GEAK stops before Finalize its own output is the only record of why, and a file keeps it
+    # through the SIGKILL below and after this process is gone.
+    with open(stdout_log, "wb") as stdout_f, open(stderr_log, "wb") as stderr_f:
+        # start_new_session=True -> run_e2e + its vllm/node children share a process group we can signal as a unit
+        # (prevents leaked-server orphans).
+        proc = subprocess.Popen(
+            cmd,
+            stdout=stdout_f,
+            stderr=stderr_f,
+            env=env,
+            start_new_session=True,
+        )
 
-    def _killpg(sig: int) -> None:
-        try:
-            os.killpg(os.getpgid(proc.pid), sig)
-        except (ProcessLookupError, PermissionError):
-            # Process already exited; nothing to signal.
-            pass
+        def _killpg(sig: int) -> None:
+            try:
+                os.killpg(os.getpgid(proc.pid), sig)
+            except (ProcessLookupError, PermissionError):
+                # Process already exited; nothing to signal.
+                pass
 
-    parent = os.getppid()
-    deadline = time.monotonic() + timeout_s
-    stopped_by = ""
-    while True:
-        try:
-            stdout, stderr = proc.communicate(timeout=max(0.0, min(STOP_POLL_S, deadline - time.monotonic())))
-            returncode = proc.returncode
+        parent = os.getppid()
+        deadline = time.monotonic() + timeout_s
+        stopped_by = ""
+        while True:
+            try:
+                returncode = proc.wait(timeout=max(0.0, min(STOP_POLL_S, deadline - time.monotonic())))
+                break
+            except subprocess.TimeoutExpired:
+                if stop is not None and stop.is_set():
+                    stopped_by = "sigterm"
+                elif os.getppid() != parent:
+                    stopped_by = "parent_exited"
+                elif time.monotonic() >= deadline:
+                    stopped_by = "timeout"
+                else:
+                    continue
+            # SIGTERM lets run_e2e flush result.json, then escalate to SIGKILL.
+            _killpg(signal.SIGTERM)
+            try:
+                returncode = proc.wait(timeout=flush_grace)
+            except subprocess.TimeoutExpired:
+                _killpg(signal.SIGKILL)
+                proc.wait()
+                returncode = -1
             break
-        except subprocess.TimeoutExpired:
-            if stop is not None and stop.is_set():
-                stopped_by = "sigterm"
-            elif os.getppid() != parent:
-                stopped_by = "parent_exited"
-            elif time.monotonic() >= deadline:
-                stopped_by = "timeout"
-            else:
-                continue
-        # SIGTERM lets run_e2e flush result.json, then escalate to SIGKILL.
-        _killpg(signal.SIGTERM)
-        try:
-            stdout, stderr = proc.communicate(timeout=flush_grace)
-            returncode = proc.returncode
-        except subprocess.TimeoutExpired:
-            _killpg(signal.SIGKILL)
-            stdout, stderr = proc.communicate()
-            returncode = -1
-        break
     reaped = reap_leftovers(output_dir)
-    stdout_tail = (stdout or "")[-4000:]
-    stderr_tail = (stderr or "")[-4000:]
+    stdout_tail = _tail(stdout_log)
+    stderr_tail = _tail(stderr_log)
 
     result: dict = {}
     if result_path.is_file():
@@ -209,6 +222,8 @@ def call_geak(
             "returncode": returncode,
             "stdout_tail": stdout_tail,
             "stderr_tail": stderr_tail,
+            "stdout_log": str(stdout_log),
+            "stderr_log": str(stderr_log),
             "elapsed_s": round(time.time() - started, 2),
             "handoff_path": str(handoff_path),
             "result_path": str(result_path),
@@ -246,7 +261,10 @@ def _main(argv: list[str]) -> int:
             {
                 "status": out.get("status"),
                 "speedup": out.get("throughput_speedup"),
+                "returncode": out.get("returncode"),
+                "stopped_by": out.get("stopped_by", ""),
                 "result_path": out.get("result_path"),
+                "stderr_log": out.get("stderr_log"),
                 "reaped_pids": out.get("reaped_pids", []),
             }
         )

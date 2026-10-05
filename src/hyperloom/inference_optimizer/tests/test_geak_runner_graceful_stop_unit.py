@@ -189,6 +189,60 @@ def test_sigkill_escalation_when_child_ignores_sigterm(tmp_path, monkeypatch):
     assert not (tmp_path / "out" / "result.json").is_file()
 
 
+def test_geak_output_survives_a_sigkill_in_the_output_dir(tmp_path, monkeypatch):
+    """GEAK's own output is the only record of why it stopped before Finalize; it must outlive a killed run."""
+    runner = _write_fake_runner(
+        tmp_path,
+        """
+        import signal, sys, time
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        print("workflow: entering Capture", flush=True)
+        print("Error: capture benchmark ran 0 times", file=sys.stderr, flush=True)
+        time.sleep(120)
+    """,
+    )
+    monkeypatch.setenv("GEAK_E2E_RUNNER", str(runner))
+    monkeypatch.setenv("GEAK_FLUSH_GRACE_S", "2")
+    out_dir = tmp_path / "out"
+
+    out = psr.call_geak(_handoff(), out_dir, timeout_s=2)
+
+    assert out["returncode"] == -1
+    assert (out_dir / "run_e2e.stdout.log").read_text() == "workflow: entering Capture\n"
+    assert (out_dir / "run_e2e.stderr.log").read_text() == "Error: capture benchmark ran 0 times\n"
+    assert out["stdout_log"] == str(out_dir / "run_e2e.stdout.log")
+    assert out["stderr_tail"] == "Error: capture benchmark ran 0 times\n"
+
+
+def test_the_runner_summary_says_how_geak_ended(tmp_path, monkeypatch, capsys):
+    """The kernel phase logs only this line, so it carries the exit code, the stop cause and where the logs are."""
+    runner = _write_fake_runner(
+        tmp_path,
+        """
+        import sys
+        print("Traceback: workflow crashed", file=sys.stderr)
+        sys.exit(3)
+    """,
+    )
+    monkeypatch.setenv("GEAK_E2E_RUNNER", str(runner))
+    handoff_path = tmp_path / "handoff.json"
+    handoff_path.write_text(json.dumps(_handoff()), encoding="utf-8")
+    out_dir = tmp_path / "out"
+
+    previous = signal.getsignal(signal.SIGTERM)  # _main installs its own handler
+    try:
+        assert psr._main([str(handoff_path), str(out_dir), "--timeout-s", "60"]) == 1
+    finally:
+        signal.signal(signal.SIGTERM, previous)
+
+    summary = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert summary["status"] == "error"
+    assert summary["returncode"] == 3
+    assert summary["stopped_by"] == ""
+    assert summary["stderr_log"] == str(out_dir / "run_e2e.stderr.log")
+    assert "Traceback: workflow crashed" in (out_dir / "run_e2e.stderr.log").read_text()
+
+
 def _alive(pid: int) -> bool:
     """Whether ``pid`` is a live process; a zombie nobody reaped yet counts as gone."""
     try:
